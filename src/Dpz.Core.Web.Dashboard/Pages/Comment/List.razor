@@ -4,7 +4,7 @@
 
 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">评论列表</MudText>
 <MudTable Hover="true"
-          ServerData="x => LoadAsync(x)"
+          ServerData="(x,_) => LoadAsync(x)"
           CurrentPage="@(_pageIndex - 1)"
           Loading="_isLoading"
           RowsPerPage="PageSize"

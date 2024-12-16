@@ -2,7 +2,7 @@
 @attribute [Authorize]
 <MudTable Hover="true"
           @ref="_table"
-          ServerData="x => LoadDataAsync(x)"
+          ServerData="(x,_) => LoadDataAsync(x)"
           CurrentPage="@(_pageIndex)"
           RowsPerPage="PageSize">
     <ToolBarContent>

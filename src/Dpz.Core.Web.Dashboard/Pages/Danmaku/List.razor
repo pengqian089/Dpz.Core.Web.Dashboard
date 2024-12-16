@@ -10,7 +10,7 @@
           Loading="_isLoading"
           MultiSelection="true"
           @ref="_table"
-          ServerData="x => LoadDataAsync(x)"
+          ServerData="(x,_) => LoadDataAsync(x)"
           CurrentPage="@(_pageIndex - 1)"
           RowsPerPage="PageSize">
     <ToolBarContent>

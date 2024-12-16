@@ -5,7 +5,7 @@
 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">动态页列表</MudText>
 <MudTable Hover="true"
           @ref="_table"
-          ServerData="x => LoadDataAsync(x)"
+          ServerData="(x,_) => LoadDataAsync(x)"
           CurrentPage="@(_pageIndex - 1)"
           RowsPerPage="PageSize">
     <ToolBarContent>

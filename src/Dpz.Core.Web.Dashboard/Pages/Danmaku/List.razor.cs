@@ -13,13 +13,17 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
 {
     public partial class List
     {
-        [Inject]private IDanmakuService DanmakuService { get; set; }
+        [Inject]
+        private IDanmakuService DanmakuService { get; set; }
 
-        [Inject] private IJSRuntime JsRuntime { get; set; }
-        
-        [Inject] private IDialogService DialogService { get; set; }
+        [Inject]
+        private IJSRuntime JsRuntime { get; set; }
 
-        [Inject] private IVideoService VideoService { get; set; }
+        [Inject]
+        private IDialogService DialogService { get; set; }
+
+        [Inject]
+        private IVideoService VideoService { get; set; }
 
         private int _pageIndex = 1;
 
@@ -50,18 +54,22 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
 
         private async Task InitAsync()
         {
-            if (_groups.Any() && _groupDic.Any()) return;
+            if (_groups.Any() && _groupDic.Any())
+                return;
             _groups = await DanmakuService.GetGroupsAsync();
             var videos = await VideoService.GetVideosAsync();
             _groups.AddRange(videos.Select(x => x.Id));
             _groups = _groups.GroupBy(x => x).Select(x => x.Key).ToList();
-            _groupDic = _groups.ToDictionary(x => x, x =>
-            {
-                var video = videos.FirstOrDefault(y => y.Id == x);
-                return !string.IsNullOrEmpty(video?.Name) ? video.Name : x;
-            });
+            _groupDic = _groups.ToDictionary(
+                x => x,
+                x =>
+                {
+                    var video = videos.FirstOrDefault(y => y.Id == x);
+                    return !string.IsNullOrEmpty(video?.Name) ? video.Name : x;
+                }
+            );
         }
-        
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await JsRuntime.InvokeVoidAsync("Prism.highlightAll");
@@ -69,6 +77,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
         }
 
         private bool _isLoading = true;
+
         private async Task<TableData<DanmakuModel>> LoadDataAsync(TableState state)
         {
             _isLoading = true;
@@ -84,13 +93,9 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
                 _pageIndex = 1;
             }
             _selectedItems.Clear();
-            var list = await DanmakuService.GetPageAsync(_text,_group,_pageIndex, PageSize);
+            var list = await DanmakuService.GetPageAsync(_text, _group, _pageIndex, PageSize);
             _isLoading = false;
-            return new TableData<DanmakuModel>()
-            {
-                TotalItems = list.TotalItemCount, 
-                Items = list
-            };
+            return new TableData<DanmakuModel>() { TotalItems = list.TotalItemCount, Items = list };
         }
 
         private void Search()
@@ -105,13 +110,17 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
                 await DialogService.ShowMessageBox(
                     "提示",
                     "请至少选择一项数据！",
-                    yesText: "确定", cancelText: "取消");
+                    yesText: "确定",
+                    cancelText: "取消"
+                );
                 return;
             }
             var result = await DialogService.ShowMessageBox(
                 "提示",
                 "删除后不能恢复，确定删除？",
-                yesText: "删除!", cancelText: "取消");
+                yesText: "删除!",
+                cancelText: "取消"
+            );
             if (result == true)
             {
                 await DanmakuService.DeleteAsync(_selectedItems.Select(x => x.Id).ToArray());
@@ -121,16 +130,25 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
 
         private async Task OnImportAcfun()
         {
-            if (!_groupDic.Any()) return;
+            if (!_groupDic.Any())
+                return;
             var parameters = new DialogParameters
             {
                 ["Title"] = "导入AcFun弹幕",
                 ["ExtensionName"] = ".json",
-                ["Groups"] = _groupDic
+                ["Groups"] = _groupDic,
             };
-            var dialog = DialogService.Show<Import>("",parameters, new DialogOptions {CloseButton = true});
+            var dialog = DialogService.Show<Import>(
+                "",
+                parameters,
+                new DialogOptions { CloseButton = true }
+            );
             var result = await dialog.Result;
-            if (!result.Cancelled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+            if (
+                result?.Canceled == false
+                && bool.TryParse(result.Data?.ToString() ?? "", out var r)
+                && r
+            )
             {
                 Search();
             }
@@ -138,16 +156,21 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
 
         private async Task OnImportBilibili()
         {
-            if (!_groupDic.Any()) return;
+            if (!_groupDic.Any())
+                return;
             var parameters = new DialogParameters
             {
                 ["Title"] = "导入bilibili弹幕",
                 ["ExtensionName"] = ".xml",
-                ["Groups"] = _groupDic
+                ["Groups"] = _groupDic,
             };
-            var dialog = DialogService.Show<Import>("",parameters, new DialogOptions {CloseButton = true});
+            var dialog = DialogService.Show<Import>(
+                "",
+                parameters,
+                new DialogOptions { CloseButton = true }
+            );
             var result = await dialog.Result;
-            if (!result.Cancelled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+            if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
             {
                 Search();
             }
@@ -156,7 +179,9 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
                 await DialogService.ShowMessageBox(
                     "提示",
                     "导入失败！",
-                    yesText: "确定", cancelText: "取消");
+                    yesText: "确定",
+                    cancelText: "取消"
+                );
             }
         }
 

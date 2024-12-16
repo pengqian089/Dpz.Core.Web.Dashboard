@@ -1,7 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
 
-<MudThemeProvider Theme="_currentTheme" />
+<MudThemeProvider IsDarkMode="true" />
 <MudSnackbarProvider />
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center" Style="height: 100vh;">
@@ -12,7 +12,3 @@
         </MudPaper>
     </div>
 </MudContainer>
-
-@code {
-    private readonly MudTheme _currentTheme = new MudBlazorAdminDashboard();
-}

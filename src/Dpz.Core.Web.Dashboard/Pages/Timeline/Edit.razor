@@ -70,7 +70,7 @@ else
                     <MudItem xs="12" md="12">
                         <MarkdownEditor 
                             @ref="_editor" 
-                            UploadPicture="UploadPicture" 
+                            UploadAction="/api/Timeline/upload" 
                             ElementId="@($"timeline-editor-{Id}")" 
                             Markdown="@_timeline.Content"/>
                     </MudItem>

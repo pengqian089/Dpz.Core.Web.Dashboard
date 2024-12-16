@@ -30,7 +30,7 @@ else
                         <MarkdownEditor
                             @ref="_editor"
                             Markdown="@_model.Markdown"
-                            UploadPicture="UploadAsync"
+                            UploadAction="/api/Mumble/upload"
                             ElementId="@($"mumble-editor-{Id}")">
                         </MarkdownEditor>
                     </MudItem>

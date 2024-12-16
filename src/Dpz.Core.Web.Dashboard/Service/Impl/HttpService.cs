@@ -290,18 +290,23 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
             var request = new HttpRequestMessage(HttpMethod.Post, uri);
             if (value != null)
             {
-                HttpContent httpContent;
-                if (value is string content)
-                {
-                    httpContent = new StringContent(content,Encoding.UTF8);
-                }
-                else
-                {
-                    httpContent = JsonContent.Create(value);
-                }
-                request.Content = httpContent;
+                SetHttpContent(value, request);
             }
             await SendRequestAsync(request);
+        }
+
+        private static void SetHttpContent(object value, HttpRequestMessage request)
+        {
+            HttpContent httpContent;
+            if (value is string content)
+            {
+                httpContent = new StringContent(content,Encoding.UTF8);
+            }
+            else
+            {
+                httpContent = JsonContent.Create(value);
+            }
+            request.Content = httpContent;
         }
 
         public async Task<T> PutAsync<T>(string uri, object value)
@@ -324,7 +329,7 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
         {
             var request = new HttpRequestMessage(HttpMethod.Patch, uri);
             if (value != null)
-                request.Content = JsonContent.Create(value);
+                SetHttpContent(value, request);
             return await SendRequestAsync<T>(request);
         }
 
@@ -332,7 +337,7 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
         {
             var request = new HttpRequestMessage(HttpMethod.Patch, uri);
             if (value != null)
-                request.Content = JsonContent.Create(value);
+                SetHttpContent(value, request);
             await SendRequestAsync(request);
         }
 

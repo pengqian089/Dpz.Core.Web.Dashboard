@@ -1,22 +1,19 @@
 ﻿@using BlazorMonaco.Editor
-@using BlazorMonaco
 
-@if (!string.IsNullOrEmpty(ElementId))
+@if (!string.IsNullOrEmpty(_elementId))
 {
     <StandaloneCodeEditor
         CssClass="monaco-editor"
         @ref="_editor"
-        Id="@ElementId"
+        Id="@_elementId"
         ConstructionOptions="x => x.HtmlEditorOptions(Html)"/>
 }
 
 @code {
-
+    private readonly string _elementId = Guid.NewGuid().ToString("N"); 
+    
     [Parameter]
     public string Html { get; set; }
-
-    [Parameter]
-    public string ElementId { get; set; }
 
     StandaloneCodeEditor _editor;
 
@@ -34,16 +31,15 @@
         endSelection.EndColumn += value.Length - distance;
         await _editor.ExecuteEdits(
             Guid.NewGuid().ToString(),
-            new List<IdentifiedSingleEditOperation>
-            {
+            [
                 new()
                 {
                     ForceMoveMarkers = true,
                     Range = selection,
                     Text = value
                 }
-            },
-            new List<Selection>{endSelection});
+            ],
+            [endSelection]);
     }
     
     public async Task DisposeAsync()

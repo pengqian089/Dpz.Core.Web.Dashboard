@@ -138,7 +138,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
                 ["ExtensionName"] = ".json",
                 ["Groups"] = _groupDic,
             };
-            var dialog = DialogService.Show<Import>(
+            var dialog = await DialogService.ShowAsync<Import>(
                 "",
                 parameters,
                 new DialogOptions { CloseButton = true }
@@ -164,7 +164,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
                 ["ExtensionName"] = ".xml",
                 ["Groups"] = _groupDic,
             };
-            var dialog = DialogService.Show<Import>(
+            var dialog = await DialogService.ShowAsync<Import>(
                 "",
                 parameters,
                 new DialogOptions { CloseButton = true }
@@ -173,15 +173,6 @@ namespace Dpz.Core.Web.Dashboard.Pages.Danmaku
             if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
             {
                 Search();
-            }
-            else
-            {
-                await DialogService.ShowMessageBox(
-                    "提示",
-                    "导入失败！",
-                    yesText: "确定",
-                    cancelText: "取消"
-                );
             }
         }
 

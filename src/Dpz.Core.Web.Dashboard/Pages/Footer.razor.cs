@@ -19,8 +19,6 @@ public partial class Footer
     
     private bool _isLoading;
 
-    private bool _saving;
-
     private string _content = "";
 
     private HtmlEditor _editor;
@@ -35,10 +33,12 @@ public partial class Footer
 
     private async Task SaveAsync(EditContext context)
     {
-        _saving = true;
+        _isLoading = true;
         var content = await _editor.GetValueAsync();
         await CommunityService.SaveFooterAsync(content);
         await _editor.DisposeAsync();
-        _saving = false;
+        _content = await CommunityService.GetFooterAsync();
+        _isLoading = false;
+        StateHasChanged();
     }
 }

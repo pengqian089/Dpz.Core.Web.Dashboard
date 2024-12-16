@@ -27,7 +27,7 @@ else
                 <DataAnnotationsValidator/>
                 <MudGrid>
                     <MudItem xs="12" md="12">
-                        <MudList Style="padding: 2em; width: 100%;" Dense="true">
+                        <MudList Style="padding: 2em; width: 100%;" Dense="true" T="string">
                             @foreach (var file in _selectMusic)
                             {
                                 <MudListItem @key="@file">
@@ -54,7 +54,7 @@ else
                                    for="fileCover">
                             点击选择要上传的音乐封面
                         </MudButton>
-                        <MudList Style="padding:2em;width:100%;" Dense="true">
+                        <MudList Style="padding:2em;width:100%;" Dense="true" T="string">
                             @if (!string.IsNullOrEmpty(_musicModel.CoverUrl) && _showCover)
                             {
                                 <MudListItem @key="Guid.NewGuid()">
@@ -86,7 +86,7 @@ else
                                    for="fileLrc">
                             点击选择要上传的歌词
                         </MudButton>
-                        <MudList Style="padding: 2em; width: 100%;" Dense="true">
+                        <MudList Style="padding: 2em; width: 100%;" Dense="true" T="string">
                             @foreach (var file in _selectLrc)
                             {
                                 <MudListItem @key="@file">
@@ -146,7 +146,7 @@ else
                         <MudText>修改</MudText>
                     }
                 </MudButton>
-                <MudButton Variant="Variant.Filled" Link="/music">返回列表</MudButton>
+                <MudButton Variant="Variant.Filled" Href="/music">返回列表</MudButton>
             </MudCardActions>
         </MudCard>
     </EditForm>

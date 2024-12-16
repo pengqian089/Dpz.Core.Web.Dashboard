@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Html;
-using BlazorMonaco.Editor;
 using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
@@ -45,7 +44,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
             _isLoading = true;
             _model = await DynamicPageService.GetDynamicPageAsync(Id);
             var htmlContext = BrowsingContext.New(Configuration.Default);
-            var html = await htmlContext.OpenAsync(x => x.Content(_model.HtmlContent));
+            var html = await htmlContext.OpenAsync(x => x.Content(_model.Content));
             html.ToHtml(_htmlContent, new PrettyMarkupFormatter());
             _isLoading = false;
             await base.OnInitializedAsync();
@@ -93,6 +92,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
                 Snackbar.Add("请输入内容", Severity.Warning);
                 return;
             }
+            
             _isPublishing = true;
             StateHasChanged();
             await DynamicPageService.EditDynamicPage(_model.Id, content);

@@ -6,7 +6,7 @@
           CanCancelEdit="true"
           OnCommitEditClick="CommitInformationAsync"
           RowEditCommit="ItemHasBeenCommitted"
-          RowEditPreview="BackupVideo" 
+          RowEditPreview="BackupVideo"
           RowEditCancel="ResetItemToOriginalValues"
           Loading="_isLoading"
           Items="_source">
@@ -51,7 +51,7 @@
             {
                 foreach (var tag in context.Tags)
                 {
-                    <MudChip Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
+                    <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
                 }
             }
         </MudTd>
@@ -59,7 +59,9 @@
             <div style="word-wrap: break-word;white-space: pre-wrap">@context.Description</div>
         </MudTd>
         <MudTd DataLabel="查看视频">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Primary"
+                       OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看
+            </MudButton>
         </MudTd>
     </RowTemplate>
     <RowEditingTemplate>
@@ -67,22 +69,24 @@
             @context.Title
         </MudTd>
         <MudTd DataLabel="名称">
-            <MudTextField @bind-Value="@context.Name" />
+            <MudTextField @bind-Value="@context.Name"/>
         </MudTd>
         <MudTd DataLabel="标题">
-            <MudTextField @bind-Value="@context.VideoTitle" />
+            <MudTextField @bind-Value="@context.VideoTitle"/>
         </MudTd>
         <MudTd DataLabel="副标题">
-            <MudTextField @bind-Value="@context.SubTitle" />
+            <MudTextField @bind-Value="@context.SubTitle"/>
         </MudTd>
         <MudTd DataLabel="标签">
-            <MudTextField @bind-Value="@context.TagsValue" />
+            <MudTextField @bind-Value="@context.TagsValue"/>
         </MudTd>
         <MudTd DataLabel="描述">
-            <MudTextField Lines="3" @bind-Value="@context.Description" />
+            <MudTextField Lines="3" @bind-Value="@context.Description"/>
         </MudTd>
         <MudTd DataLabel="查看视频">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Primary"
+                       OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看
+            </MudButton>
         </MudTd>
     </RowEditingTemplate>
 </MudTable>

@@ -41,7 +41,7 @@
                            for="importDanmaku">
                     点击选择要导入的弹幕文件
                 </MudButton>
-                <MudList Style="padding:2em;width:100%;" Dense="true">
+                <MudList Style="padding:2em;width:100%;" Dense="true" T="string">
                     @foreach (var file in _selectedFiles)
                     {
                         <MudListItem @key="@file">

@@ -41,6 +41,9 @@
             页面名称
         </MudTh>
         <MudTh>
+            Content-Type
+        </MudTh>
+        <MudTh>
             查看
         </MudTh>
         <MudTh>
@@ -58,11 +61,14 @@
         <MudTd DataLabel="页面名称">
             @context.Id
         </MudTd>
+        <MudTd DataLabel="Content-Type">
+            @context.ContentTypeStr
+        </MudTd>
         <MudTd DataLabel="查看">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" Link="@($"{Program.WebHost}/act/{context.Id}")" Target="_blank">查看</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@($"{Program.WebHost}/act/{context.Id}")" Target="_blank">查看</MudButton>
         </MudTd>
         <MudTd DataLabel="发表人">
-            @context.Creator.Name
+            @context.Creator?.Name
         </MudTd>
         <MudTd DataLabel="创建时间">
             @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
@@ -71,7 +77,7 @@
             @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
         </MudTd>
         <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/dynamic/edit/{context.Id}")">修改</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/dynamic/edit/{context.Id}")">修改</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
         </MudTd>
     </RowTemplate>

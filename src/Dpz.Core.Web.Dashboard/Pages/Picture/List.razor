@@ -98,7 +98,7 @@
         <MudTd DataLabel="标签">
             @foreach (var tag in context.Tags)
             {
-                <MudChip Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
+                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
             }
         </MudTd>
         <MudTd DataLabel="上传人">@context.Creator?.Name</MudTd>

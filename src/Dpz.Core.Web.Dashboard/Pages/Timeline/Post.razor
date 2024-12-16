@@ -1,0 +1,72 @@
+﻿@page "/timeline/post"
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">发布文章</MudText>
+<MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
+    <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
+</MudOverlay>
+<EditForm Model="@_timeline" OnValidSubmit="PostDataAsync">
+    <MudExpansionPanels>
+        <MudExpansionPanel Text="表单验证">
+            <MudText Color="@Color.Error">
+                <ValidationSummary/>
+            </MudText>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+    <MudCard>
+        <MudCardContent>
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" md="12">
+                    <MudTextField T="string"
+                                  HelperText="此项必填"
+                                  Immediate="true"
+                                  Label="标题"
+                                  Required="true"
+                                  RequiredError="请输入时间轴标题"
+                                  @bind-value="_timeline.Title"
+                                  For="@(() => _timeline.Title)"
+                                  Variant="Variant.Text">
+                    </MudTextField>
+                </MudItem>
+                <MudItem xs="12" md="12">
+                    <MudTextField T="string"
+                                  HelperText="时间轴的链接"
+                                  Immediate="true"
+                                  Label="链接"
+                                  @bind-value="_timeline.More"
+                                  For="@(() => _timeline.More)"
+                                  Variant="Variant.Text">
+                    </MudTextField>
+                </MudItem>
+                <MudItem xs="12" md="12">
+                    <MudDatePicker
+                        Label="时间"
+                        HelperText="时间轴节点"
+                        @bind-Date="_timeline.Date"
+                        Required="true"
+                        RequiredError="此项必填"
+                        For="@(() => _timeline.Date)"
+                        Variant="Variant.Text"/>
+                </MudItem>
+                <MudItem xs="12" md="12">
+                    <MarkdownEditor @ref="_editor" UploadPicture="UploadPicture" ElementId="timeline-publish-editor" Markdown="@_timeline.Content"></MarkdownEditor>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+                @if (_isPublishing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-2">正在发布</MudText>
+                }
+                else
+                {
+                    <MudText>发布</MudText>
+                }
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Link="/timeline">返回列表</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>

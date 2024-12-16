@@ -1,0 +1,126 @@
+﻿@page "/account"
+@page "/account/list"
+@using Dpz.Core.EnumLibrary
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">图像列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="上传图片"
+                       Size="Size.Medium"
+                       OnClick="CreateAccount"
+                       Class="ma-2"/>
+        <MudSpacer/>
+
+        <MudTextField T="string"
+                      Placeholder="搜索账号"
+                      @bind-value="_account"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            账号
+        </MudTh>
+        <MudTh>
+            昵称
+        </MudTh>
+        <MudTh>
+            头像
+        </MudTh>
+        <MudTh>
+            性别
+        </MudTh>
+        <MudTh>
+            签名
+        </MudTh>
+        <MudTh>
+            权限
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="账号">
+            <MudHighlighter Text="@context.Id" HighlightedText="@_account"/>
+        </MudTd>
+        <MudTd DataLabel="昵称">@context.Name</MudTd>
+        <MudTd DataLabel="头像">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => ViewAvatar(context.Avatar)">查看</MudButton>
+        </MudTd>
+        <MudTd DataLabel="性别">
+            @(context.Sex == Sex.Wuman ? "女" : "男")
+        </MudTd>
+        <MudTd DataLabel="签名">
+            @context.Sign
+        </MudTd>
+        <MudTd DataLabel="图片大小">
+            @context.Permissions?.ToString()
+        </MudTd>
+        <MudTd DataLabel="操作">
+            @if (context.Permissions == Permissions.System)
+            {
+                <MudTooltip Text="含有System权限的账号不能操作">
+                    <MudButton
+                        Variant="Variant.Filled"
+                        Color="Color.Primary"
+                        OnClick="() => Enable(context.Id)"
+                        Disabled="true">
+                        @(context.Enable == false ? "启用" : "停用")
+                    </MudButton>
+                </MudTooltip>
+                <MudTooltip Text="含有System权限的账号不能操作">
+                    <MudButton
+                        Variant="Variant.Filled"
+                        Color="Color.Error"
+                        OnClick="() => ChangePassword(context.Id, context.Name)"
+                        Disabled="true">
+                        修改密码
+                    </MudButton>
+                </MudTooltip>
+            }
+            else
+            {
+                <MudStack Spacing="1" Row="true">
+                    <MudButton
+                        Variant="Variant.Filled"
+                        Color="Color.Primary"
+                        OnClick="() => Enable(context.Id)">
+                        @(context.Enable == false ? "启用" : "停用")
+                    </MudButton>
+
+                    <MudButton
+                        Variant="Variant.Filled"
+                        Color="Color.Error"
+                        OnClick="() => ChangePassword(context.Id, context.Name)">
+                        修改密码
+                    </MudButton>
+                </MudStack>
+            }
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] { 15, 20, 30 }"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

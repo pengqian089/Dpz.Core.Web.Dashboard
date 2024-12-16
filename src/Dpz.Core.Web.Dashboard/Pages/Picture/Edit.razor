@@ -1,0 +1,126 @@
+﻿@page "/picture/edit/{id}"
+@attribute [Authorize]
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">修改图像信息</MudText>
+@if (_isLoading)
+{
+    <MudCard>
+        <MudCardContent>
+            <MudSkeleton Width="30%" Height="42px;"/>
+            <MudSkeleton Width="80%"/>
+            <MudSkeleton Width="100%"/>
+        </MudCardContent>
+        <MudCardActions>
+            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
+            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
+        </MudCardActions>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
+    </MudCard>
+}
+else
+{
+    <MudOverlay Visible="_isPosting" ZIndex="9999" DarkBackground="true">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
+    </MudOverlay>
+    <EditForm Model="_picture" OnValidSubmit="PostPictureAsync">
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="表单验证">
+                <MudText Color="@Color.Error">
+                    <ValidationSummary/>
+                </MudText>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+        <MudCard>
+            <MudCardContent>
+                <DataAnnotationsValidator/>
+                <MudGrid>
+                    <MudItem xs="12" md="12">
+                        @*<InputFile OnChange="OnInputFileChanged" id="fileInput112" hidden accept=".jpg, .jpeg, .gif, .png, .bmp, .webp, .jiff"/>
+
+                        <MudButton HtmlTag="label"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Filled.CloudUpload"
+                                   for="fileInput112">
+                            点击选择要上传的图片
+                        </MudButton>*@
+                        <MudList Style="padding: 2em; width: 100%;" Dense="true">
+                            @if (!string.IsNullOrEmpty(_imageSrc))
+                            {
+                                <MudListItem @key="Guid.NewGuid()">
+                                    <img src="@_imageSrc" style="max-width: 100%" alt="picture"/>
+                                </MudListItem>
+                            }
+                            @foreach (var file in _selectedFiles)
+                            {
+                                <MudListItem @key="@file">
+                                    <MudChip Color="Color.Dark"
+                                             Style="overflow: hidden;"
+                                             Text="@(file.Key.Split(".").Last())"/>
+                                    @file.Key
+                                    <MudChip Color="Color.Dark"
+                                             Style="overflow: hidden;"
+                                             Text="@(file.Value.FileSize())"/>
+                                </MudListItem>
+                            }
+                            <Preview></Preview>
+                        </MudList>
+                    </MudItem>
+
+                    <MudItem xs="12" md="12">
+                        <MudSelect T="string"
+                                   Label="标签"
+                                   HelperText="请选择标签"
+                                   MultiSelection="true"
+                                   SelectedValues="_picture.Tags">
+                            @foreach (var state in _tags)
+                            {
+                                <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="12">
+                        <MudTextField T="string"
+                                      HelperText="上面标签不满足时，在此输入补充标签，多个标签以[,](英文逗号)隔开"
+                                      Immediate="true"
+                                      Label="补充标签"
+                                      @bind-value="_picture.AdditionsTags"
+                                      For="@(() => _picture.AdditionsTags)"
+                                      Variant="Variant.Text">
+                        </MudTextField>
+                    </MudItem>
+                    <MudItem xs="12" md="12">
+                        <MudTextField T="string"
+                                      HelperText="图像描述"
+                                      Immediate="true"
+                                      Label="描述"
+                                      Lines="5"
+                                      @bind-value="_picture.Description"
+                                      Text="@_picture.Description"
+                                      For="@(() => _picture.Description)"
+                                      Variant="Variant.Text">
+                        </MudTextField>
+                    </MudItem>
+                    <MudItem xs="12" md="12">
+                        <div id="article-editor">
+                            <textarea id="article-area" style="display: none"></textarea>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPosting" Color="Color.Primary">
+                    @if (_isPosting)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">正在修改</MudText>
+                    }
+                    else
+                    {
+                        <MudText>修改</MudText>
+                    }
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Href="/picture">返回列表</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </EditForm>
+}

@@ -1,0 +1,143 @@
+﻿@page "/login"
+@layout LoginLayout
+@inject NavigationManager Navigation
+@inject IAuthenticationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject ICommunityService CommunityService
+
+
+<MudText Typo="Typo.h4" GutterBottom="true">登录</MudText>
+
+<MudTextField 
+    T="string" 
+    @bind-value="@Account" 
+    Label="账号" 
+    Variant="Variant.Outlined"
+    Disabled="_isVerifying"
+    @ref="_accountField"
+    OnKeyDown="OnEnterKeyDown"
+    Class="my-6"></MudTextField>
+
+<MudTextField 
+    @bind-Value="@Password" 
+    Label="密码" 
+    Variant="Variant.Outlined" 
+    InputType="@_passwordInput" 
+    Adornment="Adornment.End" 
+    AdornmentIcon="@_passwordInputIcon"
+    Disabled="_isVerifying"
+    @ref="_passwordField"
+    OnKeyDown="OnEnterKeyDown"
+    OnAdornmentClick="TogglePasswordVisibility" />
+
+<MudTextField 
+    T="string" 
+    @bind-value="@PinCode" 
+    Label="PIN码" 
+    Variant="Variant.Outlined"
+    MaxLength="6"
+    Disabled="_isVerifying"
+    OnKeyDown="OnEnterKeyDown"
+    Class="my-6"></MudTextField>
+
+<div class="d-flex justify-space-between align-center">
+    <MudCheckBox T="bool" Label="记住我？" Color="Color.Primary" Value="true" Disabled="true" Class="ml-n1 my-3"></MudCheckBox>
+</div>
+
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" Disabled="_isVerifying" OnClick="LoginAsync">
+    @if (_isVerifying)
+    {
+        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+        <MudText Class="ms-2">正在校验</MudText>
+    }
+    else
+    {
+        <MudText>登录</MudText>
+    }
+</MudButton>
+
+@if (!_isChecking)
+{
+    <MudAlert Severity="Severity.Error" Class="mt-8 mud-width-full">
+        @_message
+    </MudAlert>
+}
+
+@code {
+    string Account { get; set; }
+    string Password { get; set; }
+    string PinCode { get; set; }
+
+    bool _passwordVisibility;
+    InputType _passwordInput = InputType.Password;
+    string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    private bool _isVerifying = false;
+
+    private bool _isChecking = true;
+    
+    private MudTextField<string> _accountField;
+    private MudTextField<string> _passwordField;
+
+    string _message = "";
+
+    void TogglePasswordVisibility()
+    {
+        @if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+
+    private async Task OnEnterKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoginAsync();
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        if (string.IsNullOrEmpty(Account))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+            Snackbar.Add("请输入账号！", Severity.Normal);
+            await _accountField.FocusAsync();
+            return;
+        }
+        if (string.IsNullOrEmpty(Password))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+            Snackbar.Add("请输入密码！", Severity.Normal);
+            await _passwordField.FocusAsync();
+            return;
+        }
+        _isVerifying = true;
+        var result = await AuthorizationService.SignAsync(Account, Password,PinCode);
+        _isChecking = result.result;
+        _message = result.message;
+        if (!_isChecking)
+        {
+            _isVerifying = false;
+            return;
+        }
+
+        if (!await CommunityService.CheckBindTwoFactorAsync())
+        {
+            Navigation.NavigateTo("bind-two-factor");
+            return;
+        }
+        
+        Navigation.NavigateTo("");
+    }
+}

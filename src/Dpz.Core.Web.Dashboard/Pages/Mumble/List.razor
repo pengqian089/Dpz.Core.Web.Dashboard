@@ -1,0 +1,151 @@
+﻿@page "/mumble"
+@page "/mumble/list"
+@attribute [Authorize]
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">碎碎念列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="发布"
+                       Size="Size.Medium"
+                       Link="/mumble/post"
+                       Class="ma-2"/>
+        <MudSpacer/>
+
+        <MudTextField T="string"
+                      Placeholder="搜索"
+                      @bind-value="_content"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            Markdown
+        </MudTh>
+        <MudTh>
+            Html
+        </MudTh>
+        <MudTh>
+            点赞数量
+        </MudTh>
+        <MudTh>
+            回复量
+        </MudTh>
+        <MudTh>
+            发表人
+        </MudTh>
+        <MudTh>
+            预览
+        </MudTh>
+        <MudTh>
+            发布时间
+        </MudTh>
+        <MudTh>
+            最后修改时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd HideSmall DataLabel="Markdown">
+            <MudButton
+                Variant="Variant.Outlined"
+                Color="Color.Default"
+                Size="Size.Small"
+                OnClick="@(() => context.ShowMarkdown = !context.ShowMarkdown)">
+                @((context.ShowMarkdown) ? "收起" : "展开")
+            </MudButton>
+        </MudTd>
+        <MudTd HideSmall DataLabel="Html">
+            <MudButton
+                Variant="Variant.Outlined"
+                Color="Color.Default"
+                Size="Size.Small"
+                OnClick="@(() => context.ShowHtmlContent = !context.ShowHtmlContent)">
+                @((context.ShowHtmlContent) ? "收起" : "展开")
+            </MudButton>
+        </MudTd>
+        <MudTd DataLabel="点赞数量">
+            @context.Zan
+        </MudTd>
+        <MudTd DataLabel="回复量">
+            <MudLink Href="@($"/comment?node=Mumble&relation={@context.Id}")">@context.CommentCount 个回复</MudLink>
+        </MudTd>
+        <MudTd DataLabel="发表人">
+            @context.Author.Name
+        </MudTd>
+        <MudTd DataLabel="预览">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" Link="@($"{Program.WebHost}/talk/comment/{context.Id}")" Target="_blank">打开</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => Preview(context.HtmlContent)">预览</MudButton>
+        </MudTd>
+        <MudTd DataLabel="发布时间">
+            @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="最后修改时间">
+            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/mumble/edit/{context.Id}")">修改</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <ChildRowContent>
+        @if (context.ShowMarkdown)
+        {
+            <MudTr>
+                <td colspan="9">
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.body1">Markdown内容</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <pre class="line-numbers language-markdown"><code>@context.Markdown</code></pre>
+                        </MudCardContent>
+                    </MudCard>
+                </td>
+            </MudTr>
+        }
+        @if (context.ShowHtmlContent)
+        {
+            <MudTr>
+                <td colspan="9">
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.body1">Html内容</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <pre class="line-numbers language-html"><code>@context.HtmlContent</code></pre>
+                        </MudCardContent>
+                    </MudCard>
+
+                </td>
+            </MudTr>
+        }
+    </ChildRowContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

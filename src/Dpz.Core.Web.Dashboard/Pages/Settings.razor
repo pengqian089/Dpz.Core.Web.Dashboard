@@ -1,0 +1,115 @@
+﻿@page "/settings"
+@attribute [Authorize]
+
+@if (_isLoading)
+{
+    <MudCard>
+        <MudCardContent>
+            <MudSkeleton Width="30%" Height="42px;"/>
+            <MudSkeleton Width="80%"/>
+            <MudSkeleton Width="100%"/>
+            <MudSkeleton Width="100%"/>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
+            <MudSkeleton Width="100%"/>
+            <MudSkeleton Width="100%"/>
+            <MudSkeleton Width="100%"/>
+        </MudCardContent>
+        <MudCardActions>
+            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
+            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
+        </MudCardActions>
+    </MudCard>
+}
+else
+{
+    <MudCard>
+        <MudForm Model="@_model" @ref="@_form">
+            <MudCardContent>
+                <MudTextField @bind-Value="_model.Core"
+                              For="@(() => _model.Core)"
+                              Immediate="true"
+                              Label="核心站点"/>
+                <MudTextField @bind-Value="_model.Main"
+                              For="@(() => _model.Main)"
+                              Immediate="true"
+                              Label="主站"/>
+                <MudTextField @bind-Value="_model.Job"
+                              For="@(() => _model.Job)"
+                              Immediate="true"
+                              Label="任务站点"/>
+                <MudTextField @bind-Value="_model.Api"
+                              For="@(() => _model.Api)"
+                              Immediate="true"
+                              Label="api站点"/>
+                <MudTextField @bind-Value="_model.Image"
+                              For="@(() => _model.Image)"
+                              Immediate="true"
+                              Label="图片站点"/>
+                <MudTextField @bind-Value="_model.Message"
+                              For="@(() => _model.Message)"
+                              Immediate="true"
+                              Label="消息站点"/>
+                <MudTextField @bind-Value="_model.Static"
+                              For="@(() => _model.Static)"
+                              Immediate="true"
+                              Label="静态文件站点"/>
+                <MudTextField @bind-Value="_model.Cdn"
+                              For="@(() => _model.Cdn)"
+                              Immediate="true"
+                              Label="cdn站点"/>
+                <MudTextField @bind-Value="_model.Script"
+                              For="@(() => _model.Script)"
+                              Immediate="true"
+                              Label="自定义脚本站点"/>
+
+            </MudCardContent>
+        </MudForm>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Disabled="_saving" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await SaveAsync())">
+                @if (_saving)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-2">正在保存</MudText>
+                }
+                else
+                {
+                    <MudText>保存</MudText>
+                }
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+
+    [Inject]
+    IAppOptionService AppOptionService { get; set; }
+
+    bool _isLoading = true;
+
+    MudForm _form;
+
+    SettingModel _model = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        _model = await AppOptionService.GetSettingAsync() ?? new SettingModel();
+        _isLoading = false;
+        await base.OnInitializedAsync();
+    }
+
+
+    bool _saving = false;
+
+    async Task SaveAsync()
+    {
+        if (_form.Model is SettingModel model)
+        {
+            _saving = true;
+            await AppOptionService.SaveSettingAsync(model);
+            _saving = false;
+        }
+    }
+
+}

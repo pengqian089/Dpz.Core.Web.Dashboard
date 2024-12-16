@@ -1,0 +1,133 @@
+﻿@page "/picture"
+@page "/picture/list"
+@attribute [Authorize]
+@using Dpz.Core.EnumLibrary
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">图像列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="上传图片"
+                       Size="Size.Medium"
+                       OnClick="PostPicture"
+                       Class="ma-2"/>
+        <MudSpacer/>
+        <MudSelect T="string"
+                   Placeholder="请选择标签"
+                   @bind-value="_tag"
+                   Clearable="true"
+                   AdornmentIcon="@Icons.Material.Filled.Tag"
+                   Adornment="Adornment.Start"
+                   IconSize="Size.Medium"
+                   Class="mt-2"
+                   AdornmentColor="Color.Primary">
+            @foreach (var item in _tags)
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="int"
+                   @bind-value="_pictureType"
+                   Placeholder="请选择类型"
+                   Strict="true"
+                   ToStringFunc="_convert"
+                   AdornmentIcon="@Icons.Material.Filled.MergeType"
+                   Adornment="Adornment.Start"
+                   IconSize="Size.Medium"
+                   Class="mt-2"
+                   AdornmentColor="Color.Primary">
+            @foreach (var item in AppTools.PictureTypes)
+            {
+                <MudSelectItem Value="@item.Key">@item.Value</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField T="string"
+                      Placeholder="描述"
+                      @bind-value="_description"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            标签
+        </MudTh>
+        <MudTh>
+            上传人
+        </MudTh>
+        <MudTh>
+            上传时间
+        </MudTh>
+        <MudTh>
+            描述
+        </MudTh>
+        <MudTh>
+            类型
+        </MudTh>
+        <MudTh>
+            图片大小
+        </MudTh>
+        <MudTh>
+            高度
+        </MudTh>
+        <MudTh>
+            宽度
+        </MudTh>
+        <MudTh>
+            MD5
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="标签">
+            @foreach (var tag in context.Tags)
+            {
+                <MudChip Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
+            }
+        </MudTd>
+        <MudTd DataLabel="上传人">@context.Creator?.Name</MudTd>
+        <MudTd DataLabel="上传时间">@context.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="描述">
+            <MudHighlighter Text="@context.Description" HighlightedText="@_description"/>
+        </MudTd>
+        <MudTd DataLabel="类型">@context.Category.ToString()</MudTd>
+        <MudTd DataLabel="图片大小">
+            <MudText>@context.Length.FileSize()</MudText>
+        </MudTd>
+        <MudTd DataLabel="高度">
+            <MudText>@context.Height</MudText>
+        </MudTd>
+        <MudTd DataLabel="宽度">
+            <MudText>@context.Width</MudText>
+        </MudTd>
+        <MudTd DataLabel="MD5">
+            <MudText>@context.Md5</MudText>
+        </MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => EditPicture(context.Id)">编辑</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

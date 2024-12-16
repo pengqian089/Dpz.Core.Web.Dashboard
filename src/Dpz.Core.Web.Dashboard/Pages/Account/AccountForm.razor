@@ -1,0 +1,124 @@
+﻿@inject ISnackbar _snackbar
+@inject IAccountService _accountService
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            @(IsCreate ? "创建账号" : "修改密码")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField T="string" @bind-value="@Account" Text="@Account" Label="账号" ReadOnly="@(!IsCreate)"/>
+        <MudTextField T="string" @bind-value="@Name" Text="@Name" Label="昵称" ReadOnly="@(!IsCreate)"/>
+        <MudTextField
+            T="string"
+            InputType="@_passwordInput"
+            AdornmentIcon="@_passwordInputIcon"
+            Adornment="Adornment.End"
+            @bind-value="@_password"
+            OnAdornmentClick="TogglePasswordVisibility"
+            Label="密码"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok" Disabled="_isPublishing">
+            @if (_isPublishing)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+            }
+            else
+            {
+                @if (IsCreate)
+                {
+                    <MudText>创建账号</MudText>
+                }
+                else
+                {
+                    <MudText>修改密码</MudText>
+                }
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string Account { get; set; }
+
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public bool IsCreate { get; set; }
+
+    private string _password = "";
+
+    bool _isPublishing = false;
+    bool _passwordVisibility;
+    InputType _passwordInput = InputType.Password;
+    string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    void TogglePasswordVisibility()
+    {
+    @if (_passwordVisibility)
+    {
+        _passwordVisibility = false;
+        _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+        _passwordInput = InputType.Password;
+    }
+    else
+    {
+        _passwordVisibility = true;
+        _passwordInputIcon = Icons.Material.Filled.Visibility;
+        _passwordInput = InputType.Text;
+    }
+    }
+
+    private async Task Ok()
+    {
+        _snackbar.Configuration.SnackbarVariant = Variant.Outlined;
+        _snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+        _snackbar.Configuration.MaxDisplayedSnackbars = 10;
+        if (string.IsNullOrEmpty(Account))
+        {
+            _snackbar.Add("请输入账号", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrEmpty(Name))
+        {
+            _snackbar.Add("请输入昵称", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrEmpty(_password))
+        {
+            _snackbar.Add("请输入密码", Severity.Warning);
+            return;
+        }
+        if (IsCreate)
+        {
+            _isPublishing = true;
+            if (await _accountService.ExistsAsync(Account))
+            {
+                _snackbar.Add("该账号已存在", Severity.Warning);
+                return;
+            }
+            await _accountService.CreateAccountAsync(Account, Name, _password);
+        }
+        else
+        {
+            _isPublishing = true;
+            await _accountService.ChangePasswordAsync(Account, _password);
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+}

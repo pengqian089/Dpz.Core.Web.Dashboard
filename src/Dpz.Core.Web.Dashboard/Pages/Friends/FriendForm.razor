@@ -1,0 +1,75 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            @Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="12">
+                <MudTextField T="string"
+                              HelperText="此项必填"
+                              Immediate="true"
+                              Label="名称"
+                              Required="true"
+                              RequiredError="此项必填"
+                              @bind-value="Model.Name"
+                              For="@(() => Model.Name)"
+                              Text="@Model.Name"
+                              Variant="Variant.Text">
+                </MudTextField>
+            </MudItem>
+            <MudItem xs="12" md="12">
+                <MudTextField T="string"
+                              HelperText="此项必填"
+                              Immediate="true"
+                              Label="图标"
+                              Required="true"
+                              RequiredError="此项必填"
+                              @bind-value="Model.Avatar"
+                              For="@(() => Model.Avatar)"
+                              Text="@Model.Avatar"
+                              Variant="Variant.Text">
+                </MudTextField>
+            </MudItem>
+            <MudItem xs="12" md="12">
+                <MudTextField T="string"
+                              HelperText="此项必填"
+                              Immediate="true"
+                              Label="链接"
+                              Required="true"
+                              RequiredError="此项必填"
+                              @bind-value="Model.Link"
+                              For="@(() => Model.Link)"
+                              Text="@Model.Link"
+                              Variant="Variant.Text">
+                </MudTextField>
+            </MudItem>
+            <MudItem xs="12" md="12">
+                <MudTextField T="string"
+                              HelperText="描述"
+                              Immediate="true"
+                              Label="描述"
+                              @bind-value="Model.Description"
+                              For="@(() => Model.Description)"
+                              Text="@Model.Description"
+                              Variant="Variant.Text">
+                </MudTextField>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="_loading">
+            @if (_loading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+            }
+            else
+            {
+                <MudText>保存</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>

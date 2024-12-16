@@ -1,0 +1,67 @@
+﻿@page "/unbind-two-factor"
+@attribute [Authorize]
+
+<MudGrid Class="justify-space-between" Style="max-width: 400px;">
+    <MudItem xs="12">
+        <MudTextField Label="PIN码"
+                      @bind-Value="_pinCode" Variant="@Variant.Text" Clearable/>
+    </MudItem>
+    <MudItem xs="12">
+        <MudButton Disabled="_unbinding" Variant="Variant.Filled" Color="Color.Primary" OnClick="UnbindTwoFactorAsync">
+            @if (_unbinding)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">解绑中...</MudText>
+            }
+            else
+            {
+                <MudText>解绑</MudText>
+            }
+        </MudButton>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-8 mud-width-full">
+                @_message
+            </MudAlert>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string _pinCode = "";
+
+    private bool _unbinding = false;
+
+    private string _message = "";
+
+    [Inject]
+    ICommunityService CommunityService { get; set; }
+    
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    private async Task UnbindTwoFactorAsync()
+    {
+        if (string.IsNullOrEmpty(_pinCode))
+        {
+            _message = "请输入PIN码";
+            return;
+        }
+
+        _unbinding = true;
+        try
+        {
+            await CommunityService.UnbindTwoFactorAsync(_pinCode);
+            NavigationManager.NavigateTo("");
+        }
+        catch (FetchException e)
+        {
+            _message = e.Message;
+        }
+        finally
+        {
+            _unbinding = false;
+        }
+    }
+
+}

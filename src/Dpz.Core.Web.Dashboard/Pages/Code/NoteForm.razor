@@ -1,0 +1,70 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            保存代码描述
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="12">
+                Path:@(Model.Path is not null ? string.Join("/",Model.Path) : "")
+            </MudItem>
+            <MudItem xs="12" md="12">
+                Name:@Model.Name
+            </MudItem>
+            <MudItem xs="12" md="12">
+                <MudTextField T="string"
+                              HelperText="代码目录或文件的描述"
+                              Immediate="true"
+                              Label="描述"
+                              @bind-value="Model.Note"
+                              For="@(() => Model.Note)"
+                              Text="@Model.Note"
+                              Variant="Variant.Text">
+                </MudTextField>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="_loading">
+            @if (_loading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+            }
+            else
+            {
+                <MudText>保存</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code{
+
+    [Parameter]
+    public CodeSaveModel Model { get; set; }
+
+    [Inject]
+    private ICodeService CodeService { get; set; }
+
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    private bool _loading = false;
+
+    private async Task SaveAsync()
+    {
+        _loading = true;
+        await CodeService.SaveNoteAsync(Model);
+        MudDialog.Close(DialogResult.Ok(true));
+        _loading = false;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+}

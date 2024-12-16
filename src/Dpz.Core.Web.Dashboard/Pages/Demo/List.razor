@@ -1,0 +1,88 @@
+﻿@page "/list"
+@attribute [Authorize]
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="Publish"
+                       Size="Size.Medium"
+                       Link="/post"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            Id
+        </MudTh>
+        <MudTh>
+            Name
+        </MudTh>
+        <MudTh>Action</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">
+            @context.Id
+        </MudTd>
+        <MudTd DataLabel="查看">
+            @context.Name
+        </MudTd>
+        <MudTd DataLabel="Action">
+            <MudButton Variant="Variant.Filled" Color="Color.Error">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>
+
+@code {
+    private int _pageIndex = 0;
+
+    private MudTable<Model> _table;
+
+        private const int PageSize = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("page init.");
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<TableData<Model>> LoadDataAsync(TableState state)
+    {
+        Console.WriteLine("page load data.");
+
+        _pageIndex = state.Page;
+        var list = new List<Model>();
+        for (var i = _pageIndex * PageSize; i < (_pageIndex + 1) * PageSize; i++)
+        {
+            list.Add(new Model
+            {
+                Id = i,
+                Name = "Josh " + i
+            });
+        }
+
+        await Task.Delay(500);
+
+        return new TableData<Model>()
+        {
+            TotalItems = 200,
+            Items = list
+        };
+    }
+
+    private class Model
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+    }
+
+}

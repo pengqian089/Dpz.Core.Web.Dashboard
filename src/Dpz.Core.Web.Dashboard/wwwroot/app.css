@@ -1,0 +1,179 @@
+body {
+    background: #32333d
+}
+.loading-index {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+.loading-title {
+    color: #fff;
+}
+
+@-webkit-keyframes spinMove {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes spinMove {
+    to {
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes rotate {
+    to {
+        -webkit-transform: rotate(405deg);
+        transform: rotate(405deg);
+    }
+}
+
+@keyframes rotate {
+    to {
+        -webkit-transform: rotate(405deg);
+        transform: rotate(405deg);
+    }
+}
+
+:root {
+    /* color */
+    --white: #fff;
+    --grey: #757575;
+    /* font-size */
+    --text-xs: 0.875rem; /*14px*/
+    --text-sm: 1.125rem; /*18px*/
+    --text-md: 1.5rem; /*24px*/
+    --text-lg: 3rem; /*48px*/
+    --text-xlg: 4rem; /*64px*/
+    /* font-weight */
+    --weight-regular: 400;
+    --weight-semi-bold: 600;
+    --weight-bold: 700;
+    /* letter-spacing */
+    --letter-spacing-sm: -0.035em;
+    --letter-spacing-md: -0.08em;
+}
+.code-toolbar{
+    width: fit-content;
+}
+.preview-content img{
+    max-width: 100%;
+}
+
+mark {
+    background-color: transparent;
+    font-weight: bold;
+    color: #8881ff;
+}
+
+.dismiss{
+    color:#000
+}
+
+.line-highlight {
+      margin-top: 1em !important; 
+}
+
+.monaco-editor{
+    height: 800px;
+    width: 100%;
+}
+
+.markdown-body ul, ol {
+    display: block;
+    list-style: disc outside none;
+    margin: 1em 0;
+    padding: 0 0 0 40px;
+}
+.markdown-body ol {
+    list-style-type: decimal;
+}
+
+.markdown-body li {
+    display: list-item;
+}
+
+.markdown-body ul ul,.markdown-body ol ul {
+    list-style-type: circle;
+    margin-left: 15px;
+}
+.markdown-body ol ol,.markdown-body ul ol {
+    list-style-type: lower-latin;
+    margin-left: 15px;
+}
+
+.loading-jump {
+    position: relative;
+    width: 50px;
+    perspective: 200px;
+}
+
+.loading-jump:before,
+.loading-jump:after {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    content: "";
+    animation: jumping 0.5s infinite alternate;
+    background: rgba(0, 0, 0, 0);
+}
+
+.loading-jump:before {
+    left: 0;
+}
+
+.loading-jump:after {
+    right: 0;
+    animation-delay: 0.15s;
+}
+
+@keyframes jumping {
+    0% {
+        transform: scale(1) translateY(0px) rotateX(0deg);
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
+
+    100% {
+        transform: scale(1.2) translateY(-25px) rotateX(45deg);
+        background: #00ce64;
+        box-shadow: 0 25px 40px #00ce64;
+    }
+}
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #e0e0e0;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+.loading-progress circle:last-child {
+    stroke: #1b6ec2;
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 200px + 3.25rem) 0 auto 0.2rem;
+}
+
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "加载中...");
+    color: white;
+}

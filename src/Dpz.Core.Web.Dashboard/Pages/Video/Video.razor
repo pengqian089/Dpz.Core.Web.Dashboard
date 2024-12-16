@@ -1,0 +1,88 @@
+﻿@page "/video"
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">视频管理</MudText>
+<MudTable Hover="true"
+          CanCancelEdit="true"
+          OnCommitEditClick="CommitInformationAsync"
+          RowEditCommit="ItemHasBeenCommitted"
+          RowEditPreview="BackupVideo" 
+          RowEditCancel="ResetItemToOriginalValues"
+          Loading="_isLoading"
+          Items="_source">
+    <HeaderContent>
+        <MudTh>
+            目录
+        </MudTh>
+        <MudTh>
+            名称
+        </MudTh>
+        <MudTh>
+            标题
+        </MudTh>
+        <MudTh>
+            副标题
+        </MudTh>
+        <MudTh>
+            标签
+        </MudTh>
+        <MudTh>
+            描述
+        </MudTh>
+        <MudTh>
+            查看视频
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="目录">
+            @context.Title
+        </MudTd>
+        <MudTd DataLabel="名称">
+            @context.Name
+        </MudTd>
+        <MudTd DataLabel="标题">
+            @context.VideoTitle
+        </MudTd>
+        <MudTd DataLabel="副标题">
+            @context.SubTitle
+        </MudTd>
+        <MudTd DataLabel="标签">
+            @if (context.Tags != null)
+            {
+                foreach (var tag in context.Tags)
+                {
+                    <MudChip Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
+                }
+            }
+        </MudTd>
+        <MudTd DataLabel="描述">
+            <div style="word-wrap: break-word;white-space: pre-wrap">@context.Description</div>
+        </MudTd>
+        <MudTd DataLabel="查看视频">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd DataLabel="目录">
+            @context.Title
+        </MudTd>
+        <MudTd DataLabel="名称">
+            <MudTextField @bind-Value="@context.Name" />
+        </MudTd>
+        <MudTd DataLabel="标题">
+            <MudTextField @bind-Value="@context.VideoTitle" />
+        </MudTd>
+        <MudTd DataLabel="副标题">
+            <MudTextField @bind-Value="@context.SubTitle" />
+        </MudTd>
+        <MudTd DataLabel="标签">
+            <MudTextField @bind-Value="@context.TagsValue" />
+        </MudTd>
+        <MudTd DataLabel="描述">
+            <MudTextField Lines="3" @bind-Value="@context.Description" />
+        </MudTd>
+        <MudTd DataLabel="查看视频">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看</MudButton>
+        </MudTd>
+    </RowEditingTemplate>
+</MudTable>

@@ -1,0 +1,48 @@
+﻿@page "/footer"
+@attribute [Authorize]
+
+@if (_isLoading)
+{
+    <MudCard>
+        <MudCardContent>
+            <MudSkeleton Width="30%" Height="42px;" />
+            <MudSkeleton Width="80%" />
+            <MudSkeleton Width="100%" />
+        </MudCardContent>
+        <MudCardActions>
+            <MudSkeleton Width="64px" Height="40px" Class="ml-2" />
+            <MudSkeleton Width="105px" Height="40px" Class="ml-3" />
+        </MudCardActions>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
+    </MudCard>
+}
+else
+{
+    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">页脚内容</MudText>
+
+    <EditForm Model="@_t" OnValidSubmit="SaveAsync">
+        <MudCard>
+            <MudCardContent>
+                <DataAnnotationsValidator/>
+                <MudGrid>
+                    <MudItem xs="12" md="12">
+                        <HtmlEditor @ref="_editor" ElementId="footer-editor" Html="@_content"></HtmlEditor>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_saving" Color="Color.Primary">
+                    @if (_saving)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">正在保存</MudText>
+                    }
+                    else
+                    {
+                        <MudText>保存</MudText>
+                    }
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </EditForm>
+}

@@ -1,0 +1,37 @@
+﻿@using Markdig
+<div class="markdown-body"> @((MarkupString)_htmlContent)</div>
+
+@code {
+    [Parameter]
+    public string Markdown { get; set; }
+    
+    [Inject]
+    IJSRuntime JsRuntime { get; set; }
+
+    private string _htmlContent = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAutoLinks()
+            .UsePipeTables()
+            .UseTaskLists()
+            .UseEmphasisExtras()
+            .UseFooters()
+            .UseCitations()
+            .UseMathematics()
+            .UseAutoIdentifiers()
+            .Build();
+        var document = Markdig.Markdown.Parse(Markdown ?? string.Empty, pipeline);
+        _htmlContent = document.ToHtml(pipeline);
+        await base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //if(firstRender)
+        await JsRuntime.InvokeVoidAsync("Prism.highlightAll");
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+}

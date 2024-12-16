@@ -1,0 +1,45 @@
+﻿@page "/editor"
+@attribute [Authorize]
+
+<h3>Editor</h3>
+
+<MarkdownEditor ElementId="demo-editor" Markdown="@_markdownValue" @ref="_markdownEditor" UploadPicture="UploadPicture"></MarkdownEditor>
+
+<button @onclick="ShowValue">show value</button>
+
+<div>
+    @_content
+</div>
+@code {
+
+    [Inject]
+    IJSRuntime JsRuntime { get; set; }
+
+    [Inject]
+    IArticleService Service { get; set; }
+
+    string _markdownValue = "";
+
+    MarkdownEditor _markdownEditor;
+
+    string _content = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var article = await Service.GetArticleAsync("612cb16c6334bcb72527a228");
+        _markdownValue = article.Markdown;
+        await base.OnInitializedAsync();
+    }
+
+    private async Task ShowValue()
+    {
+        _content = await _markdownEditor.GetValueAsync();
+        
+    }
+
+    private async Task<string> UploadPicture(MultipartFormDataContent content)
+    {
+        return await Service.UploadAsync(content);
+    }
+
+}

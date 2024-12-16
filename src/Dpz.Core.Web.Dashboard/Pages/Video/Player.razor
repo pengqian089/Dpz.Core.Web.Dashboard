@@ -1,0 +1,27 @@
+﻿@inject IJSRuntime _jsRuntime
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.VideoLabel" Class="mr-3 mb-n1"/>
+             @(string.IsNullOrEmpty(Title) ? "查看视频" : Title)
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <video id="videoPlayer"></video>
+    </DialogContent>
+</MudDialog>
+@code {
+    [Parameter] public string VideoUrl { get; set; }
+
+    [Parameter] public string Title { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _jsRuntime.InvokeVoidAsync("initVideoPlayer", VideoUrl);
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+}

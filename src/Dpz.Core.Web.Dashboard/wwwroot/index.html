@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>网站管理系统 - 叫我阿胖</title>
+    <base href="/" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://dpangzi.com/library/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="https://dpangzi.com/library/prism/prism.css" />    
+    <link href="Dpz.Core.Web.Dashboard.styles.css?version=1.0.1" rel="stylesheet" />
+    <link href="app.css?version=1.0.0" rel="stylesheet" />
+    <link href="markdown-dark.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <div class="loading-index">
+            <h1 class="loading-title" style="margin-bottom: 50px">后台管理系统</h1>
+            <div class="loading-jump"></div>
+        </div>
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui" style="color:black">
+        发生了一个未处理的错误。
+        <a href="" class="reload">重新加载</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    
+    <script src="https://dpangzi.com/core/lib/jquery/jquery.min.js"></script>
+    <script src="https://dpangzi.com/core/lib/layer/layer.js"></script>
+    <script src="https://dpangzi.com/library/prism/prism.js"></script>
+    <script src="https://dpangzi.com/core/lib/hls.js/hls.min.js"></script>
+    <script src="_content/BlazorMonaco/jsInterop.js"></script>
+    <script>
+        var require = { 
+            paths: { vs: 'https://dpangzi.com/scripts/monaco-editor/min/vs' },
+            'vs/nls': {
+                availableLanguages: {
+                    '*': 'zh-cn'
+                }
+            } 
+        };
+    </script>
+    <script src="https://dpangzi.com/scripts/monaco-editor/min/vs/loader.js"></script>
+    <script src="https://dpangzi.com/scripts/monaco-editor/min/vs/editor/editor.main.js"></script>    
+    <script src="/js/app.js?version=1.1.1"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <!--script>
+        let i = 0;
+        let allResourcesBeingLoaded = [];
+        Blazor.start({
+            loadBootResource: function(type,name,defaultUri,integrity) {
+                if(type === "dotnetjs")
+                    return defaultUri;
+
+                let f = fetch(defaultUri,{
+                    cache: 'no-cache',
+                    integrity: integrity
+                });
+
+                allResourcesBeingLoaded.push(f);
+                f.then((r) => {
+                    i++;
+                    let progress = document.getElementById("blazorProgress");
+                    let l = allResourcesBeingLoaded.length;
+                    progress.value = (100 * i / l);
+                });
+                return f;
+            }
+        });
+    </script-->
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>

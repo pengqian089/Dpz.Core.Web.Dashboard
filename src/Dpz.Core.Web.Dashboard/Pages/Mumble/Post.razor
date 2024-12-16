@@ -1,0 +1,44 @@
+﻿@page "/mumble/post"
+@attribute [Authorize]
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">发布碎碎念</MudText>
+<MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
+    <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
+</MudOverlay>
+<EditForm Model="@_t" OnValidSubmit="PostDataAsync">
+    <MudExpansionPanels>
+        <MudExpansionPanel Text="表单验证">
+            <MudText Color="@Color.Error">
+                <ValidationSummary/>
+            </MudText>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+    <MudCard>
+        <MudCardContent>
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" md="12">
+                    <MarkdownEditor
+                        @ref="_editor"
+                        Markdown=""
+                        UploadPicture="UploadAsync"
+                        ElementId="mumble-publish-editor">
+                    </MarkdownEditor>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+                @if (_isPublishing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-2">正在发布</MudText>
+                }
+                else
+                {
+                    <MudText>发布</MudText>
+                }
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Link="/mumble">返回列表</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>

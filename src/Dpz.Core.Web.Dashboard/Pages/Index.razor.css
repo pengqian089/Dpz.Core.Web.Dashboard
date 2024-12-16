@@ -1,0 +1,15 @@
+﻿.banner-information {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    background-color: rgba(73, 81, 89, 0.5);
+}
+.banner-information span{
+    color:rgb(61, 235, 157);
+}
+.d-flex img{
+    width: 100%;
+    height: 100%;
+}

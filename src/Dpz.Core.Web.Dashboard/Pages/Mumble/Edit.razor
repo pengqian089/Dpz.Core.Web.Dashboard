@@ -1,0 +1,55 @@
+﻿@page "/mumble/edit/{Id}"
+@attribute [Authorize]
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">编辑碎碎念</MudText>
+@if (_isLoading)
+{
+    <MudCard>
+        <MudCardContent>
+            <MudSkeleton Width="30%" Height="42px;"/>
+            <MudSkeleton Width="80%"/>
+            <MudSkeleton Width="100%"/>
+        </MudCardContent>
+        <MudCardActions>
+            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
+            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
+        </MudCardActions>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
+    </MudCard>
+}
+else
+{
+    <MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
+    </MudOverlay>
+    <EditForm Model="@_t" OnValidSubmit="PostDataAsync">
+        <MudCard>
+            <MudCardContent>
+                <DataAnnotationsValidator/>
+                <MudGrid>
+                    <MudItem xs="12" md="12">
+                        <MarkdownEditor
+                            @ref="_editor"
+                            Markdown="@_model.Markdown"
+                            UploadPicture="UploadAsync"
+                            ElementId="@($"mumble-editor-{Id}")">
+                        </MarkdownEditor>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+                    @if (_isPublishing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">正在发布</MudText>
+                    }
+                    else
+                    {
+                        <MudText>发布</MudText>
+                    }
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Link="/mumble">返回列表</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </EditForm>
+}

@@ -1,0 +1,162 @@
+﻿@page "/comment"
+@using Dpz.Core.EnumLibrary
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">评论列表</MudText>
+<MudTable Hover="true"
+          ServerData="x => LoadAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          Loading="_isLoading"
+          RowsPerPage="PageSize"
+          @ref="_table">
+    <ToolBarContent>
+        <MudSpacer/>
+        <MudSelect T="string"
+                   Placeholder="请选择类型"
+                   Clearable="true"
+                   AdornmentIcon="@Icons.Material.Filled.Category"
+                   Adornment="Adornment.Start"
+                   IconSize="Size.Medium"
+                   Class="mt-2"
+                   Value="Node"
+                   ValueChanged="async x => await OnNodeChange(x)"
+                   AdornmentColor="Color.Primary">
+            <MudSelectItem Value="@CommentNode.Article.ToString()">文章</MudSelectItem>
+            <MudSelectItem Value="@CommentNode.Code.ToString()">源码</MudSelectItem>
+            <MudSelectItem Value="@CommentNode.Friends.ToString()">友链</MudSelectItem>
+            <MudSelectItem Value="@CommentNode.Mumble.ToString()">碎碎念</MudSelectItem>
+            <MudSelectItem Value="@CommentNode.Other.ToString()">其它</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect T="string"
+                   Placeholder="请选择类型"
+                   @bind-value="Relation"
+                   Clearable="true"
+                   AdornmentIcon="@Icons.Material.Filled.Link"
+                   Adornment="Adornment.Start"
+                   IconSize="Size.Medium"
+                   Class="mt-2"
+                   AdornmentColor="Color.Primary"
+                   @ref="_secondSelect">
+                @foreach (var item in _secondItems.OrderBy(x => x.Key))
+                {
+                    <MudSelectItem Value="@item.Key">@item.Value</MudSelectItem>
+                }
+        </MudSelect>
+
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            类型
+        </MudTh>
+        <MudTh>
+            关联
+        </MudTh>
+        <MudTh>
+            是否匿名
+        </MudTh>
+        <MudTh>
+            昵称
+        </MudTh>
+        <MudTh>
+            邮箱
+        </MudTh>
+        <MudTh>
+            个人网站
+        </MudTh>
+        <MudTh>
+            评论内容
+        </MudTh>
+        <MudTh>
+            身份标识
+        </MudTh>
+        <MudTh>
+            评论时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="类型">
+            @* <MudHighlighter Text="@context.BlogTitle" HighlightedText="@_title"/> *@
+            @context.Node
+        </MudTd>
+        <MudTd DataLabel="关联">
+            @if (_secondItems.ContainsKey(context.Relation))
+            {
+                <span>@_secondItems[context.Relation]</span>
+            }
+            else
+            {
+                <span>@context.Relation</span>
+            }
+        </MudTd>
+        <MudTd DataLabel="是否匿名">
+            @if (context.IsGuest)
+            {
+                <span style="color: #d9aa51">匿名</span>
+            }
+            else
+            {
+                <span style="color: #00b5c3">成员</span>
+            }
+        </MudTd>
+        <MudTd DataLabel="昵称">@context.NickName</MudTd>
+        <MudTd DataLabel="邮箱">@context.Email</MudTd>
+        <MudTd DataLabel="个人网站">@context.Site</MudTd>
+        <MudTd DataLabel="评论内容">
+            <div style="overflow: hidden;display: -webkit-box;-webkit-line-clamp: 1;-webkit-box-orient:vertical;max-width: 200px">
+                @context.CommentText
+            </div>
+            @if (context.CommentText.Contains("\n"))
+            {
+                <MudButton Variant="Variant.Text" OnClick="@(() => context.ShowComment = !context.ShowComment)" Color="Color.Primary">
+                     @((context.ShowComment) ? "收起评论" : "展开评论")
+                </MudButton>
+            }
+        </MudTd>
+        <MudTd DataLabel="身份标识">@context.Identity</MudTd>
+        <MudTd DataLabel="评论时间">@context.PublishTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="操作">
+            @if (context.IsDelete == true)
+            {
+                <span>已删除</span>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>    
+            }
+        </MudTd>
+    </RowTemplate>
+        <ChildRowContent>
+            @if (context.ShowComment)
+            {
+                <MudTr>
+                    <td colspan="9">
+                        <MudCard>
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">Markdown内容</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <pre style="width: calc(100vw - 30.5em);max-height: 300px" class="line-numbers language-markdown"><code>@context.CommentText</code></pre>
+                            </MudCardContent>
+                        </MudCard>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

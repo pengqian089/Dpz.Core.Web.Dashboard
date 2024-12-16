@@ -1,0 +1,15 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            查看头像
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <img src="@($"{Avatar}")" style="max-width: 500px" alt="avatar"/>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public string Avatar { get; set; }
+}

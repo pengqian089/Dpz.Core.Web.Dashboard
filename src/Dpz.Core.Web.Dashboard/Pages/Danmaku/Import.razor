@@ -1,0 +1,177 @@
+﻿@using System.Net.Http.Headers
+@inject IDialogService _dialogService
+@inject IDanmakuService _danmakuService
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            @Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="12">
+                @*<MudAutocomplete
+                    T="string"
+                    HelperText="请选择分组"
+                    Immediate="true"
+                    Label="弹幕分组"
+                    @bind-value="_group"
+                    CoerceValue="true"
+                    SearchFunc="SearchGroupAsync"
+                    Variant="Variant.Text"/>*@
+                 <MudSelect T="string" 
+                            Label="弹幕分组" 
+                            HelperText="请选择分组"
+                            ToStringFunc="x => x" 
+                            @bind-Value="_group">
+                     @foreach (var item in Groups) 
+                     { 
+                         <MudSelectItem T="string" Value="@item.Key">@item.Value</MudSelectItem> 
+                     }
+                 </MudSelect> 
+            </MudItem>
+            <MudItem xs="12" md="12">
+                <InputFile OnChange="OnInputFileChanged" id="importDanmaku" hidden accept="@ExtensionName"/>
+
+                <MudButton HtmlTag="label"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Filled.CloudUpload"
+                           for="importDanmaku">
+                    点击选择要导入的弹幕文件
+                </MudButton>
+                <MudList Style="padding:2em;width:100%;" Dense="true">
+                    @foreach (var file in _selectedFiles)
+                    {
+                        <MudListItem @key="@file">
+                            <MudChip Color="Color.Dark"
+                                     Style="overflow:hidden;"
+                                     Text="@(file.Key.Split(".").Last())"/>
+                            @file.Key
+                            <MudChip Color="Color.Dark"
+                                     Style="overflow:hidden;"
+                                     Text="@(file.Value.FileSize())"/>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Color="Color.Primary" OnClick="ImportDanmakuAsync" Disabled="_isImporting">
+            @if (_isImporting)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+            }
+            else
+            {
+                <MudText>导入弹幕</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public string ExtensionName { get; set; }
+
+    [Parameter]
+    public Dictionary<string,string> Groups { get; set; }
+
+    private IBrowserFile _file = null;
+
+    private string _group = "";
+
+    private bool _isImporting = false;
+
+    private Dictionary<string, long> _selectedFiles = new();
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles();
+        _selectedFiles = files.ToDictionary(x => x.Name, x => x.Size);
+        _file = files.FirstOrDefault();
+    }
+
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task ImportDanmakuAsync()
+    {
+        if (_file == null)
+        {
+            await _dialogService.ShowMessageBox(
+                "提示",
+                "请选择要导入的弹幕文件！",
+                yesText: "确定", cancelText: "取消");
+            return;
+        }
+        if (string.IsNullOrEmpty(_group))
+        {
+            await _dialogService.ShowMessageBox(
+                "提示",
+                "请选择要弹幕分组！",
+                yesText: "确定", cancelText: "取消");
+            return;
+        }
+
+        _isImporting = true;
+        using var content = new MultipartFormDataContent();
+        var groupContent = new StringContent(_group);
+        content.Add(
+            content: groupContent,
+            name: "\"Group\"");
+        if (ExtensionName == ".json")
+        {
+            var jsonContent =
+                new StreamContent(_file.OpenReadStream(AppTools.MaxFileSize));
+            jsonContent.Headers.ContentType =
+                new MediaTypeHeaderValue(_file.ContentType);
+            content.Add(
+                content: jsonContent,
+                name: "\"File\"",
+                fileName: _file.Name);
+            await _danmakuService.ImportAcfunAsync(content);
+            MudDialog.Close(DialogResult.Ok(true));
+            return;
+        }
+        if (ExtensionName == ".xml")
+        {
+            var xmlContent =
+                new StreamContent(_file.OpenReadStream(AppTools.MaxFileSize));
+            xmlContent.Headers.ContentType =
+                new MediaTypeHeaderValue(_file.ContentType);
+            content.Add(
+                content: xmlContent,
+                name: "\"File\"",
+                fileName: _file.Name);
+            await _danmakuService.ImportBilibiliAsync(content);
+            MudDialog.Close(DialogResult.Ok(true));
+            return;
+        }
+        MudDialog.Close(DialogResult.Ok(false));
+    }
+
+    //private async Task<IEnumerable<string>> SearchGroupAsync(string arg)
+    //{
+    //    return await Task.Factory.StartNew(() =>
+    //    {
+    //        if (string.IsNullOrEmpty(arg))
+    //            return Groups;
+    //        return Groups.Where(x => x.Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    //    });
+    //}
+
+}

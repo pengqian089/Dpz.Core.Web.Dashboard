@@ -1,0 +1,53 @@
+﻿@page "/post"
+@attribute [Authorize]
+<EditForm Model="@_t" OnValidSubmit="PostDataAsync">
+    <MudCard>
+        <MudCardContent>
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" md="12">
+                    <MudTextField T="string"
+                                  HelperText="name"
+                                  Immediate="true"
+                                  Label="name"
+                                  Required="true"
+                                  @bind-value="_name"
+                                  Variant="Variant.Text">
+                    </MudTextField>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+                @if (_isPublishing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-2">Publishing</MudText>
+                }
+                else
+                {
+                    <MudText>Publish</MudText>
+                }
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
+@code{
+
+    private readonly object _t = new();
+    
+    private string _name = "";
+    
+    [Inject]private NavigationManager Navigation { get; set; }
+
+    private bool _isPublishing = false;
+
+    private async Task PostDataAsync(EditContext context)
+    {
+        _isPublishing = true;        
+        StateHasChanged();
+        await Task.Delay(1000);
+        Console.WriteLine("to list page");
+        Navigation.NavigateTo("/list");
+    }
+}

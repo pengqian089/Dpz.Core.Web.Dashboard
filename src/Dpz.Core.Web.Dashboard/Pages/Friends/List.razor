@@ -1,0 +1,72 @@
+﻿@page "/friends"
+@page "/firends/list"
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">友情链接</MudText>
+<MudTable Hover="true"
+          Items="_list"
+          Loading="_tableLoading">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                               Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               Title="新增友链"
+                               Size="Size.Medium"
+                               OnClick="AddAsync"
+                               Class="ma-2"/>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="刷新"
+                       Size="Size.Medium"
+                       OnClick="LoadDataAsync"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            名称
+        </MudTh>
+        <MudTh>
+            图标
+        </MudTh>
+        <MudTh>
+            链接
+        </MudTh>
+        <MudTh>
+            描述
+        </MudTh>
+        <MudTh>
+            创建时间
+        </MudTh>
+        <MudTh>
+            最后修改时间
+        </MudTh>
+        <MudTh>
+            操作
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="名称">
+            @context.Name
+        </MudTd>
+        <MudTd DataLabel="图标">
+            <img src="@context.Avatar" alt="friend" style="width: 50px;height: 50px"/>
+        </MudTd>
+        <MudTd DataLabel="链接">
+            <MudLink Href="@context.Link" Target="_blank">@context.Link</MudLink>
+        </MudTd>
+        <MudTd DataLabel="描述">
+            @context.Description
+        </MudTd>
+        <MudTd DataLabel="创建时间">
+            @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="最后修改时间">
+            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => EditAsync(context)">编辑</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>

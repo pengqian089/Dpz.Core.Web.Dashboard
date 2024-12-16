@@ -1,0 +1,123 @@
+﻿@page "/article"
+@page "/article/list"
+@attribute [Authorize]
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">文章列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadArticleAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          Loading="_isLoading"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="发布新文章"
+                       Size="Size.Medium"
+                       OnClick="PublishArticle"
+                       Class="ma-2"/>
+        <MudSpacer/>
+        <MudSelect T="string"
+                   Placeholder="请选择标签"
+                   @bind-value="_tag"
+                   Clearable="true"
+                   AdornmentIcon="@Icons.Material.Filled.Tag"
+                   Adornment="Adornment.Start"
+                   IconSize="Size.Medium"
+                   Class="mt-2"
+                   AdornmentColor="Color.Primary">
+            @foreach (var item in _tags)
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField T="string"
+                      Placeholder="标题"
+                      @bind-value="_title"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            标题
+        </MudTh>
+        <MudTh>
+            作者
+        </MudTh>
+        <MudTh>
+            回复量
+        </MudTh>
+        <MudTh>
+            查看量
+        </MudTh>
+        <MudTh>
+            标签
+        </MudTh>
+        <MudTh>
+            来源
+        </MudTh>
+        <MudTh>
+            图片数量
+        </MudTh>
+        <MudTh>
+            发布时间
+        </MudTh>
+        <MudTh>
+            最后修改时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="标题">
+            <div style="max-width: 20em">
+                <MudLink Href="@($"{Program.WebHost}/article/read/{context.Id}.html")" Target="_blank">
+                    <MudHighlighter Text="@context.Title" HighlightedText="@_title"/>
+                </MudLink >
+            </div>
+        </MudTd>
+        <MudTd DataLabel="作者">@context.Author.Name</MudTd>
+        <MudTd DataLabel="回复量">
+            @if (context.CommentCount > 0)
+            {
+                <MudLink href="@($"/comment?node=Article&relation={@context.Id}")">查看评论(@context.CommentCount)</MudLink>
+            }
+            else
+            {
+                <span>暂无评论</span>
+            }
+        </MudTd>
+        <MudTd DataLabel="查看量">@context.ViewCount</MudTd>
+        <MudTd DataLabel="标签">
+            @foreach (var tag in context.Tags)
+            {
+                <div>@tag</div>
+            }
+        </MudTd>
+        <MudTd DataLabel="来源">@context.From</MudTd>
+        <MudTd DataLabel="图片数量">@context.ImagesAddress.Count</MudTd>
+        <MudTd DataLabel="最后修改时间">@context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="最后修改时间">@context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => EditArticle(context.Id)">编辑</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

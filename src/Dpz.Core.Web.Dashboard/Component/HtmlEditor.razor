@@ -1,0 +1,54 @@
+﻿@using BlazorMonaco.Editor
+@using BlazorMonaco
+
+@if (!string.IsNullOrEmpty(ElementId))
+{
+    <StandaloneCodeEditor
+        CssClass="monaco-editor"
+        @ref="_editor"
+        Id="@ElementId"
+        ConstructionOptions="x => x.HtmlEditorOptions(Html)"/>
+}
+
+@code {
+
+    [Parameter]
+    public string Html { get; set; }
+
+    [Parameter]
+    public string ElementId { get; set; }
+
+    StandaloneCodeEditor _editor;
+
+    public async Task<string> GetValueAsync()
+    {
+        return await _editor.GetValue();
+    }
+
+    public async Task InsertValueAsync(string value)
+    {
+        var selection = await _editor.GetSelection();
+        var distance = selection.EndColumn - selection.StartColumn;
+        selection.CopyTo(out var endSelection);
+        endSelection.PositionColumn += value.Length - distance;
+        endSelection.EndColumn += value.Length - distance;
+        await _editor.ExecuteEdits(
+            Guid.NewGuid().ToString(),
+            new List<IdentifiedSingleEditOperation>
+            {
+                new()
+                {
+                    ForceMoveMarkers = true,
+                    Range = selection,
+                    Text = value
+                }
+            },
+            new List<Selection>{endSelection});
+    }
+    
+    public async Task DisposeAsync()
+    {
+        await _editor.DisposeEditor();
+    }
+
+}

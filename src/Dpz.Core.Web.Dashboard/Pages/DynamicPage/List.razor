@@ -1,0 +1,84 @@
+﻿@page "/dynamic"
+@page "/dynamic/list"
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">动态页列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="发布"
+                       Size="Size.Medium"
+                       Link="/dynamic/post"
+                       Class="ma-2"/>
+        <MudSpacer/>
+
+        <MudTextField T="string"
+                      Placeholder="搜索页面名称"
+                      @bind-value="_id"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            页面名称
+        </MudTh>
+        <MudTh>
+            查看
+        </MudTh>
+        <MudTh>
+            发表人
+        </MudTh>
+        <MudTh>
+            创建时间
+        </MudTh>
+        <MudTh>
+            最后修改时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="页面名称">
+            @context.Id
+        </MudTd>
+        <MudTd DataLabel="查看">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" Link="@($"{Program.WebHost}/act/{context.Id}")" Target="_blank">查看</MudButton>
+        </MudTd>
+        <MudTd DataLabel="发表人">
+            @context.Creator.Name
+        </MudTd>
+        <MudTd DataLabel="创建时间">
+            @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="最后修改时间">
+            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/dynamic/edit/{context.Id}")">修改</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

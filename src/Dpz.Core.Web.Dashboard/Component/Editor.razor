@@ -1,0 +1,85 @@
+﻿@using BlazorMonaco.Editor
+@using BlazorMonaco
+@using Microsoft.Extensions.Logging
+@using System.Text.Json
+
+<StandaloneCodeEditor
+    CssClass="monaco-editor"
+    @ref="_editor"
+    Id="@ElementId"
+    ConstructionOptions="x => x.MarkdownEditorOptions(Markdown)"/>
+
+@code {
+
+    [Parameter]
+    public string Markdown { get; set; }
+
+    [Parameter]
+    public string ElementId { get; set; }
+
+    private StandaloneCodeEditor _editor;
+
+    // [Inject]
+    // IJSRuntime JsRuntime { get; set; }
+    //
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if(firstRender)
+    //         await JsRuntime.InvokeVoidAsync("aceEditor.initEditor", ElementId, Markdown);
+    //     await base.OnAfterRenderAsync(firstRender);
+    // }
+
+#if DEBUG
+    protected override Task OnParametersSetAsync()
+    {
+        Console.WriteLine($"editor value:{Markdown}");
+        return base.OnParametersSetAsync();
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        Console.WriteLine("editor init");
+        return base.OnInitializedAsync();
+    }
+#endif
+
+    public async Task<string> GetValueAsync()
+    {
+        return await _editor.GetValue();
+    }
+
+
+    void WriteLine(string format,params object[] args)
+    {
+        var array = args.Select(x => x is null ? "NULL" : JsonSerializer.Serialize(x)).ToArray();
+        Console.WriteLine(format,array);
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _editor.DisposeEditor();
+    }
+    
+    public async Task InsertValueAsync(string value)
+    {
+        var selection = await _editor.GetSelection();
+        //WriteLine("insert value,selection:{0}",selection);
+        var distance = selection.EndColumn - selection.StartColumn;
+        selection.CopyTo(out var endSelection);
+        endSelection.PositionColumn += value.Length - distance;
+        endSelection.EndColumn += value.Length - distance;
+        //WriteLine("EndColumn:{0}",endSelection);
+        await _editor.ExecuteEdits(
+            Guid.NewGuid().ToString(),
+            new List<IdentifiedSingleEditOperation>
+            {
+                new IdentifiedSingleEditOperation
+                {
+                    ForceMoveMarkers = true,
+                    Range = selection,
+                    Text = value
+                }
+            },
+            new List<Selection>{endSelection});
+    }
+}

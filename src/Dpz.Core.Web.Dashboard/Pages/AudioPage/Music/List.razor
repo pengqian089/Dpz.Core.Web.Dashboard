@@ -1,0 +1,130 @@
+﻿@page "/music"
+@page "/music/list"
+@attribute [Authorize]
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">音乐列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex -1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="添加音乐"
+                       Size="Size.Medium"
+                       Link="/music/add"
+                       Class="ma-2" />
+        <MudSpacer />
+        
+        <MudTextField T="string"
+                      Placeholder="搜索音乐"
+                      @bind-value="_title"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            歌曲名
+        </MudTh>
+        <MudTh>
+            歌手
+        </MudTh>
+        <MudTh>
+            文件名
+        </MudTh>
+        <MudTh>
+            分组
+        </MudTh>
+        <MudTh>
+            时长
+        </MudTh>
+        <MudTh>
+            来源
+        </MudTh>
+        <MudTh>
+            歌词
+        </MudTh>
+        <MudTh>
+            文件大小
+        </MudTh>
+        <MudTh>
+            上传时间
+        </MudTh>
+        <MudTh>
+            最后修改时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="歌曲名">
+            <div style="max-width: 20em">
+                <MudHighlighter Text="@context.Title" HighlightedText="@_title"/>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="歌手">
+            @context.Artist
+        </MudTd>
+        <MudTd DataLabel="文件名">
+            <div style="max-width: 20em">
+                <MudHighlighter Text="@context.FileName" HighlightedText="@_title" />
+            </div>
+        </MudTd>
+        <MudTd DataLabel="分组">
+            @foreach (var item in context.Group)
+            {
+                <div>@item</div>    
+            }
+        </MudTd>
+        <MudTd DataLabel="时长">
+            @{
+                var duration = TimeSpan.Parse(context.Duration);
+            }
+            @($"{duration.Hours:00}:{duration.Minutes:00}:{duration.Seconds:00}.{duration.Milliseconds / 10:00}")
+        </MudTd>
+        <MudTd DataLabel="来源">
+            @context.From
+        </MudTd>
+        <MudTd DataLabel="歌词">
+            @if (string.IsNullOrEmpty(context.LyricUrl))
+            {
+                <MudText Color="Color.Error">没有歌词</MudText>
+            }
+            else
+            {
+                <MudText Color="Color.Success">有歌词</MudText>
+            }
+        </MudTd>
+        <MudTd DataLabel="文件大小">
+            @context.MusicLength.FileSize()
+        </MudTd>
+        <MudTd DataLabel="上传时间">
+           @context.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="最后修改时间">
+            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/music/detail/{context.Id}")">详情</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new []{15,20,30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条" />
+    </PagerContent>
+</MudTable>

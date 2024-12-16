@@ -1,0 +1,117 @@
+﻿@page "/timeline"
+@page "/timeline/list"
+@attribute [Authorize]
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">时间轴列表</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Publish"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="新增时间节点"
+                       Size="Size.Medium"
+                       Link="/timeline/post"
+                       Class="ma-2"/>
+        <MudSpacer/>
+        <MudTextField T="string"
+                      Placeholder="标题"
+                      @bind-value="_title"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            标题
+        </MudTh>
+        <MudTh>
+            内容
+        </MudTh>
+        <MudTh>
+            时间节点
+        </MudTh>
+        <MudTh>
+            链接
+        </MudTh>
+        <MudTh>
+            作者
+        </MudTh>
+        <MudTh>
+            创建时间
+        </MudTh>
+        <MudTh>
+            最后修改时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="标题">
+            <MudHighlighter Text="@context.Title" HighlightedText="@_title"/>
+        </MudTd>
+        <MudTd DataLabel="内容">
+            <MudButton
+                Variant="Variant.Outlined"
+                Color="Color.Default"
+                Size="Size.Small"
+                OnClick="@(() => context.ShowContent = !context.ShowContent)">
+                @((context.ShowContent) ? "收起内容" : "展开内容")
+            </MudButton>
+        </MudTd>
+        <MudTd DataLabel="时间节点">
+            @context.Date.ToString("yyyy-MM-dd")
+        </MudTd>
+        <MudTd DataLabel="连接">
+            @if (!string.IsNullOrEmpty(context.More))
+            {
+                <MudLink Href="@(context.More.StartsWith("/") ? $"{Program.WebHost}{context.More}" : context.More)"></MudLink>
+            }
+        </MudTd>
+        <MudTd DataLabel="作者">@context.Author.Name</MudTd>
+        <MudTd DataLabel="创建时间">@context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="最后修改时间">@context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/timeline/edit/{context.Id}")">编辑</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+     <ChildRowContent>
+            @if (context.ShowContent)
+            {
+                <MudTr>
+                    <td colspan="9">
+                        <MudCard>
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">时间轴内容</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <pre class="line-numbers language-markdown"><code>@context.Content</code></pre>
+                            </MudCardContent>
+                        </MudCard>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>

@@ -1,0 +1,17 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            碎碎念预览
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <div class="preview-content markdown-body editormd-html-preview editormd-preview-theme-dark">
+            @((MarkupString)Html)
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public string Html { get; set; }
+}

@@ -1,0 +1,119 @@
+﻿@attribute [Authorize]
+@page "/bind-two-factor"
+
+<style>
+    .main {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .main, .qrCode, .bind {
+        border: 1px solid #0b6fa2;
+        border-radius: 3px;
+    }
+    
+    .qrCode{
+        height: 500px;
+    }
+</style>
+
+<MudGrid Spacing="1" Justify="Justify.Center" Class="main">
+    @if (_isLoading)
+    {
+        <MudItem xs="12" md="8" Class="d-flex justify-center align-center qrCode">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="300px" Height="300px"/>
+        </MudItem>
+        <MudItem xs="12" md="4" Class="bind">
+            <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px"/>
+            </MudPaper>
+        </MudItem>
+    }
+    else
+    {
+        <MudItem xs="12" md="8" Class="d-flex justify-center align-center qrCode">
+            <MudImage ObjectFit="ObjectFit.Cover" Width="300" Src="@_setupInfo.QrCodeSetupImageUrl" Alt="QrCode" Elevation="25" Class="rounded-lg"/>
+        </MudItem>
+        <MudItem xs="12" md="4" Class="bind">
+            <MudPaper Class="pa-4 mt-6 mt-lg-16" Elevation="0" Style="margin: 0 !important;">
+                <MudAlert Severity="Severity.Info" Class="mt-8 mud-width-full">
+                    密钥5分钟过期，请及时绑定，过期后重新刷新页面
+                </MudAlert>
+                <MudText Typo="Typo.h6">绑定双因素验证</MudText>
+
+                <MudTextField T="string" ReadOnly="true" Label="手动输入" Margin="Margin.Dense" Text="@_setupInfo.ManualEntryKey" Lines="3" Class="mt-4"/>
+                <MudTextField T="string" Label="PIN码" Margin="Margin.Dense" @bind-value="_pinCode" Class="mt-4" MaxLength="6"/>
+                <MudButton Disabled="_binding" Variant="Variant.Filled" Color="Color.Primary" OnClick="BindTwoFactorAsync">
+                    @if (_binding)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                        <MudText Class="ms-2">绑定中...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>绑定</MudText>
+                    }
+                </MudButton>
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mt-8 mud-width-full">
+                        @_message
+                    </MudAlert>
+                }
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private bool _isLoading = true;
+
+    private string _pinCode = "";
+
+    private SetupInfo _setupInfo = null;
+
+    [Inject]
+    private ICommunityService CommunityService { get; set; }
+
+    [Inject]
+    private IAuthenticationService AuthenticationService { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _setupInfo = await CommunityService.GetTwoFactorSetupInfoAsync();
+        _isLoading = false;
+    }
+
+    private bool _binding = false;
+    private string _message = "";
+
+    private async Task BindTwoFactorAsync()
+    {
+        if (string.IsNullOrEmpty(_pinCode))
+        {
+            _message = "请输入PIN码";
+            return;
+        }
+
+        _binding = true;
+        try
+        {
+            await CommunityService.BindTwoFactorAsync(_pinCode);
+        }
+        catch (FetchException e)
+        {
+            _message = e.Message;
+            return;
+        }
+        finally
+        {
+            _binding = false;
+        }
+
+        NavigationManager.NavigateTo("");
+    }
+
+}

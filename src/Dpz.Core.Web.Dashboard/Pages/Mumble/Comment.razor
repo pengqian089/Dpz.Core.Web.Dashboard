@@ -1,0 +1,118 @@
+﻿@page "/mumble/comment/{Id}"
+@inject IDialogService _dialogService
+@inject IMumbleService _mumbleService
+@inject IJSRuntime _jsRuntime
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">碎碎念回复</MudText>
+<MudTable Hover="true"
+          @ref="_table"
+          ServerData="x => LoadDataAsync(x)"
+          CurrentPage="@(_pageIndex - 1)"
+          RowsPerPage="PageSize">
+    <ToolBarContent>
+        <MudSpacer/>
+
+        <MudTextField T="string"
+                      Placeholder="搜索"
+                      @bind-value="_content"
+                      Clearable="true"
+                      Adornment="Adornment.Start"
+                      AdornmentColor="Color.Primary"
+                      AdornmentIcon="@Icons.Material.Filled.Title"
+                      IconSize="Size.Medium"
+                      Class="mt-2">
+        </MudTextField>
+        <MudIconButton Icon="@Icons.Material.Filled.Search"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Title="搜索"
+                       Size="Size.Medium"
+                       OnClick="Search"
+                       Class="ma-2"/>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+            回复内容
+        </MudTh>
+        <MudTh>
+            回复人
+        </MudTh>
+        <MudTh>
+            回复时间
+        </MudTh>
+        <MudTh>操作</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="回复内容">
+            <pre style="max-width: 500px;max-height: 200px" class="language-markdown"><code>@context.Comment</code></pre>
+        </MudTd>
+        <MudTd DataLabel="回复人">
+            @context.NickName
+        </MudTd>
+        <MudTd DataLabel="回复时间">
+            @context.CommentTime.ToString("yyyy-MM-dd HH:mm:ss")
+        </MudTd>
+        <MudTd DataLabel="操作">
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <ChildRowContent>
+
+    </ChildRowContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="每页数量"
+                       HideRowsPerPage="true"
+                       PageSizeOptions="new[] {15, 20, 30}"
+                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+    </PagerContent>
+</MudTable>
+
+@code{
+
+    [Parameter]
+    public string Id { get; set; }
+
+        const int PageSize = 12;
+
+    private int _pageIndex = 1;
+
+    private string _content = "";
+
+    private MudTable<MumbleCommentModel> _table;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await _jsRuntime.InvokeVoidAsync("Prism.highlightAll");
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task<TableData<MumbleCommentModel>> LoadDataAsync(TableState state)
+    {
+        _pageIndex = state.Page + 1;
+        var list = await _mumbleService.GetCommentPageAsync(Id, _content, _pageIndex, PageSize);
+        return new TableData<MumbleCommentModel>()
+        {
+            TotalItems = list.TotalItemCount,
+            Items = list
+        };
+    }
+
+    private void Search()
+    {
+        _table.ReloadServerData();
+    }
+
+    private async Task DeleteAsync(string commentId)
+    {
+        var result = await _dialogService.ShowMessageBox(
+            "提示",
+            "删除后不能恢复，确定删除？",
+            yesText: "删除!", cancelText: "取消");
+        if (result == true)
+        {
+            await _mumbleService.DeleteCommentAsync(Id, commentId);
+            await _table.ReloadServerData();
+        }
+    }
+
+}

@@ -1,0 +1,102 @@
+﻿@using System.Net.Http.Headers
+@if (!string.IsNullOrEmpty(ElementId))
+{
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" ActivePanelIndexChanged="TaggerPanelAsync">
+        <MudTabPanel Text="编辑">
+            @if (_activeIndex == 0)
+            {
+                <MudPaper Class="pe-4">
+                    <MudToolBar>
+                        <InputFile OnChange="UploadAsync" id="markdown-file" hidden accept=".jpg, .jpeg, .gif, .png, .bmp, .webp, .jiff"/>
+                        <MudFileUpload Accept=".jpg,.jpeg,.gif,.png,.bmp,.webp,.jiff" T="IBrowserFile">
+                            <ButtonTemplate>
+                                <MudIconButton HtmlTag="label"
+                                               Icon="@Icons.Material.Filled.CloudUpload"
+                                               Title="上传图片"
+                                               for="markdown-file">
+                                </MudIconButton>
+                            </ButtonTemplate>
+                        </MudFileUpload>
+                        <MudIconButton Icon="@Icons.Material.Outlined.Link" Title="添加链接" OnClick="LinkClick"/>
+                    </MudToolBar>
+                </MudPaper>
+            }
+            <Editor @ref="_editor" ElementId="@ElementId" Markdown="@Markdown"></Editor>
+        </MudTabPanel>
+        <MudTabPanel Text="预览">
+            <MarkdownPreview Markdown="@Markdown"></MarkdownPreview>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+
+    [Parameter]
+    public string ElementId { get; set; }
+
+    [Parameter]
+    public string Markdown { get; set; }
+
+    [Parameter]
+    public Func<MultipartFormDataContent, Task<string>> UploadPicture { get; set; } = async _ =>
+    {
+        await Task.CompletedTask;
+        return "";
+    };
+
+#if DEBUG
+    private static int _number = 0;
+    protected override Task OnInitializedAsync()
+    {
+        Console.WriteLine("markdown editor init: {0},ElementId:{1},Markdown:{2}", _number++, ElementId, Markdown);
+        return base.OnInitializedAsync();
+    }
+#endif
+
+
+    private async Task UploadAsync(InputFileChangeEventArgs e)
+    {
+        using var content = new MultipartFormDataContent();
+
+        var fileContent =
+            new StreamContent(e.File.OpenReadStream(AppTools.MaxFileSize));
+        fileContent.Headers.ContentType =
+            new MediaTypeHeaderValue(e.File.ContentType);
+        content.Add(
+            content: fileContent,
+            name: "\"image\"",
+            fileName: e.File.Name);
+
+        var accessUrl = await UploadPicture?.Invoke(content)!;
+
+        var picture = string.IsNullOrEmpty(accessUrl) ? "" : $"![{e.File.Name}]({accessUrl})";
+        await _editor.InsertValueAsync(picture);
+    }
+
+    int _activeIndex;
+
+    Editor _editor;
+
+    public async Task<string> GetValueAsync()
+    {
+        return await _editor.GetValueAsync();
+    }
+    
+    public async Task DisposeAsync()
+    {
+        await _editor.DisposeAsync();
+    }
+
+
+    private async Task TaggerPanelAsync(int index)
+    {
+        _activeIndex = index;
+        Markdown = await _editor.GetValueAsync();
+    }
+
+    private async Task LinkClick()
+    {
+        await _editor.InsertValueAsync(" [超链接](https://url.com) ");
+    }
+
+}

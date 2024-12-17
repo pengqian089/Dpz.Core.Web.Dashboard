@@ -200,7 +200,7 @@
             _series.Add(new ChartSeries
             {
                 Name = "近7天访问",
-                Data = _summary?.WeekAccessNumber.Select(x => (double)x.Count).ToArray()
+                Data = _summary?.WeekAccessNumber.Select(x => (double)x.Count).ToArray() ?? []
             });
             _xAxisLabels = _summary?.WeekAccessNumber.Select(x => x.Date).ToArray() ?? [];
         }

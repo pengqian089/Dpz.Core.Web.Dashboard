@@ -12,9 +12,8 @@
         <MudIconButton Icon="@Icons.Material.Filled.Publish"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="新增时间节点"
                        Size="Size.Medium"
-                       Link="/timeline/post"
+                       Href="/timeline/post"
                        Class="ma-2"/>
         <MudSpacer/>
         <MudTextField T="string"
@@ -30,7 +29,6 @@
         <MudIconButton Icon="@Icons.Material.Filled.Search"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="搜索"
                        Size="Size.Medium"
                        OnClick="Search"
                        Class="ma-2"/>
@@ -85,7 +83,7 @@
         <MudTd DataLabel="创建时间">@context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
         <MudTd DataLabel="最后修改时间">@context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
         <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/timeline/edit/{context.Id}")">编辑</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/timeline/edit/{context.Id}")">编辑</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
         </MudTd>
     </RowTemplate>

@@ -11,9 +11,8 @@
         <MudIconButton Icon="@Icons.Material.Filled.Publish"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="添加音乐"
                        Size="Size.Medium"
-                       Link="/music/add"
+                       Href="/music/add"
                        Class="ma-2" />
         <MudSpacer />
         
@@ -30,7 +29,6 @@
         <MudIconButton Icon="@Icons.Material.Filled.Search"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="搜索"
                        Size="Size.Medium"
                        OnClick="Search"
                        Class="ma-2" />
@@ -117,7 +115,7 @@
             @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
         </MudTd>
         <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="@($"/music/detail/{context.Id}")">详情</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/music/detail/{context.Id}")">详情</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
         </MudTd>
     </RowTemplate>

@@ -36,8 +36,6 @@ namespace Dpz.Core.Web.Dashboard.Pages.Article
 
         private bool _isPublishing;
 
-        private bool _isEditorInit;
-
         MarkdownEditor _editor;
         protected override async Task OnInitializedAsync()
         {

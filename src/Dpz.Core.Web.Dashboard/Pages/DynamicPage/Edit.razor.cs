@@ -35,8 +35,6 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
 
         private bool _isLoading = false;
 
-        private bool _isEditorInit = false;
-
         private DynamicPageModel _model = new();
 
         protected override async Task OnInitializedAsync()

@@ -12,7 +12,6 @@
         <MudIconButton Icon="@Icons.Material.Filled.Publish"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="发布新文章"
                        Size="Size.Medium"
                        OnClick="PublishArticle"
                        Class="ma-2"/>
@@ -44,7 +43,6 @@
         <MudIconButton Icon="@Icons.Material.Filled.Search"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="搜索"
                        Size="Size.Medium"
                        OnClick="Search"
                        Class="ma-2"/>
@@ -91,7 +89,7 @@
         <MudTd DataLabel="回复量">
             @if (context.CommentCount > 0)
             {
-                <MudLink href="@($"/comment?node=Article&relation={@context.Id}")">查看评论(@context.CommentCount)</MudLink>
+                <MudLink Href="@($"/comment?node=Article&relation={@context.Id}")">查看评论(@context.CommentCount)</MudLink>
             }
             else
             {

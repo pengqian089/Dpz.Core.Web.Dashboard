@@ -50,8 +50,10 @@
                         Variant="Variant.Text"/>
                 </MudItem>
                 <MudItem xs="12" md="12">
-                    <MarkdownEditor @ref="_editor" UploadAction="/api/Timeline/upload"
-                                    ElementId="timeline-publish-editor" Markdown="@_timeline.Content"></MarkdownEditor>
+                    <MarkdownEditor 
+                        @ref="_editor" 
+                        UploadAction="/api/Timeline/upload"
+                        Markdown="@_timeline.Content" />
                 </MudItem>
             </MudGrid>
         </MudCardContent>

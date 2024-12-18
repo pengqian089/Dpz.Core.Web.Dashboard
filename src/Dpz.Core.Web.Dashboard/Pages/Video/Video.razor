@@ -10,6 +10,14 @@
           RowEditCancel="ResetItemToOriginalValues"
           Loading="_isLoading"
           Items="_source">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Size="Size.Medium"
+                       OnClick="LoadVideosAsync"
+                       Class="ma-2" />
+    </ToolBarContent>
     <HeaderContent>
         <MudTh>
             目录
@@ -29,6 +37,18 @@
         <MudTh>
             描述
         </MudTh>
+        <MudTh>
+            封面
+        </MudTh>
+        <MudTd>
+            播放量
+        </MudTd>
+        <MudTd>
+            弹幕数量
+        </MudTd>
+        <MudTd>
+            评论数量
+        </MudTd>
         <MudTh>
             查看视频
         </MudTh>
@@ -58,9 +78,36 @@
         <MudTd DataLabel="描述">
             <div style="word-wrap: break-word;white-space: pre-wrap">@context.Description</div>
         </MudTd>
+        <MudTd>
+            <MudStack Spacing="1" Row="true">
+                <MudButton
+                    OnClick="() => PreviewCover(context.Cover)"
+                    Variant="Variant.Filled"
+                    Size="Size.Small"
+                    Color="Color.Primary">
+                    查看
+                </MudButton>
+                <MudButton
+                    OnClick="() => ShowSettingCover(context.Id)"
+                    Variant="Variant.Filled"
+                    Size="Size.Small"
+                    Color="Color.Primary">
+                    设置
+                </MudButton>
+            </MudStack>
+        </MudTd>
+        <MudTd>
+            <MudText>@context.PlayCount</MudText>
+        </MudTd>
+        <MudTd>
+            <MudText>@context.DanmakuCount</MudText>
+        </MudTd>
+        <MudTd>
+            <MudText>@context.CommentCount</MudText>
+        </MudTd>
         <MudTd DataLabel="查看视频">
             <MudButton Variant="Variant.Text" Color="Color.Primary"
-                       OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看
+                       OnClick="() => PreviewVideo(context.M3u8, context.VideoTitle)">查看
             </MudButton>
         </MudTd>
     </RowTemplate>
@@ -83,9 +130,36 @@
         <MudTd DataLabel="描述">
             <MudTextField Lines="3" @bind-Value="@context.Description"/>
         </MudTd>
+        <MudTd>
+            <MudStack Spacing="1" Row="true">
+                <MudButton
+                    OnClick="() => PreviewCover(context.Cover)"
+                    Variant="Variant.Filled"
+                    Size="Size.Small"
+                    Color="Color.Primary">
+                    查看
+                </MudButton>
+                <MudButton
+                    OnClick="() => ShowSettingCover(context.Id)"
+                    Variant="Variant.Filled"
+                    Size="Size.Small"
+                    Color="Color.Primary">
+                    设置
+                </MudButton>
+            </MudStack>
+        </MudTd>
+        <MudTd>
+            <MudText>@context.PlayCount</MudText>
+        </MudTd>
+        <MudTd>
+            <MudText>@context.DanmakuCount</MudText>
+        </MudTd>
+        <MudTd>
+            <MudText>@context.CommentCount</MudText>
+        </MudTd>
         <MudTd DataLabel="查看视频">
             <MudButton Variant="Variant.Text" Color="Color.Primary"
-                       OnClick="() => PreviewVideo(context.M3U8,context.VideoTitle)">查看
+                       OnClick="() => PreviewVideo(context.M3u8, context.VideoTitle)">查看
             </MudButton>
         </MudTd>
     </RowEditingTemplate>

@@ -1,0 +1,36 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.VideoLabel" Class="mr-3 mb-n1"/>
+            设置缩略图
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_isLoading)
+        {
+            <MudSkeleton Width="100%"/>
+        }
+        else
+        {
+            <MudNumericField 
+                @bind-Value="_seconds" 
+                Label="设置视频截图所在的时间点（秒）" 
+                Variant="Variant.Text" 
+                Min="1"
+                Max="(_model?.Duration ?? 0)"/>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">取消</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="_isLoading">
+            @if (_isLoading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+            }
+            else
+            {
+                <MudText>保存</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>

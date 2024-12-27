@@ -8,6 +8,7 @@ function createNewEditor(elementId, markdown) {
     cherryInstance = new Cherry({
         id: elementId,
         value: markdown,
+        height: "100%",
         // 目前应用的主题
         themeSettings: {
             mainTheme: "dark",

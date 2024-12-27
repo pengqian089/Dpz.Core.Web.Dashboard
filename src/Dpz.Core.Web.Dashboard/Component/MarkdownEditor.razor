@@ -3,8 +3,10 @@
 
 @if (!string.IsNullOrEmpty(_editorId))
 {
-    <div id="@_editorId" style="max-height: 600px"></div>
-    <input type="hidden" id="txt@(_editorId)" value="@(_baseAddress+UploadAction)"/>
+    <div id="markdown-container-@(_editorId)">
+        <div id="@_editorId" style="min-height: 600px"></div>
+        <input type="hidden" id="txt@(_editorId)" value="@(_baseAddress + UploadAction)"/>
+    </div>
 }
 
 @code {
@@ -19,8 +21,9 @@
     [Inject] private IConfiguration Configuration { get; set; }
 
     [Inject] private IJSRuntime JsRuntime { get; set; }
-    
+
     private static int _number = 0;
+
     protected override Task OnInitializedAsync()
     {
         _baseAddress = Configuration.GetSection("BaseAddress").Get<string>();
@@ -46,4 +49,5 @@
     {
         return Task.CompletedTask;
     }
+
 }

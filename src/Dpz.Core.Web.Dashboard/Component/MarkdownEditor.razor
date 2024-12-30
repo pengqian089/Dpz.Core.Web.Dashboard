@@ -1,10 +1,9 @@
-﻿@using System.Net.Http.Headers
-@using Microsoft.Extensions.Configuration
+﻿@using Microsoft.Extensions.Configuration
 
 @if (!string.IsNullOrEmpty(_editorId))
 {
-    <div id="markdown-container-@(_editorId)">
-        <div id="@_editorId" style="min-height: 600px"></div>
+    <div id="markdown-container-@(_editorId)" style="@HeightStyle">
+        <div id="@_editorId"></div>
         <input type="hidden" id="txt@(_editorId)" value="@(_baseAddress + UploadAction)"/>
     </div>
 }
@@ -13,6 +12,12 @@
     [Parameter] public required string Markdown { get; set; }
 
     [Parameter] public required string UploadAction { get; set; }
+    
+    [Parameter] public int? Height { get; set; }
+
+    [Parameter] public string HeightUnit { get; set; } = "px";
+
+    private string HeightStyle => Height == null ? "" : $"height:{Height}{HeightUnit ?? "px"}";
 
     private readonly string _editorId = Guid.NewGuid().ToString("N");
 
@@ -27,7 +32,9 @@
     protected override Task OnInitializedAsync()
     {
         _baseAddress = Configuration.GetSection("BaseAddress").Get<string>();
+#if DEBUG
         Console.WriteLine("markdown editor init: {0},ElementId:{1},Markdown:{2}", _number++, _editorId, Markdown);
+#endif
         return base.OnInitializedAsync();
     }
 

@@ -26,16 +26,23 @@
     [Inject] private IConfiguration Configuration { get; set; }
 
     [Inject] private IJSRuntime JsRuntime { get; set; }
+    
+    [Inject]private ILocalStorageService LocalStorageService { get; set; }
 
     private static int _number = 0;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        var editorTheme = await LocalStorageService.GetItemAsync<string>("cherry-theme");
+        if (editorTheme == null)
+        {
+            await LocalStorageService.SetItemAsync("cherry-theme", "dark");
+        }
         _baseAddress = Configuration.GetSection("BaseAddress").Get<string>();
 #if DEBUG
         Console.WriteLine("markdown editor init: {0},ElementId:{1},Markdown:{2}", _number++, _editorId, Markdown);
 #endif
-        return base.OnInitializedAsync();
+        await Task.FromResult(base.OnInitializedAsync());
     }
 
 

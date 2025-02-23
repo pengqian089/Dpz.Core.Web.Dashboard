@@ -87,8 +87,7 @@ else
                     <MudItem xs="12" md="12">
                         <MarkdownEditor
                             @ref="_editor"
-                            UploadPicture="UploadPicture"
-                            ElementId="@($"article-editor-{Id}")"
+                            UploadAction="/api/Article/upload"
                             Markdown="@_article.Markdown">
                         </MarkdownEditor>
                     </MudItem>
@@ -106,7 +105,7 @@ else
                         <MudText>修改</MudText>
                     }
                 </MudButton>
-                <MudButton Variant="Variant.Filled" Link="/article">返回列表</MudButton>
+                <MudButton Variant="Variant.Filled" Href="/article">返回列表</MudButton>
             </MudCardActions>
         </MudCard>
     </EditForm>

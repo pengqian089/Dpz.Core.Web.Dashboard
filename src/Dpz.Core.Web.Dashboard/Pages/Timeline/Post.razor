@@ -50,12 +50,16 @@
                         Variant="Variant.Text"/>
                 </MudItem>
                 <MudItem xs="12" md="12">
-                    <MarkdownEditor @ref="_editor" UploadPicture="UploadPicture" ElementId="timeline-publish-editor" Markdown="@_timeline.Content"></MarkdownEditor>
+                    <MarkdownEditor 
+                        @ref="_editor" 
+                        UploadAction="/api/Timeline/upload"
+                        Markdown="@_timeline.Content" />
                 </MudItem>
             </MudGrid>
         </MudCardContent>
         <MudCardActions>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing"
+                       Color="Color.Primary">
                 @if (_isPublishing)
                 {
                     <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
@@ -66,7 +70,7 @@
                     <MudText>发布</MudText>
                 }
             </MudButton>
-            <MudButton Variant="Variant.Filled" Link="/timeline">返回列表</MudButton>
+            <MudButton Variant="Variant.Filled" Href="/timeline">返回列表</MudButton>
         </MudCardActions>
     </MudCard>
 </EditForm>

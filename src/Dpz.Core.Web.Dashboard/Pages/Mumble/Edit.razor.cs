@@ -29,8 +29,6 @@ namespace Dpz.Core.Web.Dashboard.Pages.Mumble
 
         private bool _isPublishing = false;
 
-        private bool _isEditorInit = false;
-
         private MumbleModel _model = new();
         private MarkdownEditor _editor;
 

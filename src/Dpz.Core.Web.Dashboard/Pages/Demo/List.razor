@@ -2,16 +2,15 @@
 @attribute [Authorize]
 <MudTable Hover="true"
           @ref="_table"
-          ServerData="x => LoadDataAsync(x)"
+          ServerData="(x,_) => LoadDataAsync(x)"
           CurrentPage="@(_pageIndex)"
           RowsPerPage="PageSize">
     <ToolBarContent>
         <MudIconButton Icon="@Icons.Material.Filled.Publish"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="Publish"
                        Size="Size.Medium"
-                       Link="/post"
+                       Href="/post"
                        Class="ma-2"/>
     </ToolBarContent>
     <HeaderContent>

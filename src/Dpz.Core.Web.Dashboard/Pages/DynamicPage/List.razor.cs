@@ -26,7 +26,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
 
         #endregion
 
-        private MudTable<DynamicPageModel> _table;
+        private MudTable<DynamicPageListModel> _table;
 
         #region temp
 
@@ -41,7 +41,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
             await base.OnInitializedAsync();
         }
 
-        private async Task<TableData<DynamicPageModel>> LoadDataAsync(TableState state)
+        private async Task<TableData<DynamicPageListModel>> LoadDataAsync(TableState state)
         {
             if (_id == _tempId)
             {
@@ -53,7 +53,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
             }
 
             var list = await DynamicPageService.GetPageAsync(_id, _pageIndex, PageSize);
-            return new TableData<DynamicPageModel>()
+            return new TableData<DynamicPageListModel>()
             {
                 TotalItems = list.TotalItemCount,
                 Items = list

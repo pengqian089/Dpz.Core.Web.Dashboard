@@ -4,14 +4,13 @@
 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">录音管理</MudText>
 <MudTable Hover="true"
           @ref="_table"
-          ServerData="x => LoadDataAsync(x)"
+          ServerData="(x,_) => LoadDataAsync(x)"
           CurrentPage="@(_pageIndex -1)"
           RowsPerPage="PageSize">
     <ToolBarContent>
         <MudIconButton Icon="@Icons.Material.Filled.Search"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="搜索"
                        Size="Size.Medium"
                        OnClick="Search"
                        Class="ma-2" />

@@ -10,9 +10,11 @@ namespace Dpz.Core.Web.Dashboard.Pages.Friends;
 
 public partial class List
 {
-    [Inject] private IAppOptionService OptionService { get; set; }
+    [Inject]
+    private IAppOptionService OptionService { get; set; }
 
-    [Inject] private IDialogService DialogService { get; set; }
+    [Inject]
+    private IDialogService DialogService { get; set; }
 
     private IList<FriendModel> _list = new List<FriendModel>();
 
@@ -36,14 +38,16 @@ public partial class List
         var result = await DialogService.ShowMessageBox(
             "提示",
             "删除后不能恢复，确定删除？",
-            yesText: "删除!", cancelText: "取消");
+            yesText: "删除!",
+            cancelText: "取消"
+        );
         if (result == true)
         {
             await OptionService.DeleteFriendAsync(id);
             await LoadDataAsync();
         }
     }
-    
+
     private async Task AddAsync()
     {
         var parameters = new DialogParameters
@@ -51,9 +55,17 @@ public partial class List
             ["Title"] = "添加友链",
             ["Model"] = new FriendAddModel(),
         };
-        var dialog = DialogService.Show<FriendForm>("",parameters, new DialogOptions {CloseButton = true});
+        var dialog = DialogService.Show<FriendForm>(
+            "",
+            parameters,
+            new DialogOptions { CloseButton = true }
+        );
         var result = await dialog.Result;
-        if (!result.Cancelled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+        if (
+            result?.Canceled == false
+            && bool.TryParse(result.Data?.ToString() ?? "", out var r)
+            && r
+        )
         {
             await LoadDataAsync();
         }
@@ -67,16 +79,16 @@ public partial class List
             Avatar = model.Avatar,
             Description = model.Description,
             Link = model.Link,
-            Name = model.Name
+            Name = model.Name,
         };
-        var parameters = new DialogParameters
-        {
-            ["Title"] = "添加友链",
-            ["Model"] = editModel,
-        };
-        var dialog = DialogService.Show<FriendForm>("",parameters, new DialogOptions {CloseButton = true});
+        var parameters = new DialogParameters { ["Title"] = "添加友链", ["Model"] = editModel };
+        var dialog = DialogService.Show<FriendForm>(
+            "",
+            parameters,
+            new DialogOptions { CloseButton = true }
+        );
         var result = await dialog.Result;
-        if (!result.Cancelled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+        if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
         {
             await LoadDataAsync();
         }

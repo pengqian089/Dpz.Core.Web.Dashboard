@@ -11,10 +11,11 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
 {
     public partial class Account
     {
-        
-        [Inject] private IAccountService AccountService { get; set; }
+        [Inject]
+        private IAccountService AccountService { get; set; }
 
-        [Inject] private IDialogService DialogService { get; set; }
+        [Inject]
+        private IDialogService DialogService { get; set; }
 
         #region query parameter
         private int _pageIndex = 1;
@@ -27,7 +28,8 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
 
         private MudTable<UserInfo> _table;
 
-        private readonly Func<int, string> _convert = x => Enum.ToObject(typeof(PictureType), x).ToString();
+        private readonly Func<int, string> _convert = x =>
+            Enum.ToObject(typeof(PictureType), x).ToString();
 
         #region temp
 
@@ -51,12 +53,8 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
             {
                 _tempAccount = _account;
             }
-            var list = await AccountService.GetPageAsync(_account,_pageIndex, PageSize);
-            return new TableData<UserInfo>()
-            {
-                TotalItems = list.TotalItemCount,
-                Items = list
-            };
+            var list = await AccountService.GetPageAsync(_account, _pageIndex, PageSize);
+            return new TableData<UserInfo>() { TotalItems = list.TotalItemCount, Items = list };
         }
 
         private void Search()
@@ -72,35 +70,46 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
                 ["Name"] = "",
                 ["IsCreate"] = true,
             };
-            var dialog = DialogService.Show<AccountForm>("",parameters, new DialogOptions {CloseButton = true});
+            var dialog = DialogService.Show<AccountForm>(
+                "",
+                parameters,
+                new DialogOptions { CloseButton = true }
+            );
             var result = await dialog.Result;
-            if (!result.Cancelled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+            if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
             {
                 Search();
             }
         }
 
-        private async Task ChangePassword(string account,string name)
+        private async Task ChangePassword(string account, string name)
         {
             var parameters = new DialogParameters
             {
                 ["Account"] = account,
                 ["Name"] = name,
-                ["IsCreate"] = false
+                ["IsCreate"] = false,
             };
-            var dialog = DialogService.Show<AccountForm>("",parameters, new DialogOptions {CloseButton = true});
+            var dialog = DialogService.Show<AccountForm>(
+                "",
+                parameters,
+                new DialogOptions { CloseButton = true }
+            );
             var result = await dialog.Result;
-            if (!result.Cancelled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+            if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
             {
                 Search();
             }
         }
-        
+
         private void ViewAvatar(string avatar)
         {
-            var parameters = new DialogParameters {["Avatar"] = avatar};
-            DialogService.Show<PreviewAvatar>("",parameters, new DialogOptions {CloseButton = true});
-            
+            var parameters = new DialogParameters { ["Avatar"] = avatar };
+            DialogService.Show<PreviewAvatar>(
+                "",
+                parameters,
+                new DialogOptions { CloseButton = true }
+            );
         }
 
         private async Task Enable(string account)

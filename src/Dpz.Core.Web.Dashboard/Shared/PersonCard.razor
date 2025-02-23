@@ -2,7 +2,9 @@
 <MudCard Elevation="0" Square="true" Class="@Class" Style="@Style">
     <MudCardHeader>
         <CardHeaderAvatar>
-            <MudAvatar Image="@(AuthenticationService.User.Account.Avatar)" />
+            <MudAvatar>
+                <MudImage Src="@(AuthenticationService.User.Account.Avatar)"></MudImage>
+            </MudAvatar>
         </CardHeaderAvatar>
         <CardHeaderContent>
             <MudText Typo="Typo.body2">@AuthenticationService.User.Account.Name</MudText>

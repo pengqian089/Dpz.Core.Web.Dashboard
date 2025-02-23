@@ -1,0 +1,20 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
+            @Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <img src="@Src" style="@ImageStyle" alt="preview image"/>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    #nullable enable
+    [Parameter] public required string Src { get; set; }
+
+    [Parameter] public string? ImageStyle { get; set; } = "max-width: 100%;height:auto";
+
+    [Parameter] public string? Title { get; set; } = "图片预览";
+}

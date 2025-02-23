@@ -6,7 +6,7 @@ namespace Dpz.Core.Web.Dashboard.Service
 {
     public interface IDynamicPageService
     {
-        Task<IPagedList<DynamicPageModel>> GetPageAsync(string name = null, int pageIndex = 1, int pageSize = 10);
+        Task<IPagedList<DynamicPageListModel>> GetPageAsync(string name = null, int pageIndex = 1, int pageSize = 10);
 
         Task<DynamicPageModel> GetDynamicPageAsync(string id);
 

@@ -37,11 +37,11 @@
                 <MudButton HtmlTag="label"
                            Variant="Variant.Filled"
                            Color="Color.Primary"
-                           StartIcon="@Icons.Filled.CloudUpload"
+                           StartIcon="@Icons.Material.Filled.CloudUpload"
                            for="importDanmaku">
                     点击选择要导入的弹幕文件
                 </MudButton>
-                <MudList Style="padding:2em;width:100%;" Dense="true">
+                <MudList Style="padding:2em;width:100%;" Dense="true" T="string">
                     @foreach (var file in _selectedFiles)
                     {
                         <MudListItem @key="@file">

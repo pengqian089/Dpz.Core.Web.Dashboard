@@ -2,35 +2,34 @@
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
 
-namespace Dpz.Core.Web.Dashboard.Service.Impl
+namespace Dpz.Core.Web.Dashboard.Service.Impl;
+
+public class LocalStorageService(IJSRuntime jsRuntime) : ILocalStorageService
 {
-    public class LocalStorageService:ILocalStorageService
+    public async Task<T> GetItemAsync<T>(string key)
     {
-        private readonly IJSRuntime _jsRuntime;
+        var json = await jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
 
-        public LocalStorageService(IJSRuntime jsRuntime)
+        if (json == null)
+            return default;
+
+        if (typeof(T) == typeof(string))
         {
-            _jsRuntime = jsRuntime;
+            return (T)(object)json;
         }
 
-        public async Task<T> GetItemAsync<T>(string key)
-        {
-            var json = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
+        return JsonSerializer.Deserialize<T>(json);
+    }
 
-            if (json == null)
-                return default;
+    public async Task SetItemAsync<T>(string key, T value)
+    {
+        var itemValue =
+            typeof(T) == typeof(string) ? value.ToString() : JsonSerializer.Serialize(value);
+        await jsRuntime.InvokeVoidAsync("localStorage.setItem", key, itemValue);
+    }
 
-            return JsonSerializer.Deserialize<T>(json);
-        }
-
-        public async Task SetItemAsync<T>(string key, T value)
-        {
-            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, JsonSerializer.Serialize(value));
-        }
-
-        public async Task RemoveItemAsync(string key)
-        {
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
-        }
+    public async Task RemoveItemAsync(string key)
+    {
+        await jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
     }
 }

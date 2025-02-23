@@ -1,102 +1,67 @@
-﻿@using System.Net.Http.Headers
-@if (!string.IsNullOrEmpty(ElementId))
+﻿@using Microsoft.Extensions.Configuration
+
+@if (!string.IsNullOrEmpty(_editorId))
 {
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" ActivePanelIndexChanged="TaggerPanelAsync">
-        <MudTabPanel Text="编辑">
-            @if (_activeIndex == 0)
-            {
-                <MudPaper Class="pe-4">
-                    <MudToolBar>
-                        <InputFile OnChange="UploadAsync" id="markdown-file" hidden accept=".jpg, .jpeg, .gif, .png, .bmp, .webp, .jiff"/>
-                        <MudFileUpload Accept=".jpg,.jpeg,.gif,.png,.bmp,.webp,.jiff" T="IBrowserFile">
-                            <ButtonTemplate>
-                                <MudIconButton HtmlTag="label"
-                                               Icon="@Icons.Material.Filled.CloudUpload"
-                                               Title="上传图片"
-                                               for="markdown-file">
-                                </MudIconButton>
-                            </ButtonTemplate>
-                        </MudFileUpload>
-                        <MudIconButton Icon="@Icons.Material.Outlined.Link" Title="添加链接" OnClick="LinkClick"/>
-                    </MudToolBar>
-                </MudPaper>
-            }
-            <Editor @ref="_editor" ElementId="@ElementId" Markdown="@Markdown"></Editor>
-        </MudTabPanel>
-        <MudTabPanel Text="预览">
-            <MarkdownPreview Markdown="@Markdown"></MarkdownPreview>
-        </MudTabPanel>
-    </MudTabs>
+    <div id="markdown-container-@(_editorId)" style="@HeightStyle">
+        <div id="@_editorId"></div>
+        <input type="hidden" id="txt@(_editorId)" value="@(_baseAddress + UploadAction)"/>
+    </div>
 }
 
 @code {
+    [Parameter] public required string Markdown { get; set; }
 
-    [Parameter]
-    public string ElementId { get; set; }
+    [Parameter] public required string UploadAction { get; set; }
+    
+    [Parameter] public int? Height { get; set; }
 
-    [Parameter]
-    public string Markdown { get; set; }
+    [Parameter] public string HeightUnit { get; set; } = "px";
 
-    [Parameter]
-    public Func<MultipartFormDataContent, Task<string>> UploadPicture { get; set; } = async _ =>
-    {
-        await Task.CompletedTask;
-        return "";
-    };
+    private string HeightStyle => Height == null ? "" : $"height:{Height}{HeightUnit ?? "px"}";
 
-#if DEBUG
+    private readonly string _editorId = Guid.NewGuid().ToString("N");
+
+    private string _baseAddress;
+
+    [Inject] private IConfiguration Configuration { get; set; }
+
+    [Inject] private IJSRuntime JsRuntime { get; set; }
+    
+    [Inject]private ILocalStorageService LocalStorageService { get; set; }
+
     private static int _number = 0;
-    protected override Task OnInitializedAsync()
+
+    protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("markdown editor init: {0},ElementId:{1},Markdown:{2}", _number++, ElementId, Markdown);
-        return base.OnInitializedAsync();
-    }
+        var editorTheme = await LocalStorageService.GetItemAsync<string>("cherry-theme");
+        if (editorTheme == null)
+        {
+            await LocalStorageService.SetItemAsync("cherry-theme", "dark");
+        }
+        _baseAddress = Configuration.GetSection("BaseAddress").Get<string>();
+#if DEBUG
+        Console.WriteLine("markdown editor init: {0},ElementId:{1},Markdown:{2}", _number++, _editorId, Markdown);
 #endif
-
-
-    private async Task UploadAsync(InputFileChangeEventArgs e)
-    {
-        using var content = new MultipartFormDataContent();
-
-        var fileContent =
-            new StreamContent(e.File.OpenReadStream(AppTools.MaxFileSize));
-        fileContent.Headers.ContentType =
-            new MediaTypeHeaderValue(e.File.ContentType);
-        content.Add(
-            content: fileContent,
-            name: "\"image\"",
-            fileName: e.File.Name);
-
-        var accessUrl = await UploadPicture?.Invoke(content)!;
-
-        var picture = string.IsNullOrEmpty(accessUrl) ? "" : $"![{e.File.Name}]({accessUrl})";
-        await _editor.InsertValueAsync(picture);
+        await Task.FromResult(base.OnInitializedAsync());
     }
 
-    int _activeIndex;
 
-    Editor _editor;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("createNewEditor", _editorId, Markdown);
+        }
+    }
 
     public async Task<string> GetValueAsync()
     {
-        return await _editor.GetValueAsync();
-    }
-    
-    public async Task DisposeAsync()
-    {
-        await _editor.DisposeAsync();
+        return await JsRuntime.InvokeAsync<string>("getMarkdown");
     }
 
-
-    private async Task TaggerPanelAsync(int index)
+    public Task DisposeAsync()
     {
-        _activeIndex = index;
-        Markdown = await _editor.GetValueAsync();
-    }
-
-    private async Task LinkClick()
-    {
-        await _editor.InsertValueAsync(" [超链接](https://url.com) ");
+        return Task.CompletedTask;
     }
 
 }

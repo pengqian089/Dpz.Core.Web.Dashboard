@@ -25,8 +25,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.Timeline
         private bool _isPublishing = false;
 
         private bool _isLoading = false;
-
-        private bool _isEditorInit = false;
+        
         private MarkdownEditor _editor;
 
         protected override async Task OnInitializedAsync()

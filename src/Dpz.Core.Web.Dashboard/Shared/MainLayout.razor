@@ -2,6 +2,7 @@
 @inject IAuthenticationService AuthenticationService
 
 <MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
@@ -29,12 +30,12 @@
         </MudMenu>
         <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
             <ActivatorContent>
-                <MudImage Image="@(AuthenticationService.User.Account.Avatar)" />
+                @* <MudImage Src="@(AuthenticationService.User.Account.Avatar)" /> *@
             </ActivatorContent>
             <ChildContent>
                 <PersonCard Class="mt-n2" />
                 <MudDivider Class="mb-2" />
-                <MudListItem Text="注销" Icon="@Icons.Material.Outlined.Login" Href="/logout" />
+                <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login" Href="/logout" />
             </ChildContent>
         </MudMenu>
     </MudAppBar>
@@ -43,7 +44,7 @@
     </MudDrawer>
     <MudMainContent>
         <MudHidden Breakpoint="Breakpoint.SmAndDown">
-            <MudToolBar DisableGutters="true">
+            <MudToolBar Gutters="false">
                 <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" OnClick="@((e) => DrawerToggle())" Class="ml-3" />
                 @*<MudBreadcrumbs Items="_items"></MudBreadcrumbs>*@
                 <MudSpacer />

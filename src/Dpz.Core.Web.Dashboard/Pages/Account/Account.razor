@@ -6,14 +6,13 @@
 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">图像列表</MudText>
 <MudTable Hover="true"
           @ref="_table"
-          ServerData="x => LoadDataAsync(x)"
+          ServerData="(x,_) => LoadDataAsync(x)"
           CurrentPage="@(_pageIndex - 1)"
           RowsPerPage="PageSize">
     <ToolBarContent>
         <MudIconButton Icon="@Icons.Material.Filled.Publish"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="上传图片"
                        Size="Size.Medium"
                        OnClick="CreateAccount"
                        Class="ma-2"/>
@@ -32,7 +31,6 @@
         <MudIconButton Icon="@Icons.Material.Filled.Search"
                        Variant="Variant.Outlined"
                        Color="Color.Primary"
-                       Title="搜索"
                        Size="Size.Medium"
                        OnClick="Search"
                        Class="ma-2"/>

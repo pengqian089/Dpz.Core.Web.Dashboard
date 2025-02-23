@@ -127,7 +127,5 @@ namespace Dpz.Core.Web.Dashboard.Pages.Picture
         {
             _picture.Tags = tags.ToList();
         }
-
-        private EventCallback<IEnumerable<string>> temp = new EventCallback<IEnumerable<string>>();
     }
 }

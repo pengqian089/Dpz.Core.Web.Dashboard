@@ -43,7 +43,7 @@ else
                                    for="fileInput112">
                             点击选择要上传的图片
                         </MudButton>*@
-                        <MudList Style="padding: 2em; width: 100%;" Dense="true">
+                        <MudList Style="padding: 2em; width: 100%;" Dense="true" T="string">
                             @if (!string.IsNullOrEmpty(_imageSrc))
                             {
                                 <MudListItem @key="Guid.NewGuid()">

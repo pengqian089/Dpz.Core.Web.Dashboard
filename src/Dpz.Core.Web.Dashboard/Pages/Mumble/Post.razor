@@ -19,9 +19,9 @@
                 <MudItem xs="12" md="12">
                     <MarkdownEditor
                         @ref="_editor"
+                        Height="600"
                         Markdown=""
-                        UploadPicture="UploadAsync"
-                        ElementId="mumble-publish-editor">
+                        UploadAction="/api/Mumble/upload">
                     </MarkdownEditor>
                 </MudItem>
             </MudGrid>
@@ -38,7 +38,7 @@
                     <MudText>发布</MudText>
                 }
             </MudButton>
-            <MudButton Variant="Variant.Filled" Link="/mumble">返回列表</MudButton>
+            <MudButton Variant="Variant.Filled" Href="/mumble">返回列表</MudButton>
         </MudCardActions>
     </MudCard>
 </EditForm>

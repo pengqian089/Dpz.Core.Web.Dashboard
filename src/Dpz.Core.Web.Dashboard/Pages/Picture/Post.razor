@@ -23,11 +23,11 @@
                     <MudButton HtmlTag="label"
                                Variant="Variant.Filled"
                                Color="Color.Primary"
-                               StartIcon="@Icons.Filled.CloudUpload"
+                               StartIcon="@Icons.Material.Filled.CloudUpload"
                                for="fileInput112">
                         点击选择要上传的图片
                     </MudButton>
-                    <MudList Style="padding:2em;width:100%;" Dense="true">
+                    <MudList Style="padding:2em;width:100%;" Dense="true" T="string">
                         <Preview></Preview>
                         @foreach (var file in _selectedFiles)
                         {

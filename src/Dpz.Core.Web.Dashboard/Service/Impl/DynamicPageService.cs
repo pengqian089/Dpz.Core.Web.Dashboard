@@ -8,17 +8,23 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
     {
         private readonly IHttpService _httpService;
 
-        public DynamicPageService(
-            IHttpService httpService)
+        public DynamicPageService(IHttpService httpService)
         {
             _httpService = httpService;
         }
 
-        public async Task<IPagedList<DynamicPageModel>> GetPageAsync(string name = null, int pageIndex = 1,
-            int pageSize = 10)
+        public async Task<IPagedList<DynamicPageListModel>> GetPageAsync(
+            string name = null,
+            int pageIndex = 1,
+            int pageSize = 10
+        )
         {
-            return await _httpService.GetPageAsync<DynamicPageModel>("/api/DynamicPage", pageIndex, pageSize,
-                new {id = name});
+            return await _httpService.GetPageAsync<DynamicPageListModel>(
+                "/api/DynamicPage",
+                pageIndex,
+                pageSize,
+                new { id = name }
+            );
         }
 
         public async Task<DynamicPageModel> GetDynamicPageAsync(string id)
@@ -34,12 +40,12 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
 
         public async Task CreateDynamicPage(string id, string htmlContent)
         {
-            await _httpService.PostAsync("/api/DynamicPage", new {id, htmlContent});
+            await _httpService.PostAsync("/api/DynamicPage", new { id, htmlContent });
         }
 
         public async Task EditDynamicPage(string id, string htmlContent)
         {
-            await _httpService.PatchAsync("/api/DynamicPage", new {id, htmlContent});
+            await _httpService.PatchAsync($"/api/DynamicPage/content/{id}", new { content = htmlContent });
         }
 
         public async Task DeleteAsync(string id)

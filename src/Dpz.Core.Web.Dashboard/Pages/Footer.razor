@@ -26,13 +26,13 @@ else
                 <DataAnnotationsValidator/>
                 <MudGrid>
                     <MudItem xs="12" md="12">
-                        <HtmlEditor @ref="_editor" ElementId="footer-editor" Html="@_content"></HtmlEditor>
+                        <HtmlEditor @ref="_editor" Html="@_content"></HtmlEditor>
                     </MudItem>
                 </MudGrid>
             </MudCardContent>
             <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_saving" Color="Color.Primary">
-                    @if (_saving)
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isLoading" Color="Color.Primary">
+                    @if (_isLoading)
                     {
                         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
                         <MudText Class="ms-2">正在保存</MudText>

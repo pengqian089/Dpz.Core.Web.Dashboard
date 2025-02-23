@@ -18,4 +18,19 @@ public interface IVideoService
     /// <param name="model"></param>
     /// <returns></returns>
     Task SaveVideoInformationAsync(VideoModel model);
+
+    /// <summary>
+    /// 获取视频元信息
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    Task<VideoMetaDataModel> GetVideoMetadataAsync(string id);
+
+    /// <summary>
+    /// 设置视频截图
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="seconds"></param>
+    /// <returns></returns>
+    Task SetVideoScreenshotAsync(string id, double seconds);
 }

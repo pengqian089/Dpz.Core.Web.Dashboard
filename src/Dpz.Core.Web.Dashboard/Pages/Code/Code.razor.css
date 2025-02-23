@@ -255,3 +255,7 @@
 ::deep .code-view-editor{
     min-height: 600px;
 }
+
+::deep .markdown-container{
+    margin: 2em;
+}

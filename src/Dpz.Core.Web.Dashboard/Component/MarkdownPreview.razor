@@ -1,9 +1,12 @@
 ﻿@using Markdig
-<div class="markdown-body"> @((MarkupString)_htmlContent)</div>
+<div class="markdown-body" style="@Style"> @((MarkupString)_htmlContent)</div>
 
 @code {
     [Parameter]
     public string Markdown { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
     
     [Inject]
     IJSRuntime JsRuntime { get; set; }

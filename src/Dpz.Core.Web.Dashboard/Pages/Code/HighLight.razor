@@ -1,0 +1,40 @@
+﻿@using System.ComponentModel.DataAnnotations
+@{
+    var (first, keyword, end) = MatchKeyword();
+}
+@if (keyword == null || end == null)
+{
+    <span>@ItemName</span>
+}
+else
+{
+    <span class="show-name">
+        <span>@first</span>
+        <mark>@keyword</mark>
+        <span>@end</span>
+    </span>
+}
+
+
+@code{
+    [Parameter] public string SearchWord { get; set; }
+
+    [Required, Parameter] public required string ItemName { get; set; }
+
+
+    (string first, string keyword, string end) MatchKeyword()
+    {
+        if (string.IsNullOrEmpty(SearchWord))
+            return (ItemName, null, null);
+
+        var startIndex = ItemName.IndexOf(SearchWord, StringComparison.CurrentCultureIgnoreCase);
+        if (startIndex >= 0)
+        {
+            var match = ItemName.Substring(startIndex, SearchWord.Length);
+            return (ItemName[..startIndex], match, ItemName[(startIndex + SearchWord.Length)..]);
+        }
+
+        return (ItemName, null, null);
+    }
+
+}

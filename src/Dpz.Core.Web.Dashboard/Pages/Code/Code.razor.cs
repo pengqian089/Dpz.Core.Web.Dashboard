@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using MudBlazor;
 
@@ -12,11 +13,13 @@ namespace Dpz.Core.Web.Dashboard.Pages.Code;
 
 public partial class Code
 {
-    [Inject] private ICodeService CodeService { get; set; }
+    [Inject]
+    private ICodeService CodeService { get; set; }
 
     //[Inject] private IJSRuntime JsRuntime { get; set; }
 
-    [Inject] private IDialogService DialogService { get; set; }
+    [Inject]
+    private IDialogService DialogService { get; set; }
 
     private CodeNoteTree _treeData = null;
 
@@ -43,6 +46,7 @@ public partial class Code
         var currentPath = path.ToArray();
         _treeData = await CodeService.GetTreeAsync(currentPath);
         _currentPath = currentPath;
+        _searchWord = null;
         _isLoading = false;
     }
 
@@ -51,7 +55,7 @@ public partial class Code
         await LoadTreeData(_currentPath);
     }
 
-    private async Task SaveNoteAsync(IEnumerable<string> path,string name, string note)
+    private async Task SaveNoteAsync(IEnumerable<string> path, string name, string note)
     {
         var parameters = new DialogParameters
         {
@@ -59,14 +63,60 @@ public partial class Code
             {
                 Name = name,
                 Note = note,
-                Path = path?.ToArray()
-            }
+                Path = path?.ToArray(),
+            },
         };
-        var dialog = DialogService.Show<NoteForm>("",parameters, new DialogOptions {CloseButton = true});
+        var dialog = await DialogService.ShowAsync<NoteForm>(
+            "",
+            parameters,
+            new DialogOptions { CloseButton = true }
+        );
         var result = await dialog.Result;
-        if (!result.Canceled && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+        if (
+            result?.Canceled != true
+            && bool.TryParse(result?.Data?.ToString() ?? "", out var r)
+            && r
+        )
         {
             await ReferenceTreeAsync();
+        }
+    }
+
+    
+    private string _searchWord = null;
+    private string _tempSearch = null;
+    [Inject] private ISnackbar Snackbar { get; set; }
+    private async Task SearchAsync()
+    {
+        if (string.IsNullOrEmpty(_searchWord) && string.IsNullOrEmpty(_tempSearch))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+            Snackbar.Add("请输入关键字！", Severity.Warning);
+            return;
+        }
+
+        if (_searchWord == _tempSearch)
+            return;
+        _isLoading = true;
+        if (string.IsNullOrEmpty(_searchWord))
+        {
+            _tempSearch = null;
+            _treeData = await CodeService.GetTreeAsync(null);
+        }
+        else
+        {
+            _treeData = await CodeService.SearchAsync(_searchWord);
+            _tempSearch = _searchWord;
+        }
+
+        _isLoading = false;
+    }
+    
+    private async Task SearchKeyUpAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await SearchAsync();
         }
     }
 }

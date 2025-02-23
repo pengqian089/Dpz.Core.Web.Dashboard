@@ -1,0 +1,5 @@
+.show-name{
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}

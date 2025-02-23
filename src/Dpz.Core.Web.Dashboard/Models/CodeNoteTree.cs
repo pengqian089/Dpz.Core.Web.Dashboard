@@ -99,6 +99,14 @@ public class CodeContainer
     /// 代码内容
     /// </summary>
     public string CodeContent { get; set; }
-
+    
+    /// <summary>
+    /// 能否预览
+    /// </summary>
     public bool IsPreview { get; set; }
+
+    /// <summary>
+    /// AI分析结果
+    /// </summary>
+    public string AiAnalyzeResult { get; set; }
 }

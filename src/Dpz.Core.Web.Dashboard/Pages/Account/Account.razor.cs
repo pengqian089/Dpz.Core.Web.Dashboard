@@ -117,5 +117,11 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
             await AccountService.EnableAsync(account);
             Search();
         }
+
+        private async Task ViewTokenHistoryAsync(string account)
+        {
+            // TODO
+            await Task.CompletedTask;
+        }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using Dpz.Core.EnumLibrary;
+using MudBlazor;
 
 namespace Dpz.Core.Web.Dashboard.Models.Response;
 
@@ -15,6 +17,7 @@ public class AccountTokenResponse
     /// <summary>
     /// token 使用平台
     /// </summary>
+    [JsonConverter(typeof(EnumConverter<TokenPlatform>))]
     public TokenPlatform Platform { get; set; }
 
     /// <summary>
@@ -46,4 +49,11 @@ public class AccountTokenResponse
     /// 是否使用
     /// </summary>
     public bool? Used { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public bool ShowToken { get; set; }
+
+    public string ShowTokenIcon { get; set; } = Icons.Material.Filled.Visibility;
 }

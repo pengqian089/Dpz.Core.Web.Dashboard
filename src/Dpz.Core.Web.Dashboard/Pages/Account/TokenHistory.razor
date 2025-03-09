@@ -1,5 +1,93 @@
-﻿<h3>TokenHistory</h3>
+﻿<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Token" Class="mr-3 mb-n1"/>
+            Token使用记录
+        </MudText>
+    </TitleContent>
 
-@code {
-    
-}
+    <DialogContent>
+        <MudTable Hover="true"
+                  @ref="_table"
+                  Loading="_isLoading"
+                  ServerData="(x, _) => LoadDataAsync(x)"
+                  CurrentPage="@(_pageIndex - 1)"
+                  RowsPerPage="PageSize">
+            <HeaderContent>
+                <MudTh>
+                    账号
+                </MudTh>
+                <MudTh>
+                    平台
+                </MudTh>
+                <MudTh>
+                    刷新Token
+                </MudTh>
+                <MudTh>
+                    过期时间
+                </MudTh>
+                <MudTh>
+                    首次生成时间
+                </MudTh>
+                <MudTh>
+                    IP 地址
+                </MudTh>
+                <MudTh Style="max-width: 30em">
+                    User-Agent
+                </MudTh>
+                <MudTh>
+                    是否使用
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="账号">
+                    @context.Account
+                </MudTd>
+                <MudTd DataLabel="平台">
+                    @context.Platform
+                </MudTd>
+                <MudTd DataLabel="刷新Token">
+                    <MudStack Spacing="1" Row="true">
+                            <span>
+                                @(context.ShowToken ? context.RefreshToken : "******")
+                            </span>
+                        <MudIconButton
+                            Icon="@context.ShowTokenIcon"
+                            OnClick="_ => ShowToken(context)">
+                        </MudIconButton>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="过期时间">
+                    @context.RefreshTokenExpiryTime.ToString("yyyy-MM-dd HH:mm:ss")
+                </MudTd>
+                <MudTd DataLabel="首次生成时间">
+                    @context.FirstGenerateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                </MudTd>
+                <MudTd DataLabel="IP 地址">
+                    @context.IpAddress
+                </MudTd>
+                <MudTd DataLabel="User-Agent">
+                    @* @context.UserAgent *@
+                    <MudTooltip Text="@context.UserAgent">
+                        <div
+                            style="overflow: hidden;display: -webkit-box;-webkit-line-clamp: 1;-webkit-box-orient:vertical;max-width: 30em">
+                            @context.UserAgent
+                        </div>
+                    </MudTooltip>
+                </MudTd>
+                <MudTd DataLabel="是否使用">
+                    @(context.Used == true ? "是" : "否")
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="每页数量"
+                               HideRowsPerPage="true"
+                               PageSizeOptions="new[] { 15, 20, 30 }"
+                               InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
+            </PagerContent>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">关闭</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -63,7 +63,7 @@ public class AccountService(IHttpService httpService) : IAccountService
     )
     {
         return httpService.GetPageAsync<AccountTokenResponse>(
-            "/api/Account",
+            "/api/Account/tokens",
             pageIndex,
             pageSize,
             new { account, used }

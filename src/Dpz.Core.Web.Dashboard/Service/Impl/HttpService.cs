@@ -35,11 +35,13 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
 
         private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
-        public HttpService(ILogger<HttpService> logger,
+        public HttpService(
+            ILogger<HttpService> logger,
             HttpClient httpClient,
             IAuthenticationService authenticationService,
             NavigationManager navigation,
-            ILocalStorageService localStorageService)
+            ILocalStorageService localStorageService
+        )
         {
             _logger = logger;
             _httpClient = httpClient;
@@ -63,7 +65,10 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
                 // Token过期
                 if (DateTime.Now > user.Expires)
                 {
-                    var result = await _authenticationService.RefreshTokenAsync(user.Token, user.RefreshToken);
+                    var result = await _authenticationService.RefreshTokenAsync(
+                        user.Token,
+                        user.RefreshToken
+                    );
                     if (!result)
                     {
                         _navigation.NavigateTo("/login");
@@ -102,7 +107,10 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
                     return;
                 }
                 // 如果请求不成功并且不是缓存响应则抛出异常
-                if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
+                if (
+                    !response.IsSuccessStatusCode
+                    && response.StatusCode != HttpStatusCode.NotModified
+                )
                 {
                     // var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
                     // _logger.LogDebug("request error:{Error}", error);
@@ -112,17 +120,25 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
             }
             finally
             {
-                _logger.LogDebug("current user:{User}", 
-                    JsonSerializer.Serialize(user, new JsonSerializerOptions { WriteIndented = true }));
+                _logger.LogDebug(
+                    "current user:{User}",
+                    JsonSerializer.Serialize(
+                        user,
+                        new JsonSerializerOptions { WriteIndented = true }
+                    )
+                );
                 SemaphoreSlim.Release();
             }
-
-            
         }
 
-        private async Task<T> SendRequestAsync<T>(HttpRequestMessage request, Action<HttpResponseMessage> action = null)
+        private static readonly JsonSerializerOptions JsonSerializerOptions =
+            new() { PropertyNameCaseInsensitive = true };
+
+        private async Task<T> SendRequestAsync<T>(
+            HttpRequestMessage request,
+            Action<HttpResponseMessage> action = null
+        )
         {
-           
             await SemaphoreSlim.WaitAsync();
             var user = _authenticationService.User;
             try
@@ -133,17 +149,23 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
                     _navigation.NavigateTo("/login");
                     return default;
                 }
+
                 // Token过期
                 if (DateTime.Now > user.Expires)
                 {
-                    var result = await _authenticationService.RefreshTokenAsync(user.Token, user.RefreshToken);
+                    var result = await _authenticationService.RefreshTokenAsync(
+                        user.Token,
+                        user.RefreshToken
+                    );
                     if (!result)
                     {
                         _navigation.NavigateTo("/login");
                         return default;
                     }
+
                     user = await _localStorageService.GetItemAsync<AppUser>("Identity");
                 }
+
                 // ETag
                 var eTagKey = $"{request.RequestUri}|{request.Method}|ETag";
                 // if (CacheHttpHeaders.ContainsKey(eTagKey))
@@ -159,7 +181,11 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
                 // 身份认证
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
 
-                request.Headers.CacheControl = new CacheControlHeaderValue {NoCache = true, NoStore = true};
+                request.Headers.CacheControl = new CacheControlHeaderValue
+                {
+                    NoCache = true,
+                    NoStore = true,
+                };
                 // 开始请求API
                 using var response = await _httpClient.SendAsync(request);
                 // if (response.IsSuccessStatusCode)
@@ -175,13 +201,19 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
                     _navigation.NavigateTo("/login");
                     return default;
                 }
+
                 // 如果请求不成功并且不是缓存响应则抛出异常
-                if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
+                if (
+                    !response.IsSuccessStatusCode
+                    && response.StatusCode != HttpStatusCode.NotModified
+                )
                 {
-                    var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                    var error = await response.Content.ReadFromJsonAsync<
+                        Dictionary<string, string>
+                    >();
                     _logger.LogDebug("request error:{Error}", error);
                 }
-                
+
                 // 处理304缓存
                 if (response.StatusCode == HttpStatusCode.NotModified)
                 {
@@ -192,6 +224,7 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
 
                     return default;
                 }
+
                 if (action != null)
                     action(response);
 
@@ -206,21 +239,32 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
                 {
                     return default;
                 }
-                var responseData = await response.Content.ReadFromJsonAsync<T>(new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+
+                // var responseData = await response.Content.ReadFromJsonAsync<T>(
+                //     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                // );
+                var json = await response.Content.ReadAsStringAsync();
+                var responseData = JsonSerializer.Deserialize<T>(json, JsonSerializerOptions);
+
                 CacheResponseData[eTagKey] = responseData;
                 return responseData;
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return default;
+            }
             finally
             {
-                _logger.LogDebug("current user:{User}", 
-                    JsonSerializer.Serialize(user, new JsonSerializerOptions { WriteIndented = true }));
+                _logger.LogDebug(
+                    "current user:{User}",
+                    JsonSerializer.Serialize(
+                        user,
+                        new JsonSerializerOptions { WriteIndented = true }
+                    )
+                );
                 SemaphoreSlim.Release();
             }
-
-            
         }
 
         private string HandleParameter(string uri, object value)
@@ -256,22 +300,36 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
             return await SendRequestAsync<T>(request);
         }
 
-        public async Task<IPagedList<T>> GetPageAsync<T>(string uri, int pageIndex = 1, int pageSize = 10, object value = null)
+        public async Task<IPagedList<T>> GetPageAsync<T>(
+            string uri,
+            int pageIndex = 1,
+            int pageSize = 10,
+            object value = null
+        )
         {
             var pageUri = $"{uri}?pageIndex={pageIndex}&pageSize={pageSize}";
             var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(pageUri, value));
             var pagination = new Pagination();
-            var list = await SendRequestAsync<List<T>>(request, x =>
-            {
-                var xPagination = x.Headers.GetValues("X-Pagination").FirstOrDefault();
-                if (xPagination != null)
+            var list = await SendRequestAsync<List<T>>(
+                request,
+                x =>
                 {
-                    pagination = JsonSerializer.Deserialize<Pagination>(xPagination,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var xPagination = x.Headers.GetValues("X-Pagination").FirstOrDefault();
+                    if (xPagination != null)
+                    {
+                        pagination = JsonSerializer.Deserialize<Pagination>(
+                            xPagination,
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+                    }
                 }
-            });
-            var pagedList = new PagedList<T>(list ?? new List<T>(), pagination.CurrentPage, pagination.PageSize,
-                pagination.TotalCount);
+            );
+            var pagedList = new PagedList<T>(
+                list ?? new List<T>(),
+                pagination.CurrentPage,
+                pagination.PageSize,
+                pagination.TotalCount
+            );
             return pagedList;
         }
 
@@ -300,7 +358,7 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
             HttpContent httpContent;
             if (value is string content)
             {
-                httpContent = new StringContent(content,Encoding.UTF8);
+                httpContent = new StringContent(content, Encoding.UTF8);
             }
             else
             {
@@ -357,14 +415,22 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
             await SendRequestAsync(request);
         }
 
-        public async Task<T> PostFileAsync<T>(string uri, MultipartFormDataContent content, HttpMethod method = null)
+        public async Task<T> PostFileAsync<T>(
+            string uri,
+            MultipartFormDataContent content,
+            HttpMethod method = null
+        )
         {
             var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
             request.Content = content;
             return await SendRequestAsync<T>(request);
         }
 
-        public async Task PostFileAsync(string uri, MultipartFormDataContent content, HttpMethod method = null)
+        public async Task PostFileAsync(
+            string uri,
+            MultipartFormDataContent content,
+            HttpMethod method = null
+        )
         {
             var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
             request.Content = content;

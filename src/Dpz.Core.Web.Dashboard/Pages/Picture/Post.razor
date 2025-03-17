@@ -50,6 +50,7 @@
                                HelperText="请选择标签"
                                MultiSelection="true"
                                ToStringFunc="x => x"
+                               SelectedValuesChanged="OnTagsSelected"
                                SelectedValues="_picture.Tags">
                         @foreach (var state in _tags)
                         {

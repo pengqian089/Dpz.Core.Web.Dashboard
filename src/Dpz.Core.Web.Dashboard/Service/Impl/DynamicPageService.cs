@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl
 {
@@ -38,14 +39,14 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl
             return result?.IsExists ?? false;
         }
 
-        public async Task CreateDynamicPage(string id, string htmlContent)
+        public async Task CreateDynamicPage(SaveDynamicRequest request)
         {
-            await _httpService.PostAsync("/api/DynamicPage", new { id, htmlContent });
+            await _httpService.PostAsync("/api/DynamicPage", request);
         }
 
-        public async Task EditDynamicPage(string id, string htmlContent)
+        public async Task EditDynamicPage(SaveDynamicRequest request)
         {
-            await _httpService.PatchAsync($"/api/DynamicPage/content/{id}", new { content = htmlContent });
+            await _httpService.PatchAsync($"/api/DynamicPage/", request);
         }
 
         public async Task DeleteAsync(string id)

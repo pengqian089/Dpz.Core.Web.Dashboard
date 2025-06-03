@@ -52,7 +52,7 @@
             {
                 <div class="row prev">
                     <div class="header">
-                        <a href="javascript:;" @onclick="() => LoadTreeData(null)">
+                        <a href="javascript:void(0)" @onclick="() => LoadTreeData(null)">
                             <span style="min-width: 16px">[Root]</span>
                         </a>
                         <span>/</span>
@@ -70,7 +70,7 @@
                             var item = _treeData.CurrentPaths[i];
                             steps.Add(item);
                             var temp = string.Join("/", steps);
-                            <a href="javascript:;" @onclick="() => LoadTreeData(temp.Split('/'))">
+                            <a href="javascript:void(0)" @onclick="() => LoadTreeData(temp.Split('/'))">
                                 <span style="min-width: 16px">@item</span>
                             </a>
                             <span>/</span>
@@ -121,7 +121,7 @@
                         </div>
                         <div class="header">
                             <span>
-                                <a href="javascript:;" 
+                                <a href="javascript:void(0)" 
                                    title="@string.Join('/',item.CurrentPath)" 
                                    @onclick="() => LoadTreeData(item.CurrentPath)">
                                     <span style="min-width: 16px">
@@ -140,7 +140,7 @@
                                   title="@item.LastUpdateTime">@item.LastUpdateTime.TimeAgo()</time>
                         </div>
                         <div class="action">
-                            <a href="javascript:;"
+                            <a href="javascript:void(0);"
                                @onclick="() => SaveNoteAsync(_treeData.CurrentPaths, item.Name, item.Note)">
                                 @(string.IsNullOrEmpty(item.Note) ? "添加描述" : "修改描述")
                             </a>
@@ -160,7 +160,7 @@
                         </div>
                         <div class="header">
                             <span>
-                                <a href="javascript:;" 
+                                <a href="javascript:void(0);" 
                                    @onclick="() => LoadTreeData(item.CurrentPath)"
                                    title="@string.Join('/',item.CurrentPath)">
                                     <HighLight SearchWord="@_searchWord" ItemName="@item.Name"></HighLight>
@@ -177,7 +177,7 @@
                                   title="@item.LastUpdateTime">@item.LastUpdateTime.TimeAgo()</time>
                         </div>
                         <div class="action">
-                            <a href="javascript:;"
+                            <a href="javascript:void(0);"
                                @onclick="() => SaveNoteAsync(_treeData.CurrentPaths, item.Name, item.Note)">
                                 @(string.IsNullOrEmpty(item.Note) ? "添加描述" : "修改描述")
                             </a>

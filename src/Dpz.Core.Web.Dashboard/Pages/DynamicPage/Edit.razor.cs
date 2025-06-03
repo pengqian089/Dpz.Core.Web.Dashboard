@@ -5,6 +5,7 @@ using AngleSharp;
 using AngleSharp.Html;
 using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -15,15 +16,20 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
 {
     public partial class Edit
     {
-        [Parameter]public string Id { get; set; }
+        [Parameter]
+        public string Id { get; set; }
 
-        [Inject]private IJSRuntime JsRuntime { get; set; }
+        [Inject]
+        private IJSRuntime JsRuntime { get; set; }
 
-        [Inject]private IDynamicPageService DynamicPageService { get; set; }
+        [Inject]
+        private IDynamicPageService DynamicPageService { get; set; }
 
-        [Inject]private ISnackbar Snackbar { get; set; }
+        [Inject]
+        private ISnackbar Snackbar { get; set; }
 
-        [Inject]private NavigationManager Navigation { get; set; }
+        [Inject]
+        private NavigationManager Navigation { get; set; }
 
         private string _name = "";
 
@@ -50,7 +56,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
         }
 
         private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
-        private HtmlEditor  _editor;
+        private HtmlEditor _editor;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -71,7 +77,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
             // }
             await base.OnAfterRenderAsync(firstRender);
         }
-        
+
         private async Task PostDataAsync(EditContext context)
         {
             var content = await _editor.GetValueAsync();
@@ -84,16 +90,21 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
                 Snackbar.Add("参数错误", Severity.Warning);
                 return;
             }
-            
+
             if (string.IsNullOrEmpty(content))
             {
                 Snackbar.Add("请输入内容", Severity.Warning);
                 return;
             }
-            
+
             _isPublishing = true;
             StateHasChanged();
-            await DynamicPageService.EditDynamicPage(_model.Id, content);
+            await DynamicPageService.EditDynamicPage(
+                new SaveDynamicRequest
+                {
+                    HtmlContent = new HtmlContent { Content = content, Name = _model.Id },
+                }
+            );
             await _editor.DisposeAsync();
             Navigation.NavigateTo("/dynamic");
         }

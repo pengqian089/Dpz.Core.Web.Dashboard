@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Html;
 using Dpz.Core.Web.Dashboard.Component;
+using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -69,7 +71,14 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
                 return;
             }
             StateHasChanged();
-            await DynamicPageService.CreateDynamicPage(_name, content);
+            await DynamicPageService.CreateDynamicPage(new SaveDynamicRequest
+            {
+                HtmlContent = new HtmlContent
+                {
+                    Content = content,
+                    Name = _name
+                }
+            });
             await _editor.DisposeAsync();
             // bug 在回车提交时，返回列表不加载数据
             Navigation.NavigateTo("/dynamic");

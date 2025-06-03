@@ -23,7 +23,7 @@ public class DynamicPageModel
     /// 样式 地址
     /// </summary>
     public List<StyleContent> Styles { get; set; } = [];
-    
+
     /// <summary>
     /// Content-Type
     /// </summary>
@@ -64,6 +64,14 @@ public class PageContent
     /// Content-Type 字符串
     /// </summary>
     public string ContentTypeStr => ContentType.ToString();
+}
+
+public class HtmlContent : PageContent
+{
+    public HtmlContent()
+    {
+        ContentType = PageContentType.Html;
+    }
 }
 
 public class ScriptContent : PageContent

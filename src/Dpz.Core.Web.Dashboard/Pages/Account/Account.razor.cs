@@ -76,7 +76,11 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
                 new DialogOptions { CloseButton = true }
             );
             var result = await dialog.Result;
-            if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+            if (
+                result?.Canceled == false
+                && bool.TryParse(result.Data?.ToString() ?? "", out var r)
+                && r
+            )
             {
                 Search();
             }
@@ -96,7 +100,11 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
                 new DialogOptions { CloseButton = true }
             );
             var result = await dialog.Result;
-            if (result?.Canceled == false && bool.TryParse(result.Data?.ToString() ?? "", out var r) && r)
+            if (
+                result?.Canceled == false
+                && bool.TryParse(result.Data?.ToString() ?? "", out var r)
+                && r
+            )
             {
                 Search();
             }
@@ -116,6 +124,21 @@ namespace Dpz.Core.Web.Dashboard.Pages.Account
         {
             await AccountService.EnableAsync(account);
             Search();
+        }
+
+        private async Task ViewTokenHistoryAsync(string account)
+        {
+            var parameters = new DialogParameters { ["Account"] = account };
+            await DialogService.ShowAsync<TokenHistory>(
+                "",
+                parameters,
+                new DialogOptions
+                {
+                    CloseButton = true,
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    BackdropClick = false,
+                }
+            );
         }
     }
 }

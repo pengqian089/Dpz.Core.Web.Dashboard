@@ -8,4 +8,6 @@ public interface ICodeService
     Task<CodeNoteTree> GetTreeAsync(params string[] path);
 
     Task SaveNoteAsync(CodeSaveModel model);
+    
+    Task<CodeNoteTree> SearchAsync(string keyword);
 }

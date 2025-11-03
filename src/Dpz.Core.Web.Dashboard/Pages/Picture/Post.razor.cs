@@ -123,7 +123,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.Picture
             public IBrowserFile Image { get; set; }
         }
 
-        private void OnTagsSelected(List<string> tags)
+        private void OnTagsSelected(IEnumerable<string> tags)
         {
             _picture.Tags = tags.ToList();
         }

@@ -127,4 +127,9 @@ public static class AppTools
         Console.WriteLine($"MarkdownEditorOptions has value:{!string.IsNullOrEmpty(value)}");
         return editor.EditorConstructionOptions("markdown", value);
     }
+
+    public static void DebugOutPut(object obj)
+    {
+        Console.WriteLine(JsonSerializer.Serialize(obj));
+    }
 }

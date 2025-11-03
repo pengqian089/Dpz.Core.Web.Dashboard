@@ -28,4 +28,9 @@ public class CodeService:ICodeService
     {
         await _httpService.PostAsync("/api/Code", model);
     }
+    
+    public async Task<CodeNoteTree> SearchAsync(string keyword)
+    {
+        return await _httpService.GetAsync<CodeNoteTree>($"/api/Code/search?keyword={keyword}");
+    }
 }

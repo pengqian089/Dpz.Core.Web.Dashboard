@@ -21,16 +21,18 @@
             <MudText Typo="Typo.subtitle2">后台管理系统</MudText>
         </MudHidden>
         <MudSpacer />
-        <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"  Dense="true">
-            <MudMenuItem>简体中文</MudMenuItem>
-        </MudMenu>
+        @* <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"  Dense="true"> *@
+        @*     <MudMenuItem>简体中文</MudMenuItem> *@
+        @* </MudMenu> *@
         <MudMenu Icon="@Icons.Material.Outlined.Widgets" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"  Dense="true">
-            <MudMenuItem Href="https://core.dpangzi.com" Target="_blank">Core站点</MudMenuItem>
-            <MudMenuItem Href="https://www.dpangzi.com" Target="_blank">主站点</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://core.dpangzi.com" Target="_blank">Core站点</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://www.dpangzi.com" Target="_blank">主站点</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.EventNote" Href="https://www.dpangzi.com" Target="_blank">日志</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.SettingsApplications" Href="https://config.dpangzi.com" Target="_blank">系统配置</MudMenuItem>
         </MudMenu>
         <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
             <ActivatorContent>
-                @* <MudImage Src="@(AuthenticationService.User.Account.Avatar)" /> *@
+                <MudImage Src="@(AuthenticationService.User.Account.Avatar)" Style="width: 24px;height: 24px"/>
             </ActivatorContent>
             <ChildContent>
                 <PersonCard Class="mt-n2" />

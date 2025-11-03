@@ -49,6 +49,9 @@
             性别
         </MudTh>
         <MudTh>
+            登录记录
+        </MudTh>
+        <MudTh>
             签名
         </MudTh>
         <MudTh>
@@ -66,6 +69,14 @@
         </MudTd>
         <MudTd DataLabel="性别">
             @(context.Sex == Sex.Wuman ? "女" : "男")
+        </MudTd>
+        <MudTd DataLabel="登录记录">
+            <MudButton
+                Variant="Variant.Filled"
+                Color="Color.Secondary"
+                OnClick="() => ViewTokenHistoryAsync(context.Id)">
+                查看
+            </MudButton>
         </MudTd>
         <MudTd DataLabel="签名">
             @context.Sign

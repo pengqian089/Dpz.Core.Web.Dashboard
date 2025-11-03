@@ -1,49 +1,72 @@
 ﻿using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Response;
 
-namespace Dpz.Core.Web.Dashboard.Service.Impl
+namespace Dpz.Core.Web.Dashboard.Service.Impl;
+
+public class AccountService(IHttpService httpService) : IAccountService
 {
-    public class AccountService : IAccountService
+    public async Task<IPagedList<UserInfo>> GetPageAsync(
+        string account = null,
+        int pageIndex = 1,
+        int pageSize = 10
+    )
     {
-        private readonly IHttpService _httpService;
+        return await httpService.GetPageAsync<UserInfo>(
+            "/api/Account",
+            pageIndex,
+            pageSize,
+            new { account }
+        );
+    }
 
-        public AccountService(
-            IHttpService httpService)
-        {
-            _httpService = httpService;
-        }
+    public async Task CreateAccountAsync(string account, string name, string password = null)
+    {
+        await httpService.PostAsync(
+            "/api/Account",
+            new
+            {
+                account,
+                name,
+                password,
+            }
+        );
+    }
 
-        public async Task<IPagedList<UserInfo>> GetPageAsync(string account = null, int pageIndex = 1,
-            int pageSize = 10)
-        {
-            return await _httpService.GetPageAsync<UserInfo>("/api/Account", pageIndex, pageSize, new {account});
-        }
+    public async Task<UserInfo> GetUserAsync(string account)
+    {
+        return await httpService.GetAsync<UserInfo>($"/api/Account/{account}");
+    }
 
-        public async Task CreateAccountAsync(string account, string name, string password = null)
-        {
-            await _httpService.PostAsync("/api/Account", new {account, name, password});
-        }
+    public async Task EnableAsync(string account)
+    {
+        await httpService.PatchAsync($"/api/Account/{account}");
+    }
 
-        public async Task<UserInfo> GetUserAsync(string account)
-        {
-            return await _httpService.GetAsync<UserInfo>($"/api/Account/{account}");
-        }
+    public async Task ChangePasswordAsync(string account, string password)
+    {
+        await httpService.PatchAsync($"/api/Account/change-password", new { account, password });
+    }
 
-        public async Task EnableAsync(string account)
-        {
-            await _httpService.PatchAsync($"/api/Account/{account}");
-        }
+    public async Task<bool> ExistsAsync(string account)
+    {
+        var result = await httpService.GetAsync<Exists>($"/api/Account/exists/{account}");
+        return result?.IsExists ?? false;
+    }
 
-        public async Task ChangePasswordAsync(string account, string password)
-        {
-            await _httpService.PatchAsync($"/api/Account/change-password", new {account, password});
-        }
-
-        public async Task<bool> ExistsAsync(string account)
-        {
-            var result = await _httpService.GetAsync<Exists>($"/api/Account/exists/{account}");
-            return result?.IsExists ?? false;
-        }
+    public Task<IPagedList<AccountTokenResponse>> GetTokenHistoryAsync(
+        string account,
+        bool? used,
+        int pageIndex,
+        int pageSize
+    )
+    {
+        return httpService.GetPageAsync<AccountTokenResponse>(
+            "/api/Account/tokens",
+            pageIndex,
+            pageSize,
+            new { account, used }
+        );
     }
 }

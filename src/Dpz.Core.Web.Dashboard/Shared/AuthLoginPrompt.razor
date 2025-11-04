@@ -1,0 +1,74 @@
+@using System.Timers
+@inject NavigationManager Navigation
+
+<div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+    <MudIcon Icon="@Icons.Material.Outlined.Lock" Color="Color.Primary" Size="Size.Large" />
+    <MudText Typo="Typo.h5" Class="mt-4">需要登录后访问此页面</MudText>
+    <MudText Typo="Typo.body2" Class="mt-2 mb-6" Color="Color.Secondary">
+        请先完成身份验证，然后我们会带您返回当前页面
+    </MudText>
+    <div class="d-flex align-center">
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="LoginNow">立即登录</MudButton>
+        @if (_autoRedirect)
+        {
+            <MudText Typo="Typo.caption" Class="ml-4">将于 @_seconds 秒后自动跳转</MudText>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" Class="ml-2" OnClick="CancelAuto">取消</MudButton>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ReturnUrl { get; set; }
+    [Parameter] public int Seconds { get; set; } = 5;
+
+    private int _seconds;
+    private bool _autoRedirect = true;
+    private Timer _timer;
+
+    protected override void OnInitialized()
+    {
+        _seconds = Seconds;
+        StartTimer();
+    }
+
+    private void StartTimer()
+    {
+        _timer?.Dispose();
+        if (!_autoRedirect) return;
+        _timer = new Timer(1000);
+        _timer.Elapsed += (_, _) =>
+        {
+            if (!_autoRedirect) { _timer?.Stop(); return; }
+            if (_seconds <= 1)
+            {
+                _timer.Stop();
+                InvokeAsync(LoginNow);
+                return;
+            }
+            _seconds--;
+            InvokeAsync(StateHasChanged);
+        };
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private void CancelAuto()
+    {
+        _autoRedirect = false;
+        _timer?.Stop();
+        StateHasChanged();
+    }
+
+    private void LoginNow()
+    {
+        var url = $"/authentication/login?returnUrl={Uri.EscapeDataString(ReturnUrl ?? Navigation.Uri)}";
+        Navigation.NavigateTo(url, forceLoad: false);
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
+
+

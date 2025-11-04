@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 
 namespace Dpz.Core.Web.Dashboard.Service
@@ -6,6 +7,7 @@ namespace Dpz.Core.Web.Dashboard.Service
     /// <summary>
     /// 身份认证
     /// </summary>
+    [Obsolete("used OIDC")]
     public interface IAuthenticationService
     {
         /// <summary>

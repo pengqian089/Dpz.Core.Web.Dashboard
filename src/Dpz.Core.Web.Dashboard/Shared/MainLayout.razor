@@ -1,5 +1,6 @@
-﻿@inherits LayoutComponentBase
-@inject IAuthenticationService AuthenticationService
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
 <MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
@@ -30,16 +31,36 @@
             <MudMenuItem Icon="@Icons.Material.Outlined.EventNote" Href="https://www.dpangzi.com" Target="_blank">日志</MudMenuItem>
             <MudMenuItem Icon="@Icons.Material.Outlined.SettingsApplications" Href="https://config.dpangzi.com" Target="_blank">系统配置</MudMenuItem>
         </MudMenu>
-        <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
-            <ActivatorContent>
-                <MudImage Src="@(AuthenticationService.User.Account.Avatar)" Style="width: 24px;height: 24px"/>
-            </ActivatorContent>
-            <ChildContent>
-                <PersonCard Class="mt-n2" />
-                <MudDivider Class="mb-2" />
-                <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login" Href="/logout" />
-            </ChildContent>
-        </MudMenu>
+        <AuthorizeView>
+            <Authorized Context="auth">
+                <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
+                    <ActivatorContent>
+                        @{
+                            var avatar = auth.User?.FindFirst("picture")?.Value;
+                        }
+                        @if (!string.IsNullOrWhiteSpace(avatar))
+                        {
+                            <MudImage Src="@avatar" Style="width: 24px;height: 24px" />
+                        }
+                        else
+                        {
+                            <MudAvatar Size="Size.Medium" Icon="@Icons.Material.Outlined.Person" />
+                        }
+                    </ActivatorContent>
+                    <ChildContent>
+                        <PersonCard Class="mt-n2" />
+                        <MudDivider Class="mb-2" />
+                        <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login" Href="/authentication/logout" />
+                    </ChildContent>
+                </MudMenu>
+            </Authorized>
+            <NotAuthorized>
+                @{
+                    var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+                }
+                <MudButton Variant="Variant.Text" Href="@($"/authentication/login?returnUrl={returnUrl}")">登录</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="25" ClipMode="DrawerClipMode.Always">
         <NavMenu />

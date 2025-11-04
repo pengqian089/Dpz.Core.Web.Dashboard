@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Dpz.Core.Web.Dashboard.Helper
 {
+    [Obsolete("used OIDC")]
     public class AppRouteView:RouteView
     {
         [Inject]

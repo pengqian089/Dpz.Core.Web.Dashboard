@@ -1,6 +1,8 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Dpz.Core.EnumLibrary
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 
 <MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode" />
@@ -95,9 +97,16 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         StateHasChanged();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!Enum.TryParse(authState.User.FindFirst("Permissions")?.Value ?? "", out Permissions permissions)
+            || (permissions & Permissions.System) != Permissions.System)
+        {
+            Navigation.NavigateTo("/no-permission");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

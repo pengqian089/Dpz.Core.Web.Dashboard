@@ -1,6 +1,100 @@
 ﻿@page "/authentication/{action}"
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-<RemoteAuthenticatorView Action="@Action" />
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+<RemoteAuthenticatorView Action="@Action">
+    @* authentication/login *@
+    <LoggingIn>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.LockOpen" Color="Color.Primary" Size="Size.Large"/>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            <MudText Typo="Typo.h6" Class="mt-4">正在跳转至身份认证中心：@Configuration["OIDC:Authority"]</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">请稍候，无需手动操作</MudText>
+        </div>
+    </LoggingIn>
+
+    @* authentication/login-callback *@
+    <CompletingLoggingIn>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.Login" Color="Color.Primary" Size="Size.Large"/>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            <MudText Typo="Typo.h6" Class="mt-4">正在完成登录并返回应用...</MudText>
+        </div>
+    </CompletingLoggingIn>
+
+    @* authentication/login-failed *@
+    <LogInFailed>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Color="Color.Error" Size="Size.Large"/>
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-4">
+                登录失败，请重试或稍后再试。
+            </MudAlert>
+            <MudButton Class="mt-4" Color="Color.Primary" Variant="Variant.Filled" Href="/authentication/login">
+                重新登录
+            </MudButton>
+        </div>
+    </LogInFailed>
+
+    @* authentication/logout *@
+    <LogOut>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.Logout" Color="Color.Primary" Size="Size.Large"/>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            <MudText Typo="Typo.h6" Class="mt-4">正在退出登录...</MudText>
+        </div>
+    </LogOut>
+
+    @* authentication/logout-callback *@
+    <CompletingLogOut>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.Logout" Color="Color.Primary" Size="Size.Large"/>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            <MudText Typo="Typo.h6" Class="mt-4">已退出登录，正在返回...</MudText>
+        </div>
+    </CompletingLogOut>
+
+    @* authentication/logout-failed *@
+    <LogOutFailed>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Color="Color.Error" Size="Size.Large"/>
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-4">
+                退出失败，请重试。
+            </MudAlert>
+            <MudButton Class="mt-4" Color="Color.Primary" Variant="Variant.Filled" Href="/">返回首页</MudButton>
+        </div>
+    </LogOutFailed>
+
+    @* authentication/logged-out *@
+    <LogOutSucceeded>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Color="Color.Success" Size="Size.Large"/>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">
+                您已成功退出登录。
+            </MudAlert>
+            <MudButton Class="mt-4" Color="Color.Primary" Variant="Variant.Filled" Href="/">返回首页</MudButton>
+        </div>
+    </LogOutSucceeded>
+
+    @* authentication/profile *@
+    <UserProfile>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.ManageAccounts" Color="Color.Primary" Size="Size.Large"/>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            <MudText Typo="Typo.h6" Class="mt-4">正在打开个人资料...</MudText>
+        </div>
+    </UserProfile>
+
+    @* authentication/register *@
+    <Registering>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+            <MudIcon Icon="@Icons.Material.Outlined.PersonAdd" Color="Color.Primary" Size="Size.Large"/>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            <MudText Typo="Typo.h6" Class="mt-4">正在跳转至注册...</MudText>
+        </div>
+    </Registering>
+
+</RemoteAuthenticatorView>
 
 @code{
     [Parameter] public string Action { get; set; }

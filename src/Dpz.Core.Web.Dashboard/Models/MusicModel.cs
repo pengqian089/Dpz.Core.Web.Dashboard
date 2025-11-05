@@ -66,5 +66,10 @@ namespace Dpz.Core.Web.Dashboard.Models
         /// 分组
         /// </summary>
         public List<string> Group { get; set; } = new();
+
+        /// <summary>
+        /// 歌词
+        /// </summary>
+        public string LyricContent { get; set; }
     }
 }

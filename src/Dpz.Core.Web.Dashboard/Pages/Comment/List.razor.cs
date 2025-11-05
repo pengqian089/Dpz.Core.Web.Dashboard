@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.EnumLibrary;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Response;
 using Dpz.Core.Web.Dashboard.Service;
-using Dpz.Core.Web.Dashboard.Service.Impl;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -13,15 +14,22 @@ namespace Dpz.Core.Web.Dashboard.Pages.Comment;
 
 public partial class List
 {
-    [Parameter] [SupplyParameterFromQuery] public string Node { get; set; }
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string Node { get; set; }
 
-    [Parameter] [SupplyParameterFromQuery] public string Relation { get; set; }
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string Relation { get; set; }
 
-    [Inject] private ICommentService CommentService { get; set; }
+    [Inject]
+    private ICommentService CommentService { get; set; }
 
-    [Inject] private IDialogService DialogService { get; set; }
-    
-    [Inject]private IJSRuntime JsRuntime { get; set; }
+    [Inject]
+    private IDialogService DialogService { get; set; }
+
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; }
 
     private MudTable<CommentModel> _table;
 
@@ -29,21 +37,21 @@ public partial class List
 
     private int _pageIndex = 1;
 
-    private CommentNode? _nodeType = null;
+    private CommentNode? _nodeType;
 
-    private IDictionary<string, string> _secondItems = new Dictionary<string, string>();
+    private List<CommentRelationResponse> _secondItems = [];
 
     private bool _isLoading = true;
 
     private bool _isInit = true;
 
-    private bool _isReload = false;
+    private bool _isReload;
 
     #region temp
 
-    private CommentNode? _tempNode = null;
+    private CommentNode? _tempNode;
 
-    private string _tempRelation = null;
+    private string _tempRelation;
     private MudSelect<string> _secondSelect;
 
     #endregion
@@ -53,7 +61,7 @@ public partial class List
         await JsRuntime.InvokeVoidAsync("Prism.highlightAll");
         await base.OnAfterRenderAsync(firstRender);
     }
-    
+
     protected override async Task OnParametersSetAsync()
     {
         Console.WriteLine(Relation);
@@ -65,7 +73,7 @@ public partial class List
                 CommentNode.Article => await CommentService.GetArticleRelationAsync(),
                 CommentNode.Code => await CommentService.CodeRelationAsync(),
                 CommentNode.Other => await CommentService.OtherRelationAsync(),
-                _ => new Dictionary<string, string>()
+                _ => [],
             };
         }
         else
@@ -75,9 +83,7 @@ public partial class List
 
         if (_table != null)
         {
-            if (_nodeType == _tempNode && Relation == _tempRelation)
-            {
-            }
+            if (_nodeType == _tempNode && Relation == _tempRelation) { }
             else
             {
                 _tempNode = _nodeType;
@@ -103,11 +109,7 @@ public partial class List
         var list = await CommentService.GetPageAsync(_nodeType, Relation, _pageIndex, PageSize);
         _isReload = false;
         _isLoading = false;
-        return new TableData<CommentModel>()
-        {
-            TotalItems = list.TotalItemCount,
-            Items = list
-        };
+        return new TableData<CommentModel>() { TotalItems = list.TotalItemCount, Items = list };
     }
 
     private async Task DeleteAsync(string id)
@@ -115,14 +117,15 @@ public partial class List
         var result = await DialogService.ShowMessageBox(
             "提示",
             "删除后不能恢复，确定删除？",
-            yesText: "删除!", cancelText: "取消");
+            yesText: "删除!",
+            cancelText: "取消"
+        );
         if (result == true)
         {
             await CommentService.ClearAsync(id);
             await _table.ReloadServerData();
         }
     }
-
 
     private void Search()
     {
@@ -142,14 +145,26 @@ public partial class List
                 CommentNode.Article => await CommentService.GetArticleRelationAsync(),
                 CommentNode.Code => await CommentService.CodeRelationAsync(),
                 CommentNode.Other => await CommentService.OtherRelationAsync(),
-                _ => new Dictionary<string, string>()
+                _ => [],
             };
         }
         else
         {
             _nodeType = null;
             Node = null;
-            _secondItems = new Dictionary<string, string>();
+            _secondItems = [];
         }
+    }
+
+    private bool FindRelation(string relation, out string title)
+    {
+        var item = _secondItems.FirstOrDefault(x => x.Id == relation);
+        if (item == null)
+        {
+            title = null;
+            return false;
+        }
+        title = item.Title;
+        return true;
     }
 }

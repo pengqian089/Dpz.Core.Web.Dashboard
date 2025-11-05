@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dpz.Core.EnumLibrary;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Response;
 
 namespace Dpz.Core.Web.Dashboard.Service;
 
@@ -13,9 +14,9 @@ public interface ICommentService
 
     Task ClearAsync(string id);
 
-    Task<IDictionary<string, string>> GetArticleRelationAsync();
+    Task<List<CommentRelationResponse>> GetArticleRelationAsync();
     
-    Task<IDictionary<string, string>> CodeRelationAsync();
+    Task<List<CommentRelationResponse>> CodeRelationAsync();
     
-    Task<IDictionary<string, string>> OtherRelationAsync();
+    Task<List<CommentRelationResponse>> OtherRelationAsync();
 }

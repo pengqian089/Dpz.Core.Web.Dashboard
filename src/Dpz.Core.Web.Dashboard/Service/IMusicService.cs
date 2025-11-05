@@ -22,6 +22,7 @@ namespace Dpz.Core.Web.Dashboard.Service
 
         Task DeleteAsync(string id);
 
+        [Obsolete("弃用")]
         Task<string> GetLyricAsync(string id);
 
         Task<List<string>> GetGroupsAsync();

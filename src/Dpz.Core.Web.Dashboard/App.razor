@@ -1,11 +1,40 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager Navigation
 
-<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="@typeof(NotFound)">
-            
-        </LayoutView>
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            @if (Attribute.IsDefined(routeData.PageType, typeof(AuthorizeAttribute)))
+            {
+                <AuthorizeView>
+                    <Authorized>
+                        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+                    </Authorized>
+                    <Authorizing>
+                        <LayoutView Layout="@typeof(PublicLayout)">
+                            <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+                                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true"/>
+                                <MudText Typo="Typo.h5" Class="mt-4">正在验证身份，请稍候...</MudText>
+                            </div>
+                        </LayoutView>
+                    </Authorizing>
+                    <NotAuthorized>
+                        <LayoutView Layout="@typeof(PublicLayout)">
+                            <AuthLoginPrompt ReturnUrl="@Navigation.Uri" Seconds="5"/>
+                        </LayoutView>
+                    </NotAuthorized>
+                </AuthorizeView>
+            }
+            else
+            {
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(PublicLayout)"/>
+            }
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(NotFound)">
+
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

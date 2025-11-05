@@ -1,5 +1,9 @@
-﻿@inherits LayoutComponentBase
-@inject IAuthenticationService AuthenticationService
+﻿@using Dpz.Core.EnumLibrary
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
 
 <MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
@@ -30,16 +34,36 @@
             <MudMenuItem Icon="@Icons.Material.Outlined.EventNote" Href="https://www.dpangzi.com" Target="_blank">日志</MudMenuItem>
             <MudMenuItem Icon="@Icons.Material.Outlined.SettingsApplications" Href="https://config.dpangzi.com" Target="_blank">系统配置</MudMenuItem>
         </MudMenu>
-        <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
-            <ActivatorContent>
-                <MudImage Src="@(AuthenticationService.User.Account.Avatar)" Style="width: 24px;height: 24px"/>
-            </ActivatorContent>
-            <ChildContent>
-                <PersonCard Class="mt-n2" />
-                <MudDivider Class="mb-2" />
-                <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login" Href="/logout" />
-            </ChildContent>
-        </MudMenu>
+        <AuthorizeView>
+            <Authorized Context="auth">
+                <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
+                    <ActivatorContent>
+                        @{
+                            var avatar = auth.User?.FindFirst("picture")?.Value;
+                        }
+                        @if (!string.IsNullOrWhiteSpace(avatar))
+                        {
+                            <MudImage Src="@avatar" Style="width: 24px;height: 24px" />
+                        }
+                        else
+                        {
+                            <MudAvatar Size="Size.Medium" Icon="@Icons.Material.Outlined.Person" />
+                        }
+                    </ActivatorContent>
+                    <ChildContent>
+                        <PersonCard Class="mt-n2" />
+                        <MudDivider Class="mb-2" />
+                        <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login" OnClick="BeginLogout" />
+                    </ChildContent>
+                </MudMenu>
+            </Authorized>
+            <NotAuthorized>
+                @{
+                    var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+                }
+                <MudButton Variant="Variant.Text" Href="@($"/authentication/login?returnUrl={returnUrl}")">登录</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="25" ClipMode="DrawerClipMode.Always">
         <NavMenu />
@@ -73,9 +97,16 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         StateHasChanged();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!Enum.TryParse(authState.User.FindFirst("Permissions")?.Value ?? "", out Permissions permissions)
+            || (permissions & Permissions.System) != Permissions.System)
+        {
+            Navigation.NavigateTo("/no-permission");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -95,4 +126,12 @@
     //    new BreadcrumbItem("Personal", href: "#"),
     //    new BreadcrumbItem("Dashboard", href: "#"),
     //};
+    
+    private Task BeginLogout()
+    {
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        Navigation.NavigateToLogout($"authentication/logout?returnUrl={returnUrl}");
+        return Task.CompletedTask;
+    }
+
 }

@@ -16,425 +16,300 @@ using Dpz.Core.Web.Dashboard.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 
-namespace Dpz.Core.Web.Dashboard.Service.Impl
+namespace Dpz.Core.Web.Dashboard.Service.Impl;
+
+public class HttpService(
+    ILogger<HttpService> logger,
+    IHttpClientFactory httpClientFactory,
+    NavigationManager navigation
+) : IHttpService
 {
-    public class HttpService : IHttpService
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("ServerAPI");
+
+    /// <summary>
+    /// 缓存数据
+    /// </summary>
+    private static readonly Dictionary<string, object> CacheResponseData = new();
+
+    private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
+
+    private async Task SendRequestAsync(HttpRequestMessage request)
     {
-        private readonly ILogger<HttpService> _logger;
-        private readonly HttpClient _httpClient;
-        private readonly IAuthenticationService _authenticationService;
-        private readonly NavigationManager _navigation;
-        private readonly ILocalStorageService _localStorageService;
-
-        //private static readonly Dictionary<string, string> CacheHttpHeaders = new();
-
-        /// <summary>
-        /// 缓存数据
-        /// </summary>
-        private static readonly Dictionary<string, object> CacheResponseData = new();
-
-        private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
-
-        public HttpService(
-            ILogger<HttpService> logger,
-            HttpClient httpClient,
-            IAuthenticationService authenticationService,
-            NavigationManager navigation,
-            ILocalStorageService localStorageService
-        )
+        await SemaphoreSlim.WaitAsync();
+        try
         {
-            _logger = logger;
-            _httpClient = httpClient;
-            _authenticationService = authenticationService;
-            _navigation = navigation;
-            _localStorageService = localStorageService;
-        }
-
-        private async Task SendRequestAsync(HttpRequestMessage request)
-        {
-            await SemaphoreSlim.WaitAsync();
-            var user = _authenticationService.User;
-            try
+            // 开始请求API
+            using var response = await _httpClient.SendAsync(request);
+            // 如果响应401，就返回登录页面
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                // 没有获取到当前登录用户
-                if (user == null)
-                {
-                    _navigation.NavigateTo("/login");
-                    return;
-                }
-                // Token过期
-                if (DateTime.Now > user.Expires)
-                {
-                    var result = await _authenticationService.RefreshTokenAsync(
-                        user.Token,
-                        user.RefreshToken
-                    );
-                    if (!result)
-                    {
-                        _navigation.NavigateTo("/login");
-                        return;
-                    }
-                    user = await _localStorageService.GetItemAsync<AppUser>("Identity");
-                }
-                // ETag
-                var eTagKey = $"{request.RequestUri}|{request.Method}|ETag";
-                // if (CacheHttpHeaders.ContainsKey(eTagKey))
-                // {
-                //     request.Headers.Add("If-None-Match", CacheHttpHeaders[eTagKey]);
-                // }
-                // // Last-Modified
-                // var lastModifiedKey = $"{request.RequestUri}|{request.Method}|Last-Modified";
-                // if (CacheHttpHeaders.ContainsKey(lastModifiedKey))
-                // {
-                //     request.Headers.Add("If-Modified-Since", CacheHttpHeaders[lastModifiedKey]);
-                // }
-                // 身份认证
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
-                // 开始请求API
-                using var response = await _httpClient.SendAsync(request);
-                // if (response.IsSuccessStatusCode)
-                // {
-                //     CacheHttpHeaders[eTagKey] = response.Headers.ETag?.ToString();
-                //     var culture = new CultureInfo("en-US");
-                //     CacheHttpHeaders[lastModifiedKey] =
-                //         response.Content.Headers.LastModified?.ToString("ddd, dd MMM yyy HH':'mm':'ss 'GMT'", culture);
-                // }
-
-                // 如果响应401，就返回登录页面
-                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    _navigation.NavigateTo("/login");
-                    return;
-                }
-                // 如果请求不成功并且不是缓存响应则抛出异常
-                if (
-                    !response.IsSuccessStatusCode
-                    && response.StatusCode != HttpStatusCode.NotModified
-                )
-                {
-                    // var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                    // _logger.LogDebug("request error:{Error}", error);
-                    var result = await response.Content.ReadAsStringAsync();
-                    throw new FetchException(result);
-                }
+                var returnUrl = Uri.EscapeDataString(navigation.Uri);
+                navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}");
+                return;
             }
-            finally
+            // 如果请求不成功并且不是缓存响应则抛出异常
+            if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
             {
-                _logger.LogDebug(
-                    "current user:{User}",
-                    JsonSerializer.Serialize(
-                        user,
-                        new JsonSerializerOptions { WriteIndented = true }
-                    )
-                );
-                SemaphoreSlim.Release();
+                var result = await response.Content.ReadAsStringAsync();
+                throw new FetchException(result);
             }
         }
-
-        private static readonly JsonSerializerOptions JsonSerializerOptions =
-            new() { PropertyNameCaseInsensitive = true };
-
-        private async Task<T> SendRequestAsync<T>(
-            HttpRequestMessage request,
-            Action<HttpResponseMessage> action = null
-        )
+        finally
         {
-            await SemaphoreSlim.WaitAsync();
-            var user = _authenticationService.User;
-            try
+            logger.LogDebug("request finished: {Method} {Uri}", request.Method, request.RequestUri);
+            SemaphoreSlim.Release();
+        }
+    }
+
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
+    private async Task<T> SendRequestAsync<T>(
+        HttpRequestMessage request,
+        Action<HttpResponseMessage> action = null
+    )
+    {
+        await SemaphoreSlim.WaitAsync();
+        try
+        {
+            // ETag
+            var eTagKey = $"{request.RequestUri}|{request.Method}|ETag";
+
+            request.Headers.CacheControl = new CacheControlHeaderValue
             {
-                // 没有获取到当前登录用户
-                if (user == null)
-                {
-                    _navigation.NavigateTo("/login");
-                    return default;
-                }
-
-                // Token过期
-                if (DateTime.Now > user.Expires)
-                {
-                    var result = await _authenticationService.RefreshTokenAsync(
-                        user.Token,
-                        user.RefreshToken
-                    );
-                    if (!result)
-                    {
-                        _navigation.NavigateTo("/login");
-                        return default;
-                    }
-
-                    user = await _localStorageService.GetItemAsync<AppUser>("Identity");
-                }
-
-                // ETag
-                var eTagKey = $"{request.RequestUri}|{request.Method}|ETag";
-                // if (CacheHttpHeaders.ContainsKey(eTagKey))
-                // {
-                //     request.Headers.Add("If-None-Match", CacheHttpHeaders[eTagKey]);
-                // }
-                // // Last-Modified
-                // var lastModifiedKey = $"{request.RequestUri}|{request.Method}|Last-Modified";
-                // if (CacheHttpHeaders.ContainsKey(lastModifiedKey))
-                // {
-                //     request.Headers.Add("If-Modified-Since", CacheHttpHeaders[lastModifiedKey]);
-                // }
-                // 身份认证
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
-
-                request.Headers.CacheControl = new CacheControlHeaderValue
-                {
-                    NoCache = true,
-                    NoStore = true,
-                };
-                // 开始请求API
-                using var response = await _httpClient.SendAsync(request);
-                // if (response.IsSuccessStatusCode)
-                // {
-                //     CacheHttpHeaders[eTagKey] = response.Headers.ETag?.ToString();
-                //     var culture = new CultureInfo("en-US");
-                //     CacheHttpHeaders[lastModifiedKey] =
-                //         response.Content.Headers.LastModified?.ToString("ddd, dd MMM yyy HH':'mm':'ss 'GMT'", culture);
-                // }
-                // 如果响应401，就返回登录页面
-                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    _navigation.NavigateTo("/login");
-                    return default;
-                }
-
-                // 如果请求不成功并且不是缓存响应则抛出异常
-                if (
-                    !response.IsSuccessStatusCode
-                    && response.StatusCode != HttpStatusCode.NotModified
-                )
-                {
-                    var error = await response.Content.ReadFromJsonAsync<
-                        Dictionary<string, string>
-                    >();
-                    _logger.LogDebug("request error:{Error}", error);
-                }
-
-                // 处理304缓存
-                if (response.StatusCode == HttpStatusCode.NotModified)
-                {
-                    if (CacheResponseData.ContainsKey(eTagKey))
-                    {
-                        return (T)CacheResponseData[eTagKey];
-                    }
-
-                    return default;
-                }
-
-                if (action != null)
-                    action(response);
-
-                if (typeof(T) == typeof(string))
-                {
-                    object content = await response.Content.ReadAsStringAsync();
-                    CacheResponseData[eTagKey] = content;
-                    return (T)content;
-                }
-
-                if (response.StatusCode == HttpStatusCode.NoContent)
-                {
-                    return default;
-                }
-
-                // var responseData = await response.Content.ReadFromJsonAsync<T>(
-                //     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                // );
-                var json = await response.Content.ReadAsStringAsync();
-                var responseData = JsonSerializer.Deserialize<T>(json, JsonSerializerOptions);
-
-                CacheResponseData[eTagKey] = responseData;
-                return responseData;
-            }
-            catch (Exception e)
+                NoCache = true,
+                NoStore = true,
+            };
+            // 开始请求API
+            using var response = await _httpClient.SendAsync(request);
+            // 如果响应401，就返回登录页面
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                Console.WriteLine(e);
+                var returnUrl = Uri.EscapeDataString(navigation.Uri);
+                navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}");
                 return default;
             }
-            finally
+            // 如果请求不成功并且不是缓存响应则抛出异常
+            if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
             {
-                _logger.LogDebug(
-                    "current user:{User}",
-                    JsonSerializer.Serialize(
-                        user,
-                        new JsonSerializerOptions { WriteIndented = true }
-                    )
-                );
-                SemaphoreSlim.Release();
-            }
-        }
-
-        private string HandleParameter(string uri, object value)
-        {
-            if (value == null)
-                return uri;
-            var index = uri.IndexOf("?", StringComparison.CurrentCultureIgnoreCase);
-            var query = index >= 0 ? uri.Substring(index) : "";
-            var queryParameters = HttpUtility.ParseQueryString(query);
-
-            var properties = value.GetType().GetProperties();
-            foreach (var property in properties)
-            {
-                queryParameters.Add(property.Name, property.GetValue(value)?.ToString());
+                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                logger.LogDebug("request error:{Error}", error);
             }
 
-            var newUri = "";
-            if (index >= 0)
+            // 处理304缓存
+            if (response.StatusCode == HttpStatusCode.NotModified)
             {
-                newUri = uri.Substring(0, index + 1) + queryParameters;
-            }
-            else
-            {
-                newUri += "?" + queryParameters;
-            }
-
-            return newUri;
-        }
-
-        public async Task<T> GetAsync<T>(string uri, object value = null)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(uri, value));
-            return await SendRequestAsync<T>(request);
-        }
-
-        public async Task<IPagedList<T>> GetPageAsync<T>(
-            string uri,
-            int pageIndex = 1,
-            int pageSize = 10,
-            object value = null
-        )
-        {
-            var pageUri = $"{uri}?pageIndex={pageIndex}&pageSize={pageSize}";
-            var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(pageUri, value));
-            var pagination = new Pagination();
-            var list = await SendRequestAsync<List<T>>(
-                request,
-                x =>
+                if (CacheResponseData.TryGetValue(eTagKey, out var value))
                 {
-                    var xPagination = x.Headers.GetValues("X-Pagination").FirstOrDefault();
-                    if (xPagination != null)
-                    {
-                        pagination = JsonSerializer.Deserialize<Pagination>(
-                            xPagination,
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                        );
-                    }
+                    return (T)value;
                 }
-            );
-            var pagedList = new PagedList<T>(
-                list ?? new List<T>(),
-                pagination.CurrentPage,
-                pagination.PageSize,
-                pagination.TotalCount
-            );
-            return pagedList;
-        }
 
-        public async Task<T> PostAsync<T>(string uri, object value)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            if (value != null)
-                request.Content = JsonContent.Create(value);
-            return await SendRequestAsync<T>(request);
-        }
-
-        public async Task PostAsync(string uri, object value)
-        {
-            if (uri == null)
-                throw new ArgumentNullException(nameof(uri));
-            var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            if (value != null)
-            {
-                SetHttpContent(value, request);
+                return default;
             }
-            await SendRequestAsync(request);
-        }
 
-        private static void SetHttpContent(object value, HttpRequestMessage request)
-        {
-            HttpContent httpContent;
-            if (value is string content)
+            action?.Invoke(response);
+
+            if (typeof(T) == typeof(string))
             {
-                httpContent = new StringContent(content, Encoding.UTF8);
+                object content = await response.Content.ReadAsStringAsync();
+                CacheResponseData[eTagKey] = content;
+                return (T)content;
             }
-            else
+
+            if (response.StatusCode == HttpStatusCode.NoContent)
             {
-                httpContent = JsonContent.Create(value);
+                return default;
             }
-            request.Content = httpContent;
+
+            var json = await response.Content.ReadAsStringAsync();
+            var responseData = JsonSerializer.Deserialize<T>(json, JsonSerializerOptions);
+
+            CacheResponseData[eTagKey] = responseData;
+            return responseData;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return default;
+        }
+        finally
+        {
+            logger.LogDebug("request finished: {Method} {Uri}", request.Method, request.RequestUri);
+            SemaphoreSlim.Release();
+        }
+    }
+
+    private static string HandleParameter(string uri, object value)
+    {
+        if (value == null)
+        {
+            return uri;
+        }
+        var index = uri.IndexOf("?", StringComparison.CurrentCultureIgnoreCase);
+        var query = index >= 0 ? uri.Substring(index) : "";
+        var queryParameters = HttpUtility.ParseQueryString(query);
+
+        var properties = value.GetType().GetProperties();
+        foreach (var property in properties)
+        {
+            queryParameters.Add(property.Name, property.GetValue(value)?.ToString());
         }
 
-        public async Task<T> PutAsync<T>(string uri, object value)
+        var newUri = "";
+        if (index >= 0)
         {
-            var request = new HttpRequestMessage(HttpMethod.Put, uri);
-            if (value != null)
-                request.Content = JsonContent.Create(value);
-            return await SendRequestAsync<T>(request);
+            newUri = uri.Substring(0, index + 1) + queryParameters;
+        }
+        else
+        {
+            newUri += "?" + queryParameters;
         }
 
-        public async Task PutAsync(string uri, object value)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Put, uri);
-            if (value != null)
-                request.Content = JsonContent.Create(value);
-            await SendRequestAsync(request);
-        }
+        return newUri;
+    }
 
-        public async Task<T> PatchAsync<T>(string uri, object value)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Patch, uri);
-            if (value != null)
-                SetHttpContent(value, request);
-            return await SendRequestAsync<T>(request);
-        }
+    public async Task<T> GetAsync<T>(string uri, object value = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(uri, value));
+        return await SendRequestAsync<T>(request);
+    }
 
-        public async Task PatchAsync(string uri, object value)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Patch, uri);
-            if (value != null)
-                SetHttpContent(value, request);
-            await SendRequestAsync(request);
-        }
+    public async Task<IPagedList<T>> GetPageAsync<T>(
+        string uri,
+        int pageIndex = 1,
+        int pageSize = 10,
+        object value = null
+    )
+    {
+        var pageUri = $"{uri}?pageIndex={pageIndex}&pageSize={pageSize}";
+        var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(pageUri, value));
+        var pagination = new Pagination();
+        var list = await SendRequestAsync<List<T>>(
+            request,
+            x =>
+            {
+                var xPagination = x.Headers.GetValues("X-Pagination").FirstOrDefault();
+                if (xPagination != null)
+                {
+                    pagination = JsonSerializer.Deserialize<Pagination>(
+                        xPagination,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+                }
+            }
+        );
+        var pagedList = new PagedList<T>(
+            list ?? new List<T>(),
+            pagination.CurrentPage,
+            pagination.PageSize,
+            pagination.TotalCount
+        );
+        return pagedList;
+    }
 
-        public async Task<T> DeleteAsync<T>(string uri, object value)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Delete, uri);
-            if (value != null)
-                request.Content = JsonContent.Create(value);
-            return await SendRequestAsync<T>(request);
-        }
+    public async Task<T> PostAsync<T>(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, uri);
+        if (value != null)
+            request.Content = JsonContent.Create(value);
+        return await SendRequestAsync<T>(request);
+    }
 
-        public async Task DeleteAsync(string uri, object value)
+    public async Task PostAsync(string uri, object value)
+    {
+        if (uri == null)
+            throw new ArgumentNullException(nameof(uri));
+        var request = new HttpRequestMessage(HttpMethod.Post, uri);
+        if (value != null)
         {
-            var request = new HttpRequestMessage(HttpMethod.Delete, uri);
-            if (value != null)
-                request.Content = JsonContent.Create(value);
-            await SendRequestAsync(request);
+            SetHttpContent(value, request);
         }
+        await SendRequestAsync(request);
+    }
 
-        public async Task<T> PostFileAsync<T>(
-            string uri,
-            MultipartFormDataContent content,
-            HttpMethod method = null
-        )
+    private static void SetHttpContent(object value, HttpRequestMessage request)
+    {
+        HttpContent httpContent;
+        if (value is string content)
         {
-            var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
-            request.Content = content;
-            return await SendRequestAsync<T>(request);
+            httpContent = new StringContent(content, Encoding.UTF8);
         }
+        else
+        {
+            httpContent = JsonContent.Create(value);
+        }
+        request.Content = httpContent;
+    }
 
-        public async Task PostFileAsync(
-            string uri,
-            MultipartFormDataContent content,
-            HttpMethod method = null
-        )
-        {
-            var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
-            request.Content = content;
-            await SendRequestAsync(request);
-        }
+    public async Task<T> PutAsync<T>(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, uri);
+        if (value != null)
+            request.Content = JsonContent.Create(value);
+        return await SendRequestAsync<T>(request);
+    }
+
+    public async Task PutAsync(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, uri);
+        if (value != null)
+            request.Content = JsonContent.Create(value);
+        await SendRequestAsync(request);
+    }
+
+    public async Task<T> PatchAsync<T>(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, uri);
+        if (value != null)
+            SetHttpContent(value, request);
+        return await SendRequestAsync<T>(request);
+    }
+
+    public async Task PatchAsync(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, uri);
+        if (value != null)
+            SetHttpContent(value, request);
+        await SendRequestAsync(request);
+    }
+
+    public async Task<T> DeleteAsync<T>(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, uri);
+        if (value != null)
+            request.Content = JsonContent.Create(value);
+        return await SendRequestAsync<T>(request);
+    }
+
+    public async Task DeleteAsync(string uri, object value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, uri);
+        if (value != null)
+            request.Content = JsonContent.Create(value);
+        await SendRequestAsync(request);
+    }
+
+    public async Task<T> PostFileAsync<T>(
+        string uri,
+        MultipartFormDataContent content,
+        HttpMethod method = null
+    )
+    {
+        var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
+        request.Content = content;
+        return await SendRequestAsync<T>(request);
+    }
+
+    public async Task PostFileAsync(
+        string uri,
+        MultipartFormDataContent content,
+        HttpMethod method = null
+    )
+    {
+        var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
+        request.Content = content;
+        await SendRequestAsync(request);
     }
 }

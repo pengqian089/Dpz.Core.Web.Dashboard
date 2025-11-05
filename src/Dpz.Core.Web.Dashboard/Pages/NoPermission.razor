@@ -1,0 +1,21 @@
+﻿@page "/no-permission"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@layout PublicLayout
+@inject NavigationManager Navigation
+
+<div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
+    <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Color="Color.Warning" Size="Size.Large"/>
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mt-4">
+        当前账号的权限不足以访问。
+    </MudAlert>
+    <MudButton Class="mt-4" Color="Color.Primary" Variant="Variant.Filled" OnClick="LogOut">
+        退出
+    </MudButton>
+</div>
+
+@code {
+    private void LogOut(MouseEventArgs obj)
+    {
+        Navigation.NavigateToLogout("authentication/logout");
+    }
+}

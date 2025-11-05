@@ -38,9 +38,9 @@
                    Class="mt-2"
                    AdornmentColor="Color.Primary"
                    @ref="_secondSelect">
-                @foreach (var item in _secondItems.OrderBy(x => x.Key))
+                @foreach (var item in _secondItems.OrderBy(x => x.Id))
                 {
-                    <MudSelectItem Value="@item.Key">@item.Value</MudSelectItem>
+                    <MudSelectItem Value="@item.Id">@item.Title</MudSelectItem>
                 }
         </MudSelect>
 
@@ -87,9 +87,9 @@
             @context.Node
         </MudTd>
         <MudTd DataLabel="关联">
-            @if (_secondItems.ContainsKey(context.Relation))
+            @if (FindRelation(context.Relation,out var title))
             {
-                <span>@_secondItems[context.Relation]</span>
+                <span>@title</span>
             }
             else
             {

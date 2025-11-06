@@ -14,6 +14,7 @@ using System.Web;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.Extensions.Logging;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
@@ -33,25 +34,70 @@ public class HttpService(
 
     private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
+    private void NavigateToSessionExpired()
+    {
+        var currentUri = navigation.Uri;
+
+        if (
+            !string.IsNullOrWhiteSpace(currentUri)
+            && currentUri.Contains("/session-expired", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            return;
+        }
+
+        var returnUrl = string.IsNullOrWhiteSpace(currentUri)
+            ? string.Empty
+            : Uri.EscapeDataString(currentUri);
+
+        var target = string.IsNullOrEmpty(returnUrl)
+            ? "/session-expired"
+            : $"/session-expired?returnUrl={returnUrl}";
+
+        navigation.NavigateTo(target);
+    }
+
     private async Task SendRequestAsync(HttpRequestMessage request)
     {
         await SemaphoreSlim.WaitAsync();
         try
         {
-            // 开始请求API
-            using var response = await _httpClient.SendAsync(request);
-            // 如果响应401，就返回登录页面
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            try
             {
-                var returnUrl = Uri.EscapeDataString(navigation.Uri);
-                navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}");
-                return;
+                // 开始请求API
+                using var response = await _httpClient.SendAsync(request);
+                // 如果响应401，就返回登录页面
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    logger.LogWarning(
+                        "request unauthorized: {Method} {Uri}",
+                        request.Method,
+                        request.RequestUri
+                    );
+                    NavigateToSessionExpired();
+                    return;
+                }
+                // 如果请求不成功并且不是缓存响应则抛出异常
+
+                if (
+                    !response.IsSuccessStatusCode
+                    && response.StatusCode != HttpStatusCode.NotModified
+                )
+                {
+                    var result = await response.Content.ReadAsStringAsync();
+                    throw new FetchException(result);
+                }
             }
-            // 如果请求不成功并且不是缓存响应则抛出异常
-            if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
+            catch (AccessTokenNotAvailableException ex)
             {
-                var result = await response.Content.ReadAsStringAsync();
-                throw new FetchException(result);
+                logger.LogWarning(
+                    ex,
+                    "access token unavailable: {Method} {Uri}",
+                    request.Method,
+                    request.RequestUri
+                );
+                NavigateToSessionExpired();
+                return;
             }
         }
         finally
@@ -82,16 +128,22 @@ public class HttpService(
                 NoCache = true,
                 NoStore = true,
             };
+
             // 开始请求API
             using var response = await _httpClient.SendAsync(request);
             // 如果响应401，就返回登录页面
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                var returnUrl = Uri.EscapeDataString(navigation.Uri);
-                navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}");
+                logger.LogWarning(
+                    "request unauthorized: {Method} {Uri}",
+                    request.Method,
+                    request.RequestUri
+                );
+                NavigateToSessionExpired();
                 return default;
             }
             // 如果请求不成功并且不是缓存响应则抛出异常
+
             if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
             {
                 var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
@@ -129,9 +181,25 @@ public class HttpService(
             CacheResponseData[eTagKey] = responseData;
             return responseData;
         }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "access token unavailable: {Method} {Uri}",
+                request.Method,
+                request.RequestUri
+            );
+            NavigateToSessionExpired();
+            return default;
+        }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(
+                e,
+                "request failed: {Method} {Uri}",
+                request.Method,
+                request.RequestUri
+            );
             return default;
         }
         finally

@@ -1,0 +1,18 @@
+@page "/session-expired"
+@layout PublicLayout
+
+<PageTitle>会话过期</PageTitle>
+
+<AuthLoginPrompt ReturnUrl="@ResolvedReturnUrl"
+                 Seconds="8"
+                 Message="会话已过期"
+                 Description="由于密码修改或长时间未操作，您的登录状态已失效。请重新登录以继续。" />
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string ReturnUrl { get; set; }
+
+    private string ResolvedReturnUrl => string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+}
+

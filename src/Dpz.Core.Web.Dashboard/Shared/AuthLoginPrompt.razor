@@ -3,9 +3,9 @@
 
 <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
     <MudIcon Icon="@Icons.Material.Outlined.Lock" Color="Color.Primary" Size="Size.Large" />
-    <MudText Typo="Typo.h5" Class="mt-4">需要登录后访问此页面</MudText>
+    <MudText Typo="Typo.h5" Class="mt-4">@Message</MudText>
     <MudText Typo="Typo.body2" Class="mt-2 mb-6" Color="Color.Secondary">
-        请先完成身份验证，然后我们会带您返回当前页面
+        @Description
     </MudText>
     <div class="d-flex align-center">
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="LoginNow">立即登录</MudButton>
@@ -20,6 +20,8 @@
 @code {
     [Parameter] public string ReturnUrl { get; set; }
     [Parameter] public int Seconds { get; set; } = 5;
+    [Parameter] public string Message { get; set; } = "需要登录后访问此页面";
+    [Parameter] public string Description { get; set; } = "请先完成身份验证，然后我们会带您返回当前页面";
 
     private int _seconds;
     private bool _autoRedirect = true;

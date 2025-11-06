@@ -3,8 +3,10 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="music-container">
     <MudPaper Class="music-hero pa-6 mb-6" Elevation="1">
-        <MudStack Direction="Row" Spacing="3" AlignItems="AlignItems.Center">
-            <MudAvatar Icon="@Icons.Material.Filled.LibraryMusic" Size="Size.Large" Class="music-hero__avatar"/>
+        <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center">
+            <MudAvatar Size="Size.Large" Class="music-hero__avatar">
+                <MudIcon Icon="@Icons.Material.Filled.Album" Size="Size.Large" />
+            </MudAvatar>
             <MudStack Spacing="1">
                 <MudText Typo="Typo.h4" Class="music-hero__title">添加音乐</MudText>
                 <MudText Typo="Typo.subtitle1" Class="music-hero__subtitle">上传音频、封面与歌词，一次性完成音乐素材的整理</MudText>
@@ -24,7 +26,7 @@
                     <MudStack Spacing="4">
                         <section class="upload-block">
                             <InputFile OnChange="OnMusicChanged" id="fileMusic" hidden accept="@(string.Join(',', _musicExtensions.Select(x => '.' + x)))"/>
-                            <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="upload-block__header">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="upload-block__header">
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.h6">音频文件</MudText>
                                     <MudText Typo="Typo.body2" Class="upload-block__hint">支持批量选择，自动识别格式与大小</MudText>
@@ -66,7 +68,7 @@
 
                         <section class="upload-block">
                             <InputFile OnChange="OnCoverChanged" id="fileCover" hidden accept="@(string.Join(',', AppTools.ImageExtensions.Select(x => '.' + x)))"/>
-                            <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="upload-block__header">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="upload-block__header">
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.h6">封面图片</MudText>
                                     <MudText Typo="Typo.body2" Class="upload-block__hint">推荐上传正方形高清封面，自动预览效果</MudText>
@@ -111,7 +113,7 @@
 
                         <section class="upload-block">
                             <InputFile OnChange="OnLrcChanged" id="fileLrc" hidden accept=".lrc"/>
-                            <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="upload-block__header">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="upload-block__header">
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.h6">歌词文件</MudText>
                                     <MudText Typo="Typo.body2" Class="upload-block__hint">支持标准 .LRC 歌词文件，自动展示文本</MudText>
@@ -177,7 +179,7 @@
                             </MudTextField>
                         </section>
 
-                        <MudStack Direction="Row" Justify="Justify.FlexEnd" Spacing="2" Class="actions-row">
+                        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="actions-row">
                             <MudButton Variant="Variant.Outlined" Color="Color.Default" Href="/music">返回列表</MudButton>
                             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPosting" Color="Color.Primary" Class="submit-button">
                                 @if (_isPosting)

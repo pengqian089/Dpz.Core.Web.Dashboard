@@ -5,10 +5,10 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 
-<MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout>
     <MudAppBar Elevation="25">
@@ -16,7 +16,8 @@
             <img src="https://dpangzi.com/core/images/Lara-Croft.png" style="width: 50px" alt="logo"/>
         </MudHidden>
         <MudHidden Breakpoint="Breakpoint.MdAndUp">
-            <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                           OnClick="@((e) => DrawerToggle())"/>
         </MudHidden>
         <MudHidden Breakpoint="Breakpoint.Xs">
             <MudText Typo="Typo.h6" Class="ml-4">后台管理系统</MudText>
@@ -24,15 +25,22 @@
         <MudHidden Breakpoint="Breakpoint.Xs" Invert="true">
             <MudText Typo="Typo.subtitle2">后台管理系统</MudText>
         </MudHidden>
-        <MudSpacer />
+        <MudSpacer/>
         @* <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"  Dense="true"> *@
         @*     <MudMenuItem>简体中文</MudMenuItem> *@
         @* </MudMenu> *@
-        <MudMenu Icon="@Icons.Material.Outlined.Widgets" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"  Dense="true">
-            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://core.dpangzi.com" Target="_blank">Core站点</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://www.dpangzi.com" Target="_blank">主站点</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.EventNote" Href="https://www.dpangzi.com" Target="_blank">日志</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.SettingsApplications" Href="https://config.dpangzi.com" Target="_blank">系统配置</MudMenuItem>
+        <MudMenu Icon="@Icons.Material.Outlined.Widgets" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"
+                 Dense="true">
+            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://core.dpangzi.com" Target="_blank">
+                Core站点
+            </MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://www.dpangzi.com" Target="_blank">主站点
+            </MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.EventNote" Href="https://www.dpangzi.com" Target="_blank">日志
+            </MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.SettingsApplications" Href="https://config.dpangzi.com"
+                         Target="_blank">系统配置
+            </MudMenuItem>
         </MudMenu>
         <AuthorizeView>
             <Authorized Context="auth">
@@ -43,17 +51,20 @@
                         }
                         @if (!string.IsNullOrWhiteSpace(avatar))
                         {
-                            <MudImage Src="@avatar" Style="width: 24px;height: 24px" />
+                            <MudImage Src="@avatar" Style="width: 24px;height: 24px"/>
                         }
                         else
                         {
-                            <MudAvatar Size="Size.Medium" Icon="@Icons.Material.Outlined.Person" />
+                            <MudAvatar Size="Size.Medium">
+                                <MudIcon Icon="@Icons.Material.Outlined.Person"></MudIcon>
+                            </MudAvatar>
                         }
                     </ActivatorContent>
                     <ChildContent>
-                        <PersonCard Class="mt-n2" />
-                        <MudDivider Class="mb-2" />
-                        <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login" OnClick="BeginLogout" />
+                        <PersonCard Class="mt-n2"/>
+                        <MudDivider Class="mb-2"/>
+                        <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login"
+                                     OnClick="BeginLogout"/>
                     </ChildContent>
                 </MudMenu>
             </Authorized>
@@ -61,19 +72,21 @@
                 @{
                     var returnUrl = Uri.EscapeDataString(Navigation.Uri);
                 }
-                <MudButton Variant="Variant.Text" Href="@($"/authentication/login?returnUrl={returnUrl}")">登录</MudButton>
+                <MudButton Variant="Variant.Text" Href="@($"/authentication/login?returnUrl={returnUrl}")">登录
+                </MudButton>
             </NotAuthorized>
         </AuthorizeView>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="25" ClipMode="DrawerClipMode.Always">
-        <NavMenu />
+        <NavMenu/>
     </MudDrawer>
     <MudMainContent>
         <MudHidden Breakpoint="Breakpoint.SmAndDown">
             <MudToolBar Gutters="false">
-                <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" OnClick="@((e) => DrawerToggle())" Class="ml-3" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit"
+                               OnClick="@((e) => DrawerToggle())" Class="ml-3"/>
                 @*<MudBreadcrumbs Items="_items"></MudBreadcrumbs>*@
-                <MudSpacer />
+                <MudSpacer/>
             </MudToolBar>
         </MudHidden>
         <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
@@ -85,9 +98,9 @@
 
 @code {
     //private MudBlazorAdminDashboard _theme = new();
-    
+
     private bool _isDarkMode;
-    
+
     private MudThemeProvider _mudThemeProvider;
 
     private bool _drawerOpen = true;
@@ -118,6 +131,7 @@
             //     _mudThemeProvider.Theme = new MudBlazorAdminDashboard();
             StateHasChanged();
         }
+
         await base.OnAfterRenderAsync(firstRender);
     }
 
@@ -126,7 +140,7 @@
     //    new BreadcrumbItem("Personal", href: "#"),
     //    new BreadcrumbItem("Dashboard", href: "#"),
     //};
-    
+
     private Task BeginLogout()
     {
         var returnUrl = Uri.EscapeDataString(Navigation.Uri);

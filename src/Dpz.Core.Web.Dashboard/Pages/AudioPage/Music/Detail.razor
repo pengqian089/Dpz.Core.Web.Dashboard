@@ -3,8 +3,10 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="music-container">
     <MudPaper Class="music-hero pa-6 mb-6" Elevation="1">
-        <MudStack Direction="Row" Spacing="3" AlignItems="AlignItems.Center">
-            <MudAvatar Icon="@Icons.Material.Filled.Album" Size="Size.Large" Class="music-hero__avatar"/>
+        <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center">
+            <MudAvatar Size="Size.Large" Class="music-hero__avatar">
+                <MudIcon Icon="@Icons.Material.Filled.Album" Size="Size.Large" />
+            </MudAvatar>
             <MudStack Spacing="1">
                 <MudText Typo="Typo.h4" Class="music-hero__title">音乐详情</MudText>
                 <MudText Typo="Typo.subtitle1" Class="music-hero__subtitle">
@@ -21,7 +23,7 @@
                 <MudSkeleton Width="30%" Height="42px"/>
                 <MudSkeleton Width="80%" Height="24px"/>
                 <MudSkeleton Width="100%" Height="160px"/>
-                <MudStack Direction="Row" Spacing="2">
+                <MudStack Row="true" Spacing="2">
                     <MudSkeleton Width="120px" Height="40px"/>
                     <MudSkeleton Width="140px" Height="40px"/>
                 </MudStack>
@@ -73,7 +75,7 @@
                             <section class="upload-block">
                                 <InputFile OnChange="OnCoverChanged" id="fileCover" hidden
                                            accept="@(string.Join(',', AppTools.ImageExtensions.Select(x => '.' + x)))"/>
-                                <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
                                           Class="upload-block__header">
                                     <MudStack Spacing="1">
                                         <MudText Typo="Typo.h6">封面图片</MudText>
@@ -125,7 +127,7 @@
 
                             <section class="upload-block">
                                 <InputFile OnChange="OnLrcChanged" id="fileLrc" hidden accept=".lrc"/>
-                                <MudStack Direction="Row" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
                                           Class="upload-block__header">
                                     <MudStack Spacing="1">
                                         <MudText Typo="Typo.h6">歌词文件</MudText>
@@ -196,7 +198,7 @@
                                 </MudTextField>
                             </section>
 
-                            <MudStack Direction="Row" Justify="Justify.FlexEnd" Spacing="2" Class="actions-row">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="actions-row">
                                 <MudButton Variant="Variant.Outlined" Color="Color.Default" Href="/music">返回列表
                                 </MudButton>
                                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPosting"

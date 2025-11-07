@@ -2,223 +2,424 @@
 @attribute [Authorize]
 @inject IJSRuntime JsRuntime
 @inject ICommunityService CommunityService
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">首页</MudText>
-<MudGrid>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="d-flex flex-row pt-6 pb-4" Style="height:100px;">
-            <MudIcon Icon="@Icons.Material.Filled.Article" Color="Color.Primary" Class="mx-4" Style="width:54px; height:54px;"></MudIcon>
-            <div>
-                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary mb-n1">总文章数</MudText>
-                @if (_isLoading)
-                {
-                    <MudSkeleton Width="100%" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5">@_summary?.ArticleTotalCount.ToString("N0")</MudText>
-                }
-            </div>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="d-flex flex-row pt-6 pb-4" Style="height:100px;">
-            <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Secondary" Class="mx-4" Style="width:54px; height:54px;"></MudIcon>
-            <div>
-                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary mb-n1">今日访问次数</MudText>
-                @if (_isLoading)
-                {
-                    <MudSkeleton Width="100%" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5">@_summary?.TodayAccessNumber.Sum(x => x.Count).ToString("N0")</MudText>
-                }
-            </div>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="d-flex flex-row pt-6 pb-4" Style="height:100px;">
-            <MudIcon Icon="@Icons.Material.Filled.FiberNew" Color="Color.Success" Class="mx-4" Style="width:54px; height:54px;"></MudIcon>
-            <div>
-                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary mb-n1">今日抓取文章</MudText>
-                @if (_isLoading)
-                {
-                    <MudSkeleton Width="100%" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5">@_summary?.TodayArticleCount.ToString("N0")</MudText>
-                }
-            </div>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="d-flex flex-row pt-6 pb-4" Style="height:100px;">
-            <MudIcon Icon="@Icons.Material.Filled.AddComment" Color="Color.Warning" Class="mx-4" Style="width:54px; height:54px;"></MudIcon>
-            <div>
-                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary mb-n1">近7天访问次数</MudText>
-                @if (_isLoading)
-                {
-                    <MudSkeleton Width="100%" />
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5">@_summary?.WeekAccessNumber.Sum(x => x.Count).ToString("N0")</MudText>
-                }
-            </div>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="8">
-        <MudCard Style="height: 500px">
-            @if (_isLoading)
-            {
-                <MudSkeleton Width="100%" Height="100%" />
-            }
-            else
-            {
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">最新日志</MudText>
-                    </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudIconButton Icon="fas fa-info-circle" Color="Color.Default" />
-                    </CardHeaderActions>
-                </MudCardHeader>
-                <MudCardContent Style="height: 85%">
-                    <pre style="height:100%" class="line-numbers language-log"><code>@_summary?.LatestLogs</code></pre>
-                </MudCardContent>
-            }
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        @if (_isLoading)
-        {
-            <MudSkeleton Width="100%" Height="500px" />
-        }
-        else
-        {
-            <MudCarousel Style="height:500px;" ShowArrows="true" ShowBullets="true" AutoCycle="true" TData="object">
-                @foreach (var item in _summary?.Banner ?? [])
-                {
-                    <MudCarouselItem Transition="Transition.Slide">
-                        <div class="d-flex" style="height: 100%">
-                            <img src="@item.AccessUrl" alt="@item.Description" />
-                            <div class="banner-information">
-                                @if (!string.IsNullOrEmpty(item.Description))
-                                {
-                                    <span>@item.Description</span>
-                                }
-                            </div>
-                        </div>
-                    </MudCarouselItem>
-                }
-            </MudCarousel>
-        }
-    </MudItem>
-    <MudItem xs="12" sm="12" md="6">
-        @if (_isLoading)
-        {
-            <MudSkeleton Width="100%" Height="400px" />
-        }
-        else
-        {
-            <MudCard Style="height:100%;">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">
-                            <MudLink Href="/article">最新文章</MudLink>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="dashboard-container">
+    <MudStack Spacing="3">
+        <MudPaper Class="dashboard-hero pa-6" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="3" Class="hero-layout">
+                <MudStack Spacing="1" Class="hero-text">
+                    @if (_isLoading)
+                    {
+                        <MudSkeleton Width="240px" Height="40px"/>
+                        <MudSkeleton Width="420px" Height="20px"/>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h3" Class="dashboard-hero__title">内容运营总览</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="dashboard-hero__subtitle">
+                            今日抓取文章 @FormatNumber(_summary?.TodayArticleCount ?? 0) 条，以下指标基于缓存统计数据。
                         </MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent Class="px-0">
-                    <MudSimpleTable Elevation="0" Hover="true">
-                        <thead>
-                            <tr>
-                                <th>标题</th>
-                                <th>作者</th>
-                                <th>图片数量</th>
-                                <th>发布时间</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in _summary?.LatestArticles ?? [])
+                    }
+                </MudStack>
+                <MudStack AlignItems="AlignItems.End" Spacing="1" Class="hero-actions">
+                    @if (_isLoading)
+                    {
+                        <MudSkeleton Width="220px" Height="36px" Class="mb-1"/>
+                        <MudSkeleton Width="140px" Height="40px"/>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined"
+                                 Icon="@Icons.Material.Filled.CalendarToday">
+                            @(_lastUpdated == DateTime.MinValue ? "数据尚未加载" : $"更新于 {_lastUpdated:yyyy-MM-dd HH:mm}")
+                        </MudChip>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Refresh"
+                                   Disabled="_isLoading"
+                                   OnClick="RefreshSummaryAsync">
+                            刷新数据
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        <MudGrid Spacing="3" Class="stats-grid">
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="stat-card stat-card--primary" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                        <div class="stat-card__icon stat-card__icon--primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Article" Color="Color.Inherit"/>
+                        </div>
+                        <MudStack AlignItems="AlignItems.End" Spacing="1">
+                            <MudText Typo="Typo.subtitle2" Class="stat-card__label">总文章数</MudText>
+                            @if (_isLoading)
                             {
-                                <tr>
-                                    <td>
-                                        <MudLink Href="@($"{Program.WebHost}/article/read/{item.Id}.html")" Target="_blank">@item.Title</MudLink>
-                                    </td>
-                                    <td>
-                                        @item.Author.Name
-                                    </td>
-                                    <td>
-                                        @item.ImagesAddress.Count
-                                    </td>
-                                    <td>
-                                        @item.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
-                                    </td>
-                                </tr>
+                                <MudSkeleton Width="90px" Height="32px"/>
                             }
-                        </tbody>
-                    </MudSimpleTable>
-                </MudCardContent>
-            </MudCard>
-        }
-    </MudItem>
-    <MudItem xs="12" sm="12" md="6">
-        @if (_isLoading)
-        {
-            <MudSkeleton Width="100%" Height="400px" />
-        }
-        else
-        {
-            <MudChart ChartType="ChartType.Line" ChartSeries="@_series" @bind-SelectedIndex="_index" XAxisLabels="@_xAxisLabels" Width="100%" Height="400px"></MudChart>
-        }
-    </MudItem>
-</MudGrid>
+                            else
+                            {
+                                <MudText Typo="Typo.h4"
+                                         Class="stat-card__value">@FormatNumber(_summary?.ArticleTotalCount ?? 0)</MudText>
+                                <MudText Typo="Typo.caption" Class="stat-card__hint">累计抓取内容</MudText>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="stat-card stat-card--accent" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                        <div class="stat-card__icon stat-card__icon--accent">
+                            <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Inherit"/>
+                        </div>
+                        <MudStack AlignItems="AlignItems.End" Spacing="1">
+                            <MudText Typo="Typo.subtitle2" Class="stat-card__label">今日访问次数</MudText>
+                            @if (_isLoading)
+                            {
+                                <MudSkeleton Width="90px" Height="32px"/>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h4"
+                                         Class="stat-card__value">@FormatNumber(TodayAccessTotal)</MudText>
+                                <MudText Typo="Typo.caption" Class="stat-card__hint">
+                                    7日均值 @FormatNumber(WeekAverage)</MudText>
+                            }
+                        </MudStack>
+                    </MudStack>
+                    <MudProgressLinear Value="@TodayAccessProgress" Color="Color.Secondary" Class="stat-card__progress"
+                                       Rounded="true"/>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="stat-card stat-card--success" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                        <div class="stat-card__icon stat-card__icon--success">
+                            <MudIcon Icon="@Icons.Material.Filled.FiberNew" Color="Color.Inherit"/>
+                        </div>
+                        <MudStack AlignItems="AlignItems.End" Spacing="1">
+                            <MudText Typo="Typo.subtitle2" Class="stat-card__label">今日抓取文章</MudText>
+                            @if (_isLoading)
+                            {
+                                <MudSkeleton Width="90px" Height="32px"/>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h4"
+                                         Class="stat-card__value">@FormatNumber(_summary?.TodayArticleCount ?? 0)</MudText>
+                                <MudText Typo="Typo.caption" Class="stat-card__hint">最新文章 @LatestArticleCount 篇
+                                </MudText>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Class="stat-card stat-card--warning" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                        <div class="stat-card__icon stat-card__icon--warning">
+                            <MudIcon Icon="@Icons.Material.Filled.Insights" Color="Color.Inherit"/>
+                        </div>
+                        <MudStack AlignItems="AlignItems.End" Spacing="1">
+                            <MudText Typo="Typo.subtitle2" Class="stat-card__label">近7天访问次数</MudText>
+                            @if (_isLoading)
+                            {
+                                <MudSkeleton Width="90px" Height="32px"/>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h4"
+                                         Class="stat-card__value">@FormatNumber(WeekAccessTotal)</MudText>
+                                <MudText Typo="Typo.caption" Class="stat-card__hint">Banner 数量 @BannerCount</MudText>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" lg="8">
+                <MudCard Class="panel-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Terminal" Color="Color.Primary"/>
+                                <MudText Typo="Typo.h6">最新日志</MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudTooltip Text="日志由后台实时推送">
+                                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Inherit"/>
+                            </MudTooltip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (_isLoading)
+                        {
+                            <MudSkeleton Width="100%" Height="320px"/>
+                        }
+                        else if (string.IsNullOrWhiteSpace(_summary?.LatestLogs))
+                        {
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1"
+                                      Class="log-empty">
+                                <MudIcon Icon="@Icons.Material.Filled.Inbox" Color="Color.Default" Size="Size.Large"/>
+                                <MudText Typo="Typo.subtitle2">暂无日志信息</MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <div class="log-scroll">
+                                <pre class="log-content"><code>@_summary?.LatestLogs</code></pre>
+                            </div>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudCard Class="panel-card banner-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Image" Color="Color.Secondary"/>
+                                <MudText Typo="Typo.h6">运营位 Banner</MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Color="Color.Secondary" Variant="Variant.Filled"
+                                     Icon="@Icons.Material.Filled.Collections">@BannerCount 个
+                            </MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (_isLoading)
+                        {
+                            <MudSkeleton Width="100%" Height="320px"/>
+                        }
+                        else if (!(_summary?.Banner?.Any() ?? false))
+                        {
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1"
+                                      Class="log-empty">
+                                <MudIcon Icon="@Icons.Material.Filled.Collections" Color="Color.Default"
+                                         Size="Size.Large"/>
+                                <MudText Typo="Typo.subtitle2">暂无 Banner 配置</MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudCarousel Style="height:320px;" ShowArrows="true" ShowBullets="true" AutoCycle="true"
+                                         TData="object">
+                                @foreach (var item in _summary?.Banner ?? [])
+                                {
+                                    <MudCarouselItem Transition="Transition.Slide">
+                                        <div class="banner-item">
+                                            <img src="@item.AccessUrl" alt="@item.Description"
+                                                 class="banner-item__image"/>
+                                            @if (!string.IsNullOrEmpty(item.Description))
+                                            {
+                                                <div class="banner-item__overlay">@item.Description</div>
+                                            }
+                                        </div>
+                                    </MudCarouselItem>
+                                }
+                            </MudCarousel>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" lg="6">
+                <MudCard Class="panel-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Article" Color="Color.Primary"/>
+                                <MudText Typo="Typo.h6">最新文章</MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/article"
+                                       Class="panel-action" Target="_blank">
+                                查看文章
+                            </MudButton>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (_isLoading)
+                        {
+                            <MudSkeleton Width="100%" Height="280px"/>
+                        }
+                        else if (!(_summary?.LatestArticles?.Any() ?? false))
+                        {
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1"
+                                      Class="log-empty">
+                                <MudIcon Icon="@Icons.Material.Filled.Article" Color="Color.Default" Size="Size.Large"/>
+                                <MudText Typo="Typo.subtitle2">暂无文章数据</MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudTable Items="@(_summary?.LatestArticles ?? [])" Hover="true" Dense="true"
+                                      Class="articles-table">
+                                <HeaderContent>
+                                    <MudTh>标题</MudTh>
+                                    <MudTh>作者</MudTh>
+                                    <MudTh Style="text-align:right;">图片数量</MudTh>
+                                    <MudTh Style="text-align:right;">发布时间</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="标题">
+                                        <MudLink Href="@($"{Program.WebHost}/article/read/{context.Id}.html")"
+                                                 Target="_blank">@context.Title</MudLink>
+                                    </MudTd>
+                                    <MudTd DataLabel="作者">@context.Author.Name</MudTd>
+                                    <MudTd DataLabel="图片数量"
+                                           Style="text-align:right;">@context.ImagesAddress.Count</MudTd>
+                                    <MudTd DataLabel="发布时间"
+                                           Style="text-align:right;">@context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" lg="6">
+                <MudCard Class="panel-card" Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.ShowChart" Color="Color.Primary"/>
+                                <MudText Typo="Typo.h6">访问趋势</MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">近 7 天</MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (_isLoading)
+                        {
+                            <MudSkeleton Width="100%" Height="280px"/>
+                        }
+                        else if (!(_series?.Any() ?? false))
+                        {
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1"
+                                      Class="log-empty">
+                                <MudIcon Icon="@Icons.Material.Filled.Timeline" Color="Color.Default"
+                                         Size="Size.Large"/>
+                                <MudText Typo="Typo.subtitle2">暂无访问数据</MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@_series"
+                                      @bind-SelectedIndex="_index"
+                                      XAxisLabels="@_xAxisLabels"
+                                      Width="100%"
+                                      Height="280px"
+                                      Class="chart-card"/>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudContainer>
 
 @code {
-    #nullable enable
-    
+#nullable enable
+
     private bool _isLoading;
 
     private int _index = -1;
 
-    private SummaryInformation? _summary = null;
+    private SummaryInformation? _summary;
 
     private readonly List<ChartSeries> _series = new();
 
     private string[] _xAxisLabels = [];
 
+    private DateTime _lastUpdated = DateTime.MinValue;
+
+    private int TodayAccessTotal => _summary?.TodayAccessNumber?.Sum(x => x.Count) ?? 0;
+
+    private int WeekAccessTotal => _summary?.WeekAccessNumber?.Sum(x => x.Count) ?? 0;
+
+    private int WeekAverage => _summary?.WeekAccessNumber?.Count > 0
+        ? (int)Math.Round((double)WeekAccessTotal / _summary.WeekAccessNumber.Count)
+        : 0;
+
+    private int LatestArticleCount => _summary?.LatestArticles?.Count ?? 0;
+
+    private int BannerCount => _summary?.Banner?.Count ?? 0;
+
+    private double TodayAccessProgress => WeekAverage == 0
+        ? 0
+        : Math.Min(100, Math.Round((double)TodayAccessTotal / WeekAverage * 100));
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadSummaryAsync();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task RefreshSummaryAsync()
+    {
+        await LoadSummaryAsync();
+    }
+
+    private async Task LoadSummaryAsync()
+    {
         _isLoading = true;
+        StateHasChanged();
 
         try
         {
             _summary = await CommunityService.GetSummaryAsync();
-        
-            _series.Add(new ChartSeries
+
+            _series.Clear();
+            if (_summary?.WeekAccessNumber?.Any() ?? false)
             {
-                Name = "近7天访问",
-                Data = _summary?.WeekAccessNumber.Select(x => (double)x.Count).ToArray() ?? []
-            });
-            _xAxisLabels = _summary?.WeekAccessNumber.Select(x => x.Date).ToArray() ?? [];
+                _series.Add(new ChartSeries
+                {
+                    Name = "近7天访问",
+                    Data = _summary.WeekAccessNumber.Select(x => (double)x.Count).ToArray(),
+                });
+                _xAxisLabels = _summary.WeekAccessNumber.Select(x => x.Date).ToArray();
+            }
+            else
+            {
+                _xAxisLabels = Array.Empty<string>();
+            }
+
+            _lastUpdated = DateTime.Now;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             _summary = null;
+            _series.Clear();
+            _xAxisLabels = [];
         }
-
-
-        _isLoading = false;
-        await base.OnInitializedAsync();
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
+        {
             await JsRuntime.InvokeVoidAsync("Prism.highlightAll");
+        }
+
         await base.OnAfterRenderAsync(firstRender);
     }
 
@@ -228,4 +429,5 @@
         await JsRuntime.InvokeVoidAsync("Prism.highlightAll");
     }
 
+    private static string FormatNumber(int value) => value.ToString("N0");
 }

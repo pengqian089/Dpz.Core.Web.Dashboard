@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Models.Response;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
@@ -31,34 +32,22 @@ public partial class TokenHistory : ComponentBase
 
     #endregion
 
-    private MudTable<AccountTokenResponse> _table;
+    private MudTable<AccountLoginHistoryResponse> _table;
 
-    private async Task<TableData<AccountTokenResponse>> LoadDataAsync(TableState state)
+    private async Task<TableData<AccountLoginHistoryResponse>> LoadDataAsync(TableState state)
     {
         _isLoading = true;
         _pageIndex = state.Page + 1;
         Console.WriteLine($"PageIndex:{_pageIndex}");
-        var list = await AccountService.GetTokenHistoryAsync(Account, Used, _pageIndex, PageSize);
+        var request = new AccountLoginHistoryRequest { Account = Account };
+        var list = await AccountService.GetAccountLoginHistoryAsync(request, _pageIndex, PageSize);
         _isLoading = false;
         Console.WriteLine($"IsLoading:{_isLoading}");
-        return new TableData<AccountTokenResponse>()
+        return new TableData<AccountLoginHistoryResponse>()
         {
             TotalItems = list.TotalItemCount,
             Items = list,
         };
-    }
-
-    private void ShowToken(AccountTokenResponse context)
-    {
-        if (context.ShowToken)
-        {
-            context.ShowTokenIcon = Icons.Material.Filled.Visibility;
-        }
-        else
-        {
-            context.ShowTokenIcon = Icons.Material.Filled.VisibilityOff;
-        }
-        context.ShowToken = !context.ShowToken;
     }
 
     private void Close()

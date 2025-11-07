@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Models.Response;
 
 namespace Dpz.Core.Web.Dashboard.Service
@@ -23,9 +24,8 @@ namespace Dpz.Core.Web.Dashboard.Service
 
         Task<bool> ExistsAsync(string account);
 
-        Task<IPagedList<AccountTokenResponse>> GetTokenHistoryAsync(
-            string account,
-            bool? used,
+        Task<IPagedList<AccountLoginHistoryResponse>> GetAccountLoginHistoryAsync(
+            AccountLoginHistoryRequest request,
             int pageIndex,
             int pageSize
         );

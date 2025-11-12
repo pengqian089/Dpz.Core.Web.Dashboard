@@ -6,9 +6,13 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <div class="preview-content markdown-body editormd-html-preview editormd-preview-theme-dark">
-            @((MarkupString)Html)
-        </div>
+        <MudCard>
+            <MudCardContent>
+                <div class="preview-content markdown-body" style="background: inherit !important;">
+                    @((MarkupString)Html)
+                </div>
+            </MudCardContent>
+        </MudCard>
     </DialogContent>
 </MudDialog>
 

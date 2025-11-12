@@ -9,12 +9,12 @@ namespace Dpz.Core.Web.Dashboard.Models
         /// 最新日志
         /// </summary>
         public string LatestLogs { get; set; }
-        
+
         /// <summary>
         /// 文章总数
         /// </summary>
         public int ArticleTotalCount { get; set; }
-        
+
         /// <summary>
         /// 热榜总回复数
         /// </summary>
@@ -27,16 +27,10 @@ namespace Dpz.Core.Web.Dashboard.Models
         public int TodayArticleCount { get; set; }
 
         /// <summary>
-        /// 今日热榜回复数
-        /// </summary>
-        [Obsolete]
-        public int TodayTopicCommentCount { get; set; }
-        
-        /// <summary>
         /// Banner
         /// </summary>
         public List<PictureModel> Banner { get; set; }
-        
+
         /// <summary>
         /// 最新文章
         /// </summary>
@@ -46,7 +40,7 @@ namespace Dpz.Core.Web.Dashboard.Models
         /// 今日访问次数
         /// </summary>
         public List<AccessSummary> TodayAccessNumber { get; set; }
-        
+
         /// <summary>
         /// 近7天访问次数
         /// </summary>

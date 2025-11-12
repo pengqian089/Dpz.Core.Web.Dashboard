@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Models.Response;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
@@ -55,18 +56,17 @@ public class AccountService(IHttpService httpService) : IAccountService
         return result?.IsExists ?? false;
     }
 
-    public Task<IPagedList<AccountTokenResponse>> GetTokenHistoryAsync(
-        string account,
-        bool? used,
+    public Task<IPagedList<AccountLoginHistoryResponse>> GetAccountLoginHistoryAsync(
+        AccountLoginHistoryRequest request,
         int pageIndex,
         int pageSize
     )
     {
-        return httpService.GetPageAsync<AccountTokenResponse>(
-            "/api/Account/tokens",
+        return httpService.GetPageAsync<AccountLoginHistoryResponse>(
+            "/api/Account/history/login",
             pageIndex,
             pageSize,
-            new { account, used }
+            request
         );
     }
 }

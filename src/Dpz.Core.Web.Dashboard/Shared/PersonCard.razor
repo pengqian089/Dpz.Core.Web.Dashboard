@@ -1,30 +1,28 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+
 <AuthorizeView>
     <Authorized Context="auth">
-        <MudCard Elevation="0" Square="true" Class="@Class" Style="@Style">
-            <MudCardHeader>
-                <CardHeaderAvatar>
-                    <MudAvatar>
-                        @{
-                            var avatar = auth.User?.FindFirst("picture")?.Value;
-                        }
-                        @if (!string.IsNullOrWhiteSpace(avatar))
-                        {
-                            <MudImage Src="@avatar"></MudImage>
-                        }
-                        else
-                        {
-                            <MudIcon Icon="@Icons.Material.Outlined.Person" />
-                        }
-                    </MudAvatar>
-                </CardHeaderAvatar>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.body2">@auth.User.Identity?.Name</MudText>
-                    <MudText Typo="Typo.caption">@auth.User.FindFirst("Sign")?.Value</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudDivider Class="mb-4"/>
-        </MudCard>
+        <div class="person-card @Class" style="@Style">
+            <div class="person-card__header">
+                <div class="person-card__avatar">
+                    @{
+                        var avatar = auth.User?.FindFirst("picture")?.Value;
+                    }
+                    @if (!string.IsNullOrWhiteSpace(avatar))
+                    {
+                        <img src="@avatar" alt="Avatar"/>
+                    }
+                    else
+                    {
+                        <i class="fas fa-user"></i>
+                    }
+                </div>
+                <div class="person-card__content">
+                    <div class="person-card__name">@auth.User.Identity?.Name</div>
+                    <div class="person-card__sign">@auth.User.FindFirst("Sign")?.Value</div>
+                </div>
+            </div>
+        </div>
     </Authorized>
 </AuthorizeView>
 

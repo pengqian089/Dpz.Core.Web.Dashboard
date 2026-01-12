@@ -1,37 +1,77 @@
-﻿<PersonCard Style="background-color: var(--mud-palette-drawer-background);color: var(--mud-palette-drawer-text);"/>
+﻿<PersonCard Class="mb-4" />
 
-<MudNavMenu>
-    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">菜单</MudText>
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Dashboard">首页</MudNavLink>
-    <MudNavLink Href="/article" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Article">文章管理</MudNavLink>
-    <MudNavLink Href="/picture" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Image">图像管理</MudNavLink>
-    <MudNavGroup Title="音频管理" Icon="@Icons.Material.Outlined.QueueMusic" HideExpandIcon="true">
-        <MudNavLink Href="/music" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LibraryMusic">音乐管理</MudNavLink>
-        <MudNavLink Href="/audio" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Audiotrack">录音管理</MudNavLink>
-    </MudNavGroup>
-    <MudNavLink Href="/mumble" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.EventNote">碎碎念管理</MudNavLink>
-    <MudNavLink Href="/timeline" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Timeline">时间轴管理</MudNavLink>
-    <MudNavLink Href="/danmaku" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.CommentBank">弹幕管理</MudNavLink>
-    <MudNavLink Href="/dynamic" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Pages">动态页管理</MudNavLink>
-    <MudNavGroup Title="评论管理" Icon="@Icons.Material.Outlined.Comment" HideExpandIcon="true">
-        <MudNavLink Href="/comment" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.AllInbox">所有评论</MudNavLink>
-        <MudNavLink Href="/comment?node=Article" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Article">文章评论</MudNavLink>
-        <MudNavLink Href="/comment?node=Friends" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.AddLink">友链评论</MudNavLink>
-        <MudNavLink Href="/comment?node=Code" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Code">源码评论</MudNavLink>
-        <MudNavLink Href="/comment?node=Other" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Cast">其他评论</MudNavLink>
-    </MudNavGroup>
-    <MudNavLink Href="/unbind-two-factor" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FiberPin">解绑二次验证</MudNavLink>
-    <MudNavLink Href="/video" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.VideoLibrary">视频管理</MudNavLink>
-    @* <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">系统相关</MudText> *@
-    @* <MudNavLink Href="https://config.dpangzi.com" Icon="@Icons.Material.Outlined.SettingsApplications" Target="_blank">应用配置</MudNavLink> *@
-    <MudNavLink Href="/account" Icon="@Icons.Material.Outlined.PeopleAlt">用户管理</MudNavLink>
-    @* <MudNavLink Href="/settings" Icon="@Icons.Material.Outlined.Settings">应用设置</MudNavLink> *@
-    @* <MudNavLink Href="https://logs.dpangzi.com" Icon="@Icons.Material.Outlined.EventNote" Target="_blank">查看日志</MudNavLink> *@
-    <MudNavLink Href="/friends" Icon="@Icons.Material.Outlined.AddLink">友情链接</MudNavLink>
-    <MudNavLink Href="/code" Icon="@Icons.Material.Outlined.Code">源码管理</MudNavLink>
-    <MudNavLink Href="/footer" Icon="@Icons.Material.Outlined.AutoGraph">页脚内容</MudNavLink>
-</MudNavMenu>
+<div class="app-sidebar__nav">
+    <div class="nav-group__title">菜单</div>
+    <NavLink href="" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-gauge"></i> 首页
+    </NavLink>
+    <NavLink href="article" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-file-lines"></i> 文章管理
+    </NavLink>
+    <NavLink href="picture" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-images"></i> 图像管理
+    </NavLink>
+    
+    <div class="nav-group__title">音频管理</div>
+    <NavLink href="music" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-music"></i> 音乐管理
+    </NavLink>
+    <NavLink href="audio" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-microphone"></i> 录音管理
+    </NavLink>
+
+    <div class="nav-group__title">内容管理</div>
+    <NavLink href="mumble" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-comment-dots"></i> 碎碎念管理
+    </NavLink>
+    <NavLink href="timeline" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-stream"></i> 时间轴管理
+    </NavLink>
+    <NavLink href="danmaku" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-comments"></i> 弹幕管理
+    </NavLink>
+    <NavLink href="dynamic" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-pager"></i> 动态页管理
+    </NavLink>
+
+    <div class="nav-group__title">评论管理</div>
+    <NavLink href="comment" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-comments"></i> 所有评论
+    </NavLink>
+    <NavLink href="comment?node=Article" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-file-alt"></i> 文章评论
+    </NavLink>
+    <NavLink href="comment?node=Friends" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-link"></i> 友链评论
+    </NavLink>
+    <NavLink href="comment?node=Code" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-code"></i> 源码评论
+    </NavLink>
+    <NavLink href="comment?node=Other" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-comment"></i> 其他评论
+    </NavLink>
+
+    <div class="nav-group__title">系统管理</div>
+    <NavLink href="unbind-two-factor" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-unlock"></i> 解绑二次验证
+    </NavLink>
+    <NavLink href="video" Match="NavLinkMatch.Prefix" Class="nav-item">
+        <i class="fas fa-video"></i> 视频管理
+    </NavLink>
+    <NavLink href="account" Class="nav-item">
+        <i class="fas fa-users"></i> 用户管理
+    </NavLink>
+    <NavLink href="friends" Class="nav-item">
+        <i class="fas fa-link"></i> 友情链接
+    </NavLink>
+    <NavLink href="code" Class="nav-item">
+        <i class="fas fa-code-branch"></i> 源码管理
+    </NavLink>
+    <NavLink href="footer" Class="nav-item">
+        <i class="fas fa-info-circle"></i> 页脚内容
+    </NavLink>
+</div>
 
 @code {
-    string AlertAssignmentIcon { get; set; } = "<path d=\"M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H9.18C9.6,1.84 10.7,1 12,1C13.3,1 14.4,1.84 14.82,3H19M12,3A1,1 0 0,0 11,4A1,1 0 0,0 12,5A1,1 0 0,0 13,4A1,1 0 0,0 12,3M7,7V5H5V19H19V5H17V7H7M11,9H13V13.5H11V9M11,15H13V17H11V15Z\" />";
+    
 }

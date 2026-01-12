@@ -1,0 +1,429 @@
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.app-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 50;
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-sidebar__header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.app-sidebar__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.app-sidebar__logo img {
+    height: 32px;
+    width: auto;
+}
+
+.app-sidebar__nav {
+    padding: var(--spacing-md) var(--spacing-sm);
+}
+
+/* Main Content Area */
+.app-main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-width: 0; 
+}
+
+.app-header {
+    height: var(--header-height);
+    background-color: rgba(15, 23, 42, 0.8); /* Semi-transparent bg-body */
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-lg);
+}
+
+.app-content {
+    padding: var(--spacing-lg);
+    flex: 1;
+}
+
+/* Nav Menu Items */
+.nav-group__title {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: var(--spacing-md);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.nav-item:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background-color: var(--primary);
+    color: white;
+}
+
+.nav-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .app-sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .app-sidebar.is-open {
+        transform: translateX(0);
+    }
+    
+    .app-main {
+        margin-left: 0;
+    }
+
+    .app-header__toggle {
+        display: block;
+    }
+}
+
+@media (min-width: 769px) {
+    .app-header__toggle {
+        display: none;
+    }
+}
+
+/* Person Card */
+.person-card {
+    padding: var(--spacing-md);
+    background-color: transparent;
+}
+
+.person-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.person-card__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: var(--bg-surface-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.person-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.person-card__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.person-card__name {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.person-card__sign {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Buttons & Badges */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    gap: var(--spacing-sm);
+}
+
+.btn-icon {
+    background: transparent;
+    color: var(--text-secondary);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: var(--bg-surface-hover);
+    color: var(--text-secondary);
+}
+
+.badge-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.list-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: var(--spacing-sm);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    z-index: 100;
+    padding: var(--spacing-xs) 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown:hover .dropdown-menu,
+.dropdown.active .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--text-secondary);
+    transition: background-color 0.15s;
+    font-size: 0.875rem;
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Carousel */
+.carousel {
+    position: relative;
+    height: 320px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background-color: var(--bg-surface);
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    pointer-events: none;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.carousel-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--spacing-md);
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+}
+
+.carousel-caption h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Person Card Dropdown Override */
+.user-profile {
+    padding: 6px 12px;
+    border-radius: 99px;
+    transition: background-color 0.2s;
+}
+.user-profile:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+/* Global Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-body);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--bg-surface-hover);
+}
+
+/* Hide Blazor Error UI by default */
+#blazor-error-ui {
+    display: none !important;
+}
+
+/* Sidebar Overlay */
+.app-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 45; /* Below sidebar (50) but above header (40) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.app-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Adjust Sidebar transform for Mobile */
+@media (max-width: 768px) {
+    .app-sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .app-sidebar.is-open {
+        transform: translateX(0);
+        box-shadow: var(--shadow-lg);
+    }
+}
+

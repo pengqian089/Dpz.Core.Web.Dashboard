@@ -1,91 +1,144 @@
 ﻿@page "/article/publish"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">发布文章</MudText>
-<MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
-    <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-</MudOverlay>
-<EditForm Model="@_article" OnValidSubmit="PublishArticleAsync">
-    <MudExpansionPanels>
-        <MudExpansionPanel Text="表单验证">
-            <MudText Color="@Color.Error">
-                <ValidationSummary/>
-            </MudText>
-        </MudExpansionPanel>
-    </MudExpansionPanels>
-    <MudCard>
-        <MudCardContent>
-            <DataAnnotationsValidator/>
-            <MudGrid>
-                <MudItem xs="12" md="12">
-                    <MudTextField T="string"
-                                  HelperText="此项必填"
-                                  Immediate="true"
-                                  Label="文章标题"
-                                  Required="true"
-                                  RequiredError="此项必填"
-                                  @bind-value="_article.Title"
-                                  For="@(() => _article.Title)"
-                                  Variant="Variant.Text">
-                    </MudTextField>
-                </MudItem>
-                <MudItem xs="12" md="12">
-                    <MudSelect T="string"
-                               HelperText="Tag"
-                               Immediate="true"
-                               Label="请选择标签"
-                               MultiSelection="true"
-                               @bind-SelectedValues="_article.Tags"
-                               Variant="Variant.Text">
-                        @foreach (var tag in _tags)
-                        {
-                            <MudSelectItem T="string" Value="@tag">@tag</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" md="12">
-                    <MudTextField T="string"
-                                  Immediate="true"
-                                  Label="补充标签"
-                                  @bind-value="_addTag"
-                                  For="@(() => _addTag)"
-                                  Variant="Variant.Text">
-                    </MudTextField>
-                </MudItem>
-                <MudItem xs="12" md="12">
-                    <MudTextField T="string"
-                                  HelperText="此项必填"
-                                  Immediate="true"
-                                  Label="简介"
-                                  Required="true"
-                                  RequiredError="此项必填"
-                                  Lines="5"
-                                  @bind-value="_article.Introduction"
-                                  For="@(() => _article.Introduction)"
-                                  Variant="Variant.Text">
-                    </MudTextField>
-                </MudItem>
-                <MudItem xs="12" md="12">
-                    <MarkdownEditor
-                        Markdown="@_article.Markdown"
-                        @ref="_editor"
-                        UploadAction="/api/Article/upload">
-                    </MarkdownEditor>
-                </MudItem>
-            </MudGrid>
-        </MudCardContent>
-        <MudCardActions>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+
+<div class="article-form">
+    <div class="article-form__header">
+        <h1 class="article-form__title">发布文章</h1>
+        <p class="article-form__description">创建新的博客文章</p>
+    </div>
+
+    @if (_isPublishing)
+    {
+        <div class="publishing-overlay">
+            <div style="text-align: center;">
+                <div class="publishing-overlay__spinner"></div>
+                <div class="publishing-overlay__text">正在发布文章...</div>
+            </div>
+        </div>
+    }
+
+    <EditForm Model="@_article" OnValidSubmit="PublishArticleAsync">
+        <DataAnnotationsValidator/>
+
+        <div class="article-form__content">
+            <div class="article-form__main">
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <i class="fas fa-align-left"></i>
+                        <span>基本信息</span>
+                    </div>
+                    <div class="form-section__body">
+                        <div class="form-group">
+                            <label class="form-label form-label--required" for="title">文章标题</label>
+                            <input type="text"
+                                   id="title"
+                                   class="form-input"
+                                   placeholder="请输入一个吸引人的标题"
+                                   @bind="_article.Title"
+                                   @bind:event="oninput"/>
+                            <ValidationMessage For="@(() => _article.Title)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label form-label--required">文章标签</label>
+                            <div class="tag-selector">
+                                @foreach (var tag in _tags)
+                                {
+                                    <button type="button"
+                                            class="tag-selector__item @(_article.Tags.Contains(tag) ? "tag-selector__item--active" : "")"
+                                            @onclick="() => ToggleTag(tag)">
+                                        <i class="fas @(_article.Tags.Contains(tag) ? "fa-check-circle" : "fa-circle")"></i>
+                                        @tag
+                                    </button>
+                                }
+                            </div>
+                            <ValidationMessage For="@(() => _article.Tags)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="addTag">
+                                <i class="fas fa-plus-circle"></i>
+                                添加新标签
+                            </label>
+                            <div class="input-with-icon">
+                                <input type="text"
+                                       id="addTag"
+                                       class="form-input"
+                                       placeholder="输入新标签并回车添加"
+                                       @bind="_addTag"
+                                       @bind:event="oninput"
+                                       @onkeydown="HandleAddTagKeyDown"/>
+                                @if (!string.IsNullOrEmpty(_addTag))
+                                {
+                                    <button type="button" class="input-icon-btn" @onclick="AddNewTag">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <i class="fas fa-file-alt"></i>
+                        <span>文章简介</span>
+                    </div>
+                    <div class="form-section__body">
+                        <div class="form-group">
+                            <label class="form-label form-label--required" for="introduction">简介内容</label>
+                            <textarea id="introduction"
+                                      class="form-input form-textarea"
+                                      placeholder="用一段精彩的简介吸引读者..."
+                                      rows="4"
+                                      @bind="_article.Introduction"
+                                      @bind:event="oninput"></textarea>
+                            <ValidationMessage For="@(() => _article.Introduction)" />
+                            <div class="form-helper">
+                                <i class="fas fa-info-circle"></i>
+                                建议 100-200 字，简明扼要地介绍文章核心内容
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section form-section--editor">
+                    <div class="form-section__header">
+                        <i class="fas fa-keyboard"></i>
+                        <span>文章正文</span>
+                    </div>
+                    <div class="form-section__body">
+                        <MarkdownEditor
+                            Markdown="@_article.Markdown"
+                            @ref="_editor"
+                            UploadAction="/api/Article/upload">
+                        </MarkdownEditor>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="article-form__actions">
+            <button type="submit" class="btn btn-primary btn-lg" disabled="@_isPublishing">
                 @if (_isPublishing)
                 {
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                    <MudText Class="ms-2">正在发布</MudText>
+                    <span class="btn-loading">
+                        <span class="btn-loading__spinner"></span>
+                        <span>正在发布</span>
+                    </span>
                 }
                 else
                 {
-                    <MudText>发布</MudText>
+                    <span>
+                        <i class="fas fa-paper-plane"></i>
+                        发布文章
+                    </span>
                 }
-            </MudButton>
-            <MudButton Variant="Variant.Filled" Href="/article">返回列表</MudButton>
-        </MudCardActions>
-    </MudCard>
-</EditForm>
+            </button>
+            <a href="/article" class="btn btn-lg">
+                <i class="fas fa-times"></i>
+                取消
+            </a>
+        </div>
+    </EditForm>
+</div>

@@ -2,122 +2,140 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
+using Microsoft.AspNetCore.Components.Web;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Article
+namespace Dpz.Core.Web.Dashboard.Pages.Article;
+
+public partial class Edit(
+    IArticleService articleService,
+    IAppDialogService dialogService,
+    NavigationManager navigation
+)
 {
-    public partial class Edit
+    [Parameter]
+    public string Id { get; set; } = "";
+
+    private List<string> _tags = [];
+    private string _addTag = "";
+    private ArticleEditRequest _article = new();
+    private bool _isLoading = true;
+    private bool _isPublishing;
+    private MarkdownEditor _editor = null!;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Parameter] public string Id { get; set; }
+        _tags = await articleService.GetTagsAsync();
 
-        [Inject] private IJSRuntime JsRuntime { get; set; }
-
-        [Inject] private IArticleService ArticleService { get; set; }
-
-        [Inject] private ISnackbar Snackbar { get; set; }
-
-        [Inject] private NavigationManager Navigation { get; set; }
-
-        private List<string> _tags = new();
-
-        private string _addTag = "";
-
-        private ArticleEditRequest _article = new();
-
-        private bool _isLoading = true;
-
-        private bool _isPublishing;
-
-        MarkdownEditor _editor;
-        protected override async Task OnInitializedAsync()
+        _isLoading = true;
+        var article = await articleService.GetArticleAsync(Id);
+        if (article != null)
         {
-            _tags = await ArticleService.GetTagsAsync();
-            
-            _isLoading = true;
-            var article = await ArticleService.GetArticleAsync(Id);
-            if (article != null)
+            _article = new ArticleEditRequest
             {
-                _article = new ArticleEditRequest
-                {
-                    Id = article.Id,
-                    Content = article.HtmlContent,
-                    Introduction = article.Introduction,
-                    Markdown = article.Markdown,
-                    Tags = article.Tags,
-                    Title = article.Title
-                };
-            }
-            _isLoading = false;
-            await base.OnInitializedAsync();
+                Id = article.Id,
+                Content = article.HtmlContent,
+                Introduction = article.Introduction,
+                Markdown = article.Markdown,
+                Tags = article.Tags,
+                Title = article.Title,
+            };
+        }
+        _isLoading = false;
+        await base.OnInitializedAsync();
+    }
+
+    private void ToggleTag(string tag)
+    {
+        var tags = _article.Tags.ToList();
+        if (tags.Contains(tag))
+        {
+            tags.Remove(tag);
+        }
+        else
+        {
+            tags.Add(tag);
+        }
+        _article.Tags = tags;
+    }
+
+    private void AddNewTag()
+    {
+        if (string.IsNullOrWhiteSpace(_addTag))
+        {
+            return;
         }
 
-        protected override async Task OnParametersSetAsync()
+        var trimmedTag = _addTag.Trim();
+        if (_tags.Contains(trimmedTag))
         {
-            await base.OnParametersSetAsync();
+            dialogService.Toast("该标签已存在", ToastType.Info);
+            _addTag = "";
+            return;
         }
 
-        private async Task PublishArticleAsync(EditContext context)
+        _tags.Add(trimmedTag);
+        ToggleTag(trimmedTag);
+        _addTag = "";
+        dialogService.Toast($"标签 '{trimmedTag}' 已添加", ToastType.Success);
+    }
+
+    private void HandleAddTagKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
         {
-            if (string.IsNullOrEmpty(_article.Id))
-            {
-                Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-                Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-                Snackbar.Add("缺少参数", Severity.Error);
-                return;
-            }
+            AddNewTag();
+        }
+    }
 
-            
-            _article.Markdown = await _editor.GetValueAsync();
-            _article.Content = Markdig.Markdown.ToHtml(_article.Markdown);
-            
-            if (string.IsNullOrEmpty(_article.Content) || string.IsNullOrEmpty(_article.Markdown))
-            {
-                Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-                Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-                Snackbar.Add("请输入内容", Severity.Warning);
-                return;
-            }
+    private async Task PublishArticleAsync(EditContext context)
+    {
+        if (string.IsNullOrEmpty(_article.Id))
+        {
+            dialogService.Toast("缺少参数", ToastType.Error);
+            return;
+        }
 
+        _article.Markdown = await _editor.GetValueAsync();
+        _article.Content = Markdig.Markdown.ToHtml(_article.Markdown);
 
-            _isPublishing = true;
-            //await Task.Delay(1000);
-            //_isPublishing = false;
+        if (string.IsNullOrEmpty(_article.Content) || string.IsNullOrEmpty(_article.Markdown))
+        {
+            dialogService.Toast("请输入文章内容", ToastType.Warning);
+            return;
+        }
 
-            var tags = _article.Tags.ToList();
+        _isPublishing = true;
+        StateHasChanged();
 
-            if (!string.IsNullOrEmpty(_addTag))
-                tags.Add(_addTag);
-            _article.Tags = tags;
-            StateHasChanged();
-            await ArticleService.EditAsync(_article);
+        try
+        {
+            await articleService.EditAsync(_article);
+            dialogService.Toast("文章修改成功", ToastType.Success);
             await _editor.DisposeAsync();
-            Navigation.NavigateTo("/article");
-            //Console.WriteLine(JsonSerializer.Serialize(_article, new JsonSerializerOptions {WriteIndented = true}));
+            navigation.NavigateTo("/article");
+        }
+        catch (Exception ex)
+        {
+            _isPublishing = false;
+            Console.WriteLine($"修改文章失败: {ex.Message}");
+            dialogService.Toast("修改失败,请重试", ToastType.Error);
+        }
+    }
+
+    private void HandleTagsChange(ChangeEventArgs e)
+    {
+        if (e.Value is not string[] selectedTags)
+        {
+            return;
         }
 
-        private async Task<IEnumerable<string>> SearchTagAsync(string value)
-        {
-            return await Task.Factory.StartNew(() =>
-            {
-                if (string.IsNullOrEmpty(value))
-                    return _tags;
-                return _tags.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-            });
-        }
-
-        private async Task<string> UploadPicture(MultipartFormDataContent content)
-        {
-            return await ArticleService.UploadAsync(content);
-        }
+        _article.Tags = selectedTags.ToList();
     }
 }

@@ -127,7 +127,16 @@
 
 @media (min-width: 769px) {
     .app-header__toggle {
-        display: none;
+        display: inline-flex;
+    }
+
+    /* Desktop Collapse Logic: is-open means "Collapsed" on Desktop */
+    .app-sidebar.is-open {
+        transform: translateX(-100%);
+    }
+
+    .app-main.is-open {
+        margin-left: 0;
     }
 }
 
@@ -406,6 +415,7 @@
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 45; /* Below sidebar (50) but above header (40) */
     opacity: 0;
+    display: none; /* Hidden by default (Desktop) */
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
@@ -424,6 +434,10 @@
     .app-sidebar.is-open {
         transform: translateX(0);
         box-shadow: var(--shadow-lg);
+    }
+
+    .app-overlay {
+        display: block; /* Visible on Mobile */
     }
 }
 

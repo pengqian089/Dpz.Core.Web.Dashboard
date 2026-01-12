@@ -11,8 +11,6 @@ using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Article;
 
-#nullable enable
-
 public partial class List(
     IArticleService articleService,
     NavigationManager navigation,

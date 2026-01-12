@@ -1,6 +1,7 @@
 ﻿@using Dpz.Core.EnumLibrary
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Dpz.Core.Web.Dashboard.Shared.Components.Dialog
 @inherits LayoutComponentBase
 
 <div class="app-layout">
@@ -92,4 +93,7 @@
             @Body
         </main>
     </div>
+
+    <!-- Dialog Container for global dialogs/toasts/notifications -->
+    <DialogContainer />
 </div>

@@ -36,7 +36,8 @@
    + 公共的样式应该以 _ 开头命名（比如布局页 _layout.css ，样式变量 _variables.css ，分域 _pagination.css 等等）
    + 首页专有样式应该在 index.css 中
    + 文章列表转悠样式应该在 article-list.css 中
-   + ……   
+   + ……
+   + build.ps1 脚本中会自动合并css，并重新在index.html中引用
 5. UI设计风格统一
 6. 支持Chromium内核、Firefox 浏览器
 7. 响应式UI，在手机端、平板端、PC端都需要有良好的展现

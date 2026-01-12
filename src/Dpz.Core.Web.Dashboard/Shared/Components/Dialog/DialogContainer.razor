@@ -1,0 +1,24 @@
+<!-- Dialogs (Modal) -->
+@foreach (var dialog in _dialogs)
+{
+    <DialogBox @key="dialog.Id" Model="dialog" OnClose="RemoveDialog" />
+}
+
+<!-- Toasts -->
+<div class="toast-container">
+    @foreach (var toast in _toasts)
+    {
+        <ToastBox @key="toast.Id" Model="toast" OnClose="RemoveToast" />
+    }
+</div>
+
+<!-- Notifications -->
+<div class="notification-container" style="position: fixed; top: 80px; right: 20px; width: 380px; max-width: calc(100vw - 40px); z-index: 1500; pointer-events: none; display: flex; flex-direction: column; gap: 15px;">
+    <style>
+        .notification-box { pointer-events: auto; }
+    </style>
+    @foreach (var notification in _notifications)
+    {
+        <NotificationBox @key="notification.Id" Model="notification" OnClose="RemoveNotification" />
+    }
+</div>

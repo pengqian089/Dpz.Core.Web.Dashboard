@@ -14,7 +14,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.Article;
 public partial class List(
     IArticleService articleService,
     NavigationManager navigation,
-    IJSRuntime jsRuntime
+    IAppDialogService dialogService
 )
 {
     private int _pageIndex = 1;
@@ -134,19 +134,23 @@ public partial class List(
 
     private async Task DeleteAsync(string id)
     {
-        var confirmed = await jsRuntime.InvokeAsync<bool>("confirm", "删除后不能恢复，确定删除？");
+        var confirmed = await dialogService.ConfirmAsync(
+            "删除后不能恢复，确定删除吗？",
+            "确认删除"
+        );
 
         if (confirmed)
         {
             try
             {
                 await articleService.DeleteAsync(id);
+                dialogService.Toast("文章删除成功", Models.Dialog.ToastType.Success);
                 await LoadArticlesAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"删除文章失败: {ex.Message}");
-                await jsRuntime.InvokeVoidAsync("alert", "删除失败，请重试");
+                dialogService.Toast("删除失败，请重试", Models.Dialog.ToastType.Error);
             }
         }
     }

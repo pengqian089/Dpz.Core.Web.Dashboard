@@ -29,7 +29,7 @@
 
 ### 关于前端开发要求规范：
 
-1. css 文件需要放在 src/css/ 目录下
+1. css 文件需要放在 wwwroot/css/ 目录下
 2. css需要遵循BEM规范
 3. 以深色模式视觉为主，不考虑浅色模式
 4. 样式应该在单独的文件中（css不要使用blazor WebAssembly 文件隔离形式）：

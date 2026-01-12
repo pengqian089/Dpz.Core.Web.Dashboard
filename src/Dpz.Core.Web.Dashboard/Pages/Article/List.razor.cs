@@ -1,94 +1,165 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Article
+namespace Dpz.Core.Web.Dashboard.Pages.Article;
+
+#nullable enable
+
+public partial class List(
+    IArticleService articleService,
+    NavigationManager navigation,
+    IJSRuntime jsRuntime
+)
 {
-    public partial class List
+    private int _pageIndex = 1;
+    private int _totalCount;
+    private int _totalPages;
+    private const int PageSize = 15;
+    private string _tag = "";
+    private string _title = "";
+    private List<string> _tags = [];
+    private List<ArticleModel>? _articles;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject]private IArticleService ArticleService { get; set; }
+        _tags = await articleService.GetTagsAsync();
+        ReadQueryParameters();
+        await LoadArticlesAsync();
+        await base.OnInitializedAsync();
+    }
 
-        [Inject]private NavigationManager Navigation { get; set; }
+    private void ReadQueryParameters()
+    {
+        var uri = new Uri(navigation.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query);
 
-        [Inject] private IDialogService DialogService { get; set; }
-
-        private int _pageIndex = 1;
-
-        private const int PageSize = 12;
-
-        private string _tag = "";
-
-        private string _title = "";
-
-        private List<string> _tags = new();
-
-        private MudTable<ArticleModel> _table;
-
-        private string _tempTag = "";
-
-        private string _tempTitle = "";
-
-        private bool _isLoading = true;
-
-        protected override async Task OnInitializedAsync()
+        if (int.TryParse(query["page"], out var page) && page > 0)
         {
-            _tempTag = _tag;
-            _tempTitle = _title;
-            _tags = await ArticleService.GetTagsAsync();
-            await base.OnInitializedAsync();
+            _pageIndex = page;
         }
 
-        private async Task<TableData<ArticleModel>> LoadArticleAsync(TableState state)
+        _tag = query["tag"] ?? "";
+        _title = query["title"] ?? "";
+    }
+
+    private void UpdateUrl()
+    {
+        var baseUri = navigation.ToAbsoluteUri("/article").GetLeftPart(UriPartial.Path);
+        var queryParams = new List<string>();
+
+        if (_pageIndex > 1)
         {
-            _isLoading = true;
-            if (_tag == _tempTag && _title == _tempTitle)
-            {
-                _pageIndex = state.Page + 1;
-            }
-            else
-            {
-                _tempTag = _tag;
-                _tempTitle = _title;
-                _pageIndex = 1;
-            }
-            var list = await ArticleService.GetPageAsync(_pageIndex, PageSize, _tag, _title);
+            queryParams.Add($"page={_pageIndex}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(_tag))
+        {
+            queryParams.Add($"tag={Uri.EscapeDataString(_tag)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(_title))
+        {
+            queryParams.Add($"title={Uri.EscapeDataString(_title)}");
+        }
+
+        var url = queryParams.Count > 0 ? $"{baseUri}?{string.Join("&", queryParams)}" : baseUri;
+
+        navigation.NavigateTo(url, false);
+    }
+
+    private async Task HandlePageChanged(int page)
+    {
+        _pageIndex = page;
+        UpdateUrl();
+        await LoadArticlesAsync();
+    }
+
+    private async Task LoadArticlesAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await articleService.GetPageAsync(_pageIndex, PageSize, _tag, _title);
+            _articles = result.ToList();
+            _totalCount = result.TotalItemCount;
+            _totalPages = result.TotalPageCount;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载文章列表失败: {ex.Message}");
+            _articles = [];
+            _totalCount = 0;
+            _totalPages = 0;
+        }
+        finally
+        {
             _isLoading = false;
-            return new TableData<ArticleModel>()
+            StateHasChanged();
+        }
+    }
+
+    private async Task Search()
+    {
+        _pageIndex = 1;
+        UpdateUrl();
+        await LoadArticlesAsync();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+
+    private void PublishArticle()
+    {
+        navigation.NavigateTo("/article/publish");
+    }
+
+    private void EditArticle(string id)
+    {
+        navigation.NavigateTo($"/article/edit/{id}");
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        var confirmed = await jsRuntime.InvokeAsync<bool>("confirm", "删除后不能恢复，确定删除？");
+
+        if (confirmed)
+        {
+            try
             {
-                TotalItems = list.TotalItemCount, 
-                Items = list
-            };
-        }
-
-        private void Search()
-        {
-            _table.ReloadServerData();
-        }
-
-        private void PublishArticle()
-        {
-            Navigation.NavigateTo("/article/publish");
-        }
-
-        private void EditArticle(string id)
-        {
-            Navigation.NavigateTo($"/article/edit/{id}");
-        }
-
-        private async Task DeleteAsync(string id)
-        {
-            var result = await DialogService.ShowMessageBox(
-                "提示",
-                "删除后不能恢复，确定删除？",
-                yesText: "删除!", cancelText: "取消");
-            if (result == true)
+                await articleService.DeleteAsync(id);
+                await LoadArticlesAsync();
+            }
+            catch (Exception ex)
             {
-                await ArticleService.DeleteAsync(id);
-                await _table.ReloadServerData();
+                Console.WriteLine($"删除文章失败: {ex.Message}");
+                await jsRuntime.InvokeVoidAsync("alert", "删除失败，请重试");
             }
         }
+    }
+
+    private static string HighlightText(string text, string highlight)
+    {
+        if (string.IsNullOrWhiteSpace(highlight))
+        {
+            return text;
+        }
+
+        return text;
     }
 }

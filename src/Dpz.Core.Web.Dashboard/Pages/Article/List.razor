@@ -1,121 +1,141 @@
 ﻿@page "/article"
 @page "/article/list"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">文章列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadArticleAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          Loading="_isLoading"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="PublishArticle"
-                       Class="ma-2"/>
-        <MudSpacer/>
-        <MudSelect T="string"
-                   Placeholder="请选择标签"
-                   @bind-value="_tag"
-                   Clearable="true"
-                   AdornmentIcon="@Icons.Material.Filled.Tag"
-                   Adornment="Adornment.Start"
-                   IconSize="Size.Medium"
-                   Class="mt-2"
-                   AdornmentColor="Color.Primary">
-            @foreach (var item in _tags)
-            {
-                <MudSelectItem Value="@item">@item</MudSelectItem>
-            }
-        </MudSelect>
-        <MudTextField T="string"
-                      Placeholder="标题"
-                      @bind-value="_title"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            标题
-        </MudTh>
-        <MudTh>
-            作者
-        </MudTh>
-        <MudTh>
-            回复量
-        </MudTh>
-        <MudTh>
-            查看量
-        </MudTh>
-        <MudTh>
-            标签
-        </MudTh>
-        <MudTh>
-            来源
-        </MudTh>
-        <MudTh>
-            图片数量
-        </MudTh>
-        <MudTh>
-            发布时间
-        </MudTh>
-        <MudTh>
-            最后修改时间
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="标题">
-            <div style="max-width: 20em">
-                <MudLink Href="@($"{Program.WebHost}/article/read/{context.Id}.html")" Target="_blank">
-                    <MudHighlighter Text="@context.Title" HighlightedText="@_title"/>
-                </MudLink >
+@using Dpz.Core.Web.Dashboard.Shared.Components
+
+<div class="article-list">
+    <div class="article-list__header">
+        <h1 class="page-title">文章管理</h1>
+        <p class="page-description">管理和维护网站的所有文章内容</p>
+    </div>
+
+    <div class="article-list__toolbar">
+        <div class="article-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="PublishArticle">
+                <i class="fas fa-plus"></i>
+                发布文章
+            </button>
+        </div>
+
+        <div class="article-list__toolbar-right">
+            <select class="form-control form-select" @bind="_tag" @bind:after="Search">
+                <option value="">全部标签</option>
+                @foreach (var item in _tags)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+
+            <input type="text"
+                   class="form-control"
+                   placeholder="搜索标题..."
+                   @bind="_title"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown" />
+
+            <button class="btn btn-primary" @onclick="Search">
+                <i class="fas fa-search"></i>
+                搜索
+            </button>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="article-list__loading">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>加载中...</p>
+        </div>
+    }
+    else if (_articles == null || !_articles.Any())
+    {
+        <div class="article-list__empty">
+            <i class="fas fa-inbox fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无文章数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="article-table">
+            <div class="article-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>回复量</th>
+                            <th>查看量</th>
+                            <th>标签</th>
+                            <th>来源</th>
+                            <th>图片</th>
+                            <th>发布时间</th>
+                            <th>修改时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var article in _articles)
+                        {
+                            <tr>
+                                <td data-label="标题">
+                                    <div class="article-table__title">
+                                        <a href="@($"{Program.WebHost}/article/read/{article.Id}.html")" 
+                                           target="_blank"
+                                           title="@article.Title">
+                                            @HighlightText(article.Title, _title)
+                                        </a>
+                                    </div>
+                                </td>
+                                <td data-label="作者">@article.Author.Name</td>
+                                <td data-label="回复量">
+                                    @if (article.CommentCount > 0)
+                                    {
+                                        <a href="@($"/comment?node=Article&relation={article.Id}")" 
+                                           class="article-table__comment-link">
+                                            查看评论 (@article.CommentCount)
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="article-table__no-comment">暂无评论</span>
+                                    }
+                                </td>
+                                <td data-label="查看量">@article.ViewCount.ToString("N0")</td>
+                                <td data-label="标签">
+                                    <div class="article-table__tags">
+                                        @foreach (var tag in article.Tags)
+                                        {
+                                            <span class="article-table__tag">@tag</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td data-label="来源">@article.From</td>
+                                <td data-label="图片">@article.ImagesAddress.Count</td>
+                                <td data-label="发布时间">@article.CreateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td data-label="修改时间">@article.LastUpdateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td data-label="操作">
+                                    <div class="article-table__actions">
+                                        <button class="btn btn-primary btn-sm" @onclick="() => EditArticle(article.Id)">
+                                            <i class="fas fa-edit"></i>
+                                            编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(article.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-        </MudTd>
-        <MudTd DataLabel="作者">@context.Author.Name</MudTd>
-        <MudTd DataLabel="回复量">
-            @if (context.CommentCount > 0)
-            {
-                <MudLink Href="@($"/comment?node=Article&relation={@context.Id}")">查看评论(@context.CommentCount)</MudLink>
-            }
-            else
-            {
-                <span>暂无评论</span>
-            }
-        </MudTd>
-        <MudTd DataLabel="查看量">@context.ViewCount</MudTd>
-        <MudTd DataLabel="标签">
-            @foreach (var tag in context.Tags)
-            {
-                <div>@tag</div>
-            }
-        </MudTd>
-        <MudTd DataLabel="来源">@context.From</MudTd>
-        <MudTd DataLabel="图片数量">@context.ImagesAddress.Count</MudTd>
-        <MudTd DataLabel="最后修改时间">@context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="最后修改时间">@context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => EditArticle(context.Id)">编辑</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] {15, 20, 30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged" />
+        </div>
+    }
+</div>

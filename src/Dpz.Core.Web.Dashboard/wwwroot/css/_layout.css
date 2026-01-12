@@ -203,6 +203,12 @@
     transition: all 0.2s;
     font-size: 0.875rem;
     gap: var(--spacing-sm);
+    white-space: nowrap;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
 }
 
 .btn-icon {
@@ -232,6 +238,15 @@
 
 .btn-primary:hover {
     background-color: var(--primary-hover);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
 }
 
 .badge {
@@ -382,6 +397,24 @@
 }
 .user-profile:hover {
     background-color: var(--bg-surface-hover);
+}
+
+/* Page Header Styles */
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.page-description {
+    color: var(--text-secondary);
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: 0.9375rem;
+}
+
+.article-list__header {
+    margin-bottom: var(--spacing-lg);
 }
 
 /* Global Custom Scrollbar */

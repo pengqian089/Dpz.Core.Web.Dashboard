@@ -14,10 +14,10 @@ public partial class MainLayout(
 ) : LayoutComponentBase, IDisposable
 {
     // Default closed for mobile first approach
-    private bool _drawerOpen = false;
+    private bool _drawerOpen;
 
     // Expose Navigation for Razor usage
-    protected NavigationManager Navigation => navigation;
+    private NavigationManager Navigation => navigation;
 
     private void DrawerToggle()
     {

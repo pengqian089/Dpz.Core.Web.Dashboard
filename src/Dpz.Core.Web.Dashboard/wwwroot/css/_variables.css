@@ -82,6 +82,7 @@ img {
 .mt-4 { margin-top: 1rem; }
 .text-sm { font-size: 0.875rem; }
 .font-bold { font-weight: 700; }
+.w-100 { width: 100%; }
 
 @media (max-width: 768px) {
     :root {

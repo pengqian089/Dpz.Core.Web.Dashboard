@@ -31,10 +31,11 @@
 1. css 文件需要放在 src/css/ 目录下
 2. css需要遵循BEM规范
 3. 以深色模式视觉为主，不考虑浅色模式
-4. 样式应该在单独的文件中： 
+4. 样式应该在单独的文件中（css不要使用blazor WebAssembly 文件隔离形式）：
    + 首页专有样式应该在 index.css 中
    + 文章列表转悠样式应该在 article-list.css 中
    + 公共的样式应该以 _ 开头命名（比如布局页 _layout.css ，样式变量 _variables.css ，分域 _pagination.css 等等）
 5. UI设计风格统一
 6. 支持Chromium内核、Firefox 浏览器
 7. 响应式UI，在手机端、平板端、PC端都需要有良好的展现
+8. js统一使用原生 ES 模块，并使用 blazor WebAssembly 惯例的文件隔离形式

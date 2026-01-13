@@ -22,7 +22,7 @@ public partial class Post(
 ) : IAsyncDisposable
 {
     private bool _isPosting;
-    private PostPictureModel _picture = new();
+    private readonly PostPictureModel _picture = new();
     private List<string> _tags = [];
     private Dictionary<string, long> _selectedFiles = [];
     private int _uploadProgress;

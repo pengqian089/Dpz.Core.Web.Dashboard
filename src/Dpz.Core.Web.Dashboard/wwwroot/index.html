@@ -6,9 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>网站管理系统 - 叫我阿胖</title>
     <base href="/" />
-    <!--<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />-->
-    <!-- <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" /> -->
-    <link href="css/global.min.74c504b8.css" rel="stylesheet" />
+    <link href="css/global.min.42ba13cd.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://dpangzi.com/library/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="https://dpangzi.com/library/prism/prism.css" />    
     <link rel="stylesheet" href="https://dpangzi.com/library/cherry-markdown/cherry-markdown.css">
@@ -56,31 +54,6 @@
     <script src="/js/markdown.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
-    <!--script>
-        let i = 0;
-        let allResourcesBeingLoaded = [];
-        Blazor.start({
-            loadBootResource: function(type,name,defaultUri,integrity) {
-                if(type === "dotnetjs")
-                    return defaultUri;
-
-                let f = fetch(defaultUri,{
-                    cache: 'no-cache',
-                    integrity: integrity
-                });
-
-                allResourcesBeingLoaded.push(f);
-                f.then((r) => {
-                    i++;
-                    let progress = document.getElementById("blazorProgress");
-                    let l = allResourcesBeingLoaded.length;
-                    progress.value = (100 * i / l);
-                });
-                return f;
-            }
-        });
-    </script-->
-    <!-- <script src="_content/MudBlazor/MudBlazor.min.js"></script> -->
 </body>
 
 </html>

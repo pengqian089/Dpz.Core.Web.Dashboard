@@ -18,7 +18,8 @@ public partial class Post(
     IPictureService pictureService,
     IAppDialogService dialogService,
     NavigationManager navigation,
-    IJSRuntime jsRuntime) : IAsyncDisposable
+    IJSRuntime jsRuntime
+) : IAsyncDisposable
 {
     private bool _isPosting;
     private PostPictureModel _picture = new();
@@ -34,6 +35,14 @@ public partial class Post(
             "import",
             "./Pages/Picture/Post.razor.js"
         );
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _jsModule != null)
+        {
+            await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+        }
     }
 
     private async Task PostPictureAsync()
@@ -118,11 +127,7 @@ public partial class Post(
             );
             var jsImageStream = resizedImage.OpenReadStream(AppTools.MaxFileSize);
             var dotnetImageStream = new DotNetStreamReference(jsImageStream);
-            await _jsModule.InvokeVoidAsync(
-                "setImagePreview",
-                "imagePreview",
-                dotnetImageStream
-            );
+            await _jsModule.InvokeVoidAsync("setImagePreview", "imagePreview", dotnetImageStream);
         }
     }
 

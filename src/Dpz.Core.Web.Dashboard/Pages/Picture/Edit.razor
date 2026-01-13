@@ -12,14 +12,14 @@
 
         <div class="picture-form__content">
             <div class="picture-form__main">
-                @if (!string.IsNullOrWhiteSpace(_picture.ImageUrl))
+                @if (!string.IsNullOrWhiteSpace(_picture?.ImageUrl))
                 {
                     <div class="current-image-section">
                         <div class="current-image-section__header">
                             <i class="fas fa-image"></i>
                             <span>当前图片</span>
                         </div>
-                        <div class="current-image-section__body">
+                        <div class="current-image-section__body pswp-gallery">
                             <img src="@_picture.ImageUrl" alt="当前图片" class="current-image-section__img" />
                             <div class="current-image-section__info">
                                 <span class="current-image-section__name">@_picture.FileName</span>

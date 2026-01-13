@@ -6,18 +6,22 @@ using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Picture;
 
 public partial class Edit(
     IAppDialogService appDialogService,
     NavigationManager navigationManager,
-    IPictureService pictureService
-)
+    IPictureService pictureService,
+    IJSRuntime jsRuntime
+) : IAsyncDisposable
 {
     private bool _editPicture;
-    private EditPictureRequest? _picture;
+    private EditPictureRequest _picture = new() { Id = "" };
     private List<string> _tags = [];
+    private IJSObjectReference? _jsModule;
+    private bool _pictureLoaded;
 
     [Parameter]
     public string? Id { get; set; }
@@ -25,6 +29,11 @@ public partial class Edit(
     protected override async Task OnInitializedAsync()
     {
         _tags = await pictureService.GetTagsAsync();
+        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./Pages/Picture/Edit.razor.js"
+        );
+
         if (!string.IsNullOrWhiteSpace(Id))
         {
             var response = await pictureService.GetPictureAsync(Id);
@@ -39,13 +48,23 @@ public partial class Edit(
                     FileName = response.AccessUrl.Split('/').LastOrDefault() ?? "",
                     Length = response.Length,
                 };
+                _pictureLoaded = true;
             }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pictureLoaded && _jsModule != null && !string.IsNullOrWhiteSpace(_picture.ImageUrl))
+        {
+            _pictureLoaded = false;
+            await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
         }
     }
 
     private async Task EditPictureAsync()
     {
-        if (string.IsNullOrWhiteSpace(_picture?.Id))
+        if (string.IsNullOrWhiteSpace(_picture.Id))
         {
             return;
         }
@@ -69,15 +88,23 @@ public partial class Edit(
 
     private void ToggleTag(string tag)
     {
-        if (_picture?.Tags.Contains(tag) == true)
+        if (_picture.Tags.Contains(tag))
         {
             _picture.Tags.Remove(tag);
         }
         else
         {
-            _picture?.Tags.Add(tag);
+            _picture.Tags.Add(tag);
         }
 
         StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null)
+        {
+            await _jsModule.DisposeAsync();
+        }
     }
 }

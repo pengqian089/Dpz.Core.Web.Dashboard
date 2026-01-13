@@ -1,14 +1,4 @@
-﻿const imageExtensionNames = [".jpg", ".jpeg", ".gif", ".png", ".bmp", ".webp", ".jiff"];
-async function setImageUsingStreaming(imageElementId, imageStream) {
-    const arrayBuffer = await imageStream.arrayBuffer();
-    const blob = new Blob([arrayBuffer]);
-    const url = URL.createObjectURL(blob);
-    let img = document.getElementById(imageElementId);
-    img.src = url;
-    img.style.display = "inline";    
-}
-
-function initVideoPlayer(url) {
+﻿function initVideoPlayer(url) {
     let video = document.getElementById("videoPlayer");
     if (Hls.isSupported() && video != null) {
         video.controls = true;

@@ -1,118 +1,125 @@
 ﻿@page "/picture/edit/{id}"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">修改图像信息</MudText>
-@if (_isLoading)
-{
-    <MudCard>
-        <MudCardContent>
-            <MudSkeleton Width="30%" Height="42px;"/>
-            <MudSkeleton Width="80%"/>
-            <MudSkeleton Width="100%"/>
-        </MudCardContent>
-        <MudCardActions>
-            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
-            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
-        </MudCardActions>
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
-    </MudCard>
-}
-else
-{
-    <MudOverlay Visible="_isPosting" ZIndex="9999" DarkBackground="true">
-        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-    </MudOverlay>
-    <EditForm Model="_picture" OnValidSubmit="PostPictureAsync">
-        <MudExpansionPanels>
-            <MudExpansionPanel Text="表单验证">
-                <MudText Color="@Color.Error">
-                    <ValidationSummary/>
-                </MudText>
-            </MudExpansionPanel>
-        </MudExpansionPanels>
-        <MudCard>
-            <MudCardContent>
-                <DataAnnotationsValidator/>
-                <MudGrid>
-                    <MudItem xs="12" md="12">
-                        <MudList Style="padding: 2em; width: 100%;" Dense="true" T="string">
-                            @if (!string.IsNullOrEmpty(_imageSrc))
-                            {
-                                <MudListItem @key="Guid.NewGuid()">
-                                    <img src="@_imageSrc" style="max-width: 100%" alt="picture"/>
-                                </MudListItem>
-                            }
-                            @foreach (var file in _selectedFiles)
-                            {
-                                <MudListItem @key="@file">
-                                    <MudChip Color="Color.Dark"
-                                             Style="overflow: hidden;"
-                                             Text="@(file.Key.Split(".").Last())"/>
-                                    @file.Key
-                                    <MudChip Color="Color.Dark"
-                                             Style="overflow: hidden;"
-                                             Text="@(file.Value.FileSize())"/>
-                                </MudListItem>
-                            }
-                            <Preview></Preview>
-                        </MudList>
-                    </MudItem>
 
-                    <MudItem xs="12" md="12">
-                        <MudSelect T="string" 
-                                   Label="标签"
-                                   HelperText="请选择标签"
-                                   MultiSelection="true"
-                                   SelectedValuesChanged="OnTagsSelected"
-                                   SelectedValues="_picture.Tags">
-                            @foreach (var state in _tags)
-                            {
-                                <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <MudTextField T="string"
-                                      HelperText="上面标签不满足时，在此输入补充标签，多个标签以[,](英文逗号)隔开"
-                                      Immediate="true"
-                                      Label="补充标签"
-                                      @bind-value="_picture.AdditionsTags"
-                                      For="@(() => _picture.AdditionsTags)"
-                                      Variant="Variant.Text">
-                        </MudTextField>
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <MudTextField T="string"
-                                      HelperText="图像描述"
-                                      Immediate="true"
-                                      Label="描述"
-                                      Lines="5"
-                                      @bind-value="_picture.Description"
-                                      Text="@_picture.Description"
-                                      For="@(() => _picture.Description)"
-                                      Variant="Variant.Text">
-                        </MudTextField>
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <div id="article-editor">
-                            <textarea id="article-area" style="display: none"></textarea>
+<div class="picture-form">
+    <div class="picture-form__header">
+        <h1 class="picture-form__title">编辑图片</h1>
+        <p class="picture-form__description">修改图片信息和标签</p>
+    </div>
+
+    <EditForm Model="_picture" OnValidSubmit="EditPictureAsync">
+        <DataAnnotationsValidator />
+
+        <div class="picture-form__content">
+            <div class="picture-form__main">
+                @if (!string.IsNullOrWhiteSpace(_picture.ImageUrl))
+                {
+                    <div class="current-image-section">
+                        <div class="current-image-section__header">
+                            <i class="fas fa-image"></i>
+                            <span>当前图片</span>
                         </div>
-                    </MudItem>
-                </MudGrid>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPosting" Color="Color.Primary">
-                    @if (_isPosting)
-                    {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                        <MudText Class="ms-2">正在修改</MudText>
-                    }
-                    else
-                    {
-                        <MudText>修改</MudText>
-                    }
-                </MudButton>
-                <MudButton Variant="Variant.Filled" Href="/picture">返回列表</MudButton>
-            </MudCardActions>
-        </MudCard>
+                        <div class="current-image-section__body">
+                            <img src="@_picture.ImageUrl" alt="当前图片" class="current-image-section__img" />
+                            <div class="current-image-section__info">
+                                <span class="current-image-section__name">@_picture.FileName</span>
+                                <span class="current-image-section__size">@_picture.Length.FileSize()</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <i class="fas fa-tags"></i>
+                        <span>标签选择</span>
+                    </div>
+                    <div class="form-section__body">
+                        <div class="tag-selector-wrapper">
+                            <div class="tag-selector__label">
+                                <i class="fas fa-tag"></i>
+                                <span>选择标签（可多选）</span>
+                            </div>
+                            <div class="tag-selector">
+                                @foreach (var tag in _tags)
+                                {
+                                    <button type="button" 
+                                            class="tag-selector__item @(_picture.Tags?.Contains(tag) == true ? "tag-selector__item--active" : "")"
+                                            @onclick="() => ToggleTag(tag)">
+                                        <i class="fas @(_picture.Tags?.Contains(tag) == true ? "fa-check-circle" : "fa-circle")"></i>
+                                        <span>@tag</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>补充标签</span>
+                            </label>
+                            <input type="text"
+                                   class="form-input"
+                                   placeholder="多个标签以英文逗号(,)隔开"
+                                   @bind="_picture.AdditionsTags" />
+                            <div class="form-helper">
+                                <i class="fas fa-info-circle"></i>
+                                <span>上面标签不满足时，在此输入补充标签</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <i class="fas fa-align-left"></i>
+                        <span>图片描述</span>
+                    </div>
+                    <div class="form-section__body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-file-alt"></i>
+                                <span>描述内容</span>
+                            </label>
+                            <textarea class="form-input form-textarea"
+                                      rows="5"
+                                      placeholder="请输入图片描述信息..."
+                                      @bind="_picture.Description"></textarea>
+                            <div class="form-helper">
+                                <i class="fas fa-info-circle"></i>
+                                <span>简要描述图片内容，便于后续查找和管理</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="picture-form__actions">
+            <button type="submit" class="btn btn-success btn-lg" disabled="@_editPicture">
+                @if (_editPicture)
+                {
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>正在保存</span>
+                }
+                else
+                {
+                    <i class="fas fa-save"></i>
+                    <span>保存修改</span>
+                }
+            </button>
+            <a href="/picture" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i>
+                <span>返回列表</span>
+            </a>
+        </div>
     </EditForm>
-}
+
+    @if (_editPicture)
+    {
+        <div class="picture-form__loading-overlay">
+            <div class="picture-form__loading-spinner"></div>
+            <div class="picture-form__loading-text">正在更新图片信息，请稍候...</div>
+        </div>
+    }
+</div>

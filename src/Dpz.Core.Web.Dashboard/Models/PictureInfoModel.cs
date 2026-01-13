@@ -1,5 +1,8 @@
-﻿namespace Dpz.Core.Web.Dashboard.Models
+﻿using System;
+
+namespace Dpz.Core.Web.Dashboard.Models
 {
+    [Obsolete]
     public class PictureInfoModel
     {
         /// <summary>

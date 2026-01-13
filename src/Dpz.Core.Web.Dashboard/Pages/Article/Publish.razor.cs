@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -23,7 +22,7 @@ public partial class Publish(
     private string _addTag = "";
     private readonly ArticlePublishRequest _article = new();
     private bool _isPublishing;
-    private MarkdownEditor _editor = null!;
+    private MarkdownEditor? _editor;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,7 +75,7 @@ public partial class Publish(
 
     private async Task PublishArticleAsync(EditContext context)
     {
-        _article.Markdown = await _editor.GetValueAsync();
+        _article.Markdown = _editor == null ? null : await _editor.GetValueAsync();
 
         if (string.IsNullOrEmpty(_article.Title))
         {
@@ -108,7 +107,6 @@ public partial class Publish(
 
             await articleService.PublishAsync(_article);
             dialogService.Toast("文章发布成功", ToastType.Success);
-            await _editor.DisposeAsync();
             navigation.NavigateTo("/article");
         }
         catch (Exception ex)

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -27,7 +26,7 @@ public partial class Edit(
     private ArticleEditRequest _article = new() { Id = "" };
     private bool _isLoading = true;
     private bool _isPublishing;
-    private MarkdownEditor _editor = null!;
+    private MarkdownEditor? _editor;
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,7 +70,7 @@ public partial class Edit(
         var trimmedTag = _addTag.Trim();
         if (_tags.Contains(trimmedTag))
         {
-            dialogService.Toast("该标签已存在", ToastType.Info);
+            dialogService.Toast("该标签已存在");
             _addTag = "";
             return;
         }
@@ -98,7 +97,7 @@ public partial class Edit(
             return;
         }
 
-        _article.Markdown = await _editor.GetValueAsync();
+        _article.Markdown = _editor == null ? null : await _editor.GetValueAsync();
 
         if (string.IsNullOrWhiteSpace(_article.Introduction))
         {
@@ -119,7 +118,6 @@ public partial class Edit(
         {
             await articleService.EditAsync(_article);
             dialogService.Toast("文章修改成功", ToastType.Success);
-            await _editor.DisposeAsync();
             navigation.NavigateTo("/article");
         }
         catch (Exception ex)

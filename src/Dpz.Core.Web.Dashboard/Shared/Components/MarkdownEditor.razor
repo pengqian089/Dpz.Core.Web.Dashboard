@@ -1,0 +1,7 @@
+﻿@if (!string.IsNullOrEmpty(_editorId))
+{
+    <div id="markdown-container-@(_editorId)" style="@HeightStyle">
+        <div id="@_editorId"></div>
+        <input type="hidden" id="txt@(_editorId)" value="@(_baseAddress + UploadAction)"/>
+    </div>
+}

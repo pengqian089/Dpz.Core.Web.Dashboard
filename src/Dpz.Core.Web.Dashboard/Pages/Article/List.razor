@@ -42,9 +42,39 @@
 
     @if (_isLoading)
     {
-        <div class="article-list__loading">
-            <i class="fas fa-spinner fa-spin fa-2x"></i>
-            <p>加载中...</p>
+        <div class="article-list-skeleton">
+            <div class="article-list-skeleton__table">
+                @for (var i = 0; i < 5; i++)
+                {
+                    <div class="article-list-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                    <div class="article-list-skeleton__mobile-card">
+                        <div class="article-list-skeleton__mobile-header">
+                            <div class="skeleton skeleton--text-lg" style="width: 70%;"></div>
+                            <div class="skeleton skeleton--button" style="width: 60px;"></div>
+                        </div>
+                        <div class="article-list-skeleton__mobile-body">
+                            <div class="skeleton skeleton--text" style="width: 40%;"></div>
+                            <div class="skeleton skeleton--text" style="width: 60%;"></div>
+                            <div class="skeleton skeleton--text" style="width: 50%;"></div>
+                        </div>
+                        <div class="article-list-skeleton__mobile-footer">
+                            <div class="skeleton skeleton--button" style="width: 48%; height: 36px;"></div>
+                            <div class="skeleton skeleton--button" style="width: 48%; height: 36px;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     }
     else if (_articles == null || !_articles.Any())

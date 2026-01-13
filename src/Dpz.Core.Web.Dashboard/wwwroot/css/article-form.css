@@ -310,68 +310,6 @@
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
-/* Loading State */
-.article-form__loading {
-    padding: var(--spacing-xl);
-}
-
-.skeleton {
-    background: linear-gradient(
-        90deg,
-        rgba(30, 41, 59, 0.5) 25%,
-        rgba(51, 65, 85, 0.5) 50%,
-        rgba(30, 41, 59, 0.5) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-    border-radius: var(--border-radius-sm);
-}
-
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-.skeleton--title {
-    height: 42px;
-    width: 30%;
-    margin-bottom: var(--spacing-md);
-}
-
-.skeleton--input {
-    height: 48px;
-    width: 100%;
-    margin-bottom: var(--spacing-lg);
-}
-
-.skeleton--textarea {
-    height: 120px;
-    width: 100%;
-    margin-bottom: var(--spacing-lg);
-}
-
-.skeleton--select {
-    height: 120px;
-    width: 100%;
-    margin-bottom: var(--spacing-lg);
-}
-
-.skeleton--button {
-    height: 40px;
-    width: 105px;
-    display: inline-block;
-    margin-right: var(--spacing-md);
-}
-
-.skeleton--editor {
-    height: 500px;
-    width: 100%;
-}
-
 /* Publishing Overlay */
 .publishing-overlay {
     position: fixed;

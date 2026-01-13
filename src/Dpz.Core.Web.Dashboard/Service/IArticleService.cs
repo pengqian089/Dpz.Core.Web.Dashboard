@@ -4,28 +4,32 @@ using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 
-namespace Dpz.Core.Web.Dashboard.Service
+namespace Dpz.Core.Web.Dashboard.Service;
+
+public interface IArticleService
 {
-    public interface IArticleService
-    {
-        Task<IPagedList<ArticleModel>> GetPageAsync(int pageIndex, int pageSize, string tag, string title);
+    Task<IPagedList<ArticleModel>> GetPageAsync(
+        int pageIndex,
+        int pageSize,
+        string? tag,
+        string? title
+    );
 
-        Task PublishAsync(ArticlePublishRequest request);
+    Task PublishAsync(ArticlePublishRequest request);
 
-        Task<ArticleModel> GetArticleAsync(string id);
+    Task<ArticleModel> GetArticleAsync(string id);
 
-        Task<List<string>> GetTagsAsync();
+    Task<List<string>> GetTagsAsync();
 
-        Task<List<ArticleModel>> GetNewArticlesAsync();
+    Task<List<ArticleModel>> GetNewArticlesAsync();
 
-        Task<List<ArticleModel>> GetTopViewArticlesAsync();
+    Task<List<ArticleModel>> GetTopViewArticlesAsync();
 
-        Task EditAsync(ArticleEditRequest request);
+    Task EditAsync(ArticleEditRequest request);
 
-        Task DeleteAsync(string id);
-        
-        Task<bool> ExistsAsync(string title);
+    Task DeleteAsync(string id);
 
-        Task<string> UploadAsync(MultipartFormDataContent content);
-    }
+    Task<bool> ExistsAsync(string title);
+
+    Task<string> UploadAsync(MultipartFormDataContent content);
 }

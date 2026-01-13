@@ -21,7 +21,7 @@ public partial class Publish(
 {
     private List<string> _tags = [];
     private string _addTag = "";
-    private ArticlePublishRequest _article = new() { Tags = [] };
+    private readonly ArticlePublishRequest _article = new();
     private bool _isPublishing;
     private MarkdownEditor _editor = null!;
 
@@ -55,7 +55,7 @@ public partial class Publish(
         var trimmedTag = _addTag.Trim();
         if (_tags.Contains(trimmedTag))
         {
-            dialogService.Toast("该标签已存在", ToastType.Info);
+            dialogService.Toast("该标签已存在");
             _addTag = "";
             return;
         }
@@ -77,9 +77,18 @@ public partial class Publish(
     private async Task PublishArticleAsync(EditContext context)
     {
         _article.Markdown = await _editor.GetValueAsync();
-        _article.Content = Markdig.Markdown.ToHtml(_article.Markdown);
 
-        if (string.IsNullOrEmpty(_article.Content) || string.IsNullOrEmpty(_article.Markdown))
+        if (string.IsNullOrEmpty(_article.Title))
+        {
+            dialogService.Toast("请输入标题", ToastType.Warning);
+            return;
+        }
+        if (string.IsNullOrEmpty(_article.Introduction))
+        {
+            dialogService.Toast("请输入简介", ToastType.Warning);
+            return;
+        }
+        if (string.IsNullOrEmpty(_article.Markdown))
         {
             dialogService.Toast("请输入文章内容", ToastType.Warning);
             return;

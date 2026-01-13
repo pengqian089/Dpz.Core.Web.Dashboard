@@ -24,7 +24,7 @@ public partial class Edit(
 
     private List<string> _tags = [];
     private string _addTag = "";
-    private ArticleEditRequest _article = new();
+    private ArticleEditRequest _article = new() { Id = "" };
     private bool _isLoading = true;
     private bool _isPublishing;
     private MarkdownEditor _editor = null!;
@@ -35,18 +35,14 @@ public partial class Edit(
 
         _isLoading = true;
         var article = await articleService.GetArticleAsync(Id);
-        if (article != null)
+        _article = new ArticleEditRequest
         {
-            _article = new ArticleEditRequest
-            {
-                Id = article.Id,
-                Content = article.HtmlContent,
-                Introduction = article.Introduction,
-                Markdown = article.Markdown,
-                Tags = article.Tags,
-                Title = article.Title,
-            };
-        }
+            Id = article.Id,
+            Introduction = article.Introduction,
+            Markdown = article.Markdown,
+            Tags = article.Tags,
+            Title = article.Title,
+        };
         _isLoading = false;
         await base.OnInitializedAsync();
     }
@@ -103,9 +99,14 @@ public partial class Edit(
         }
 
         _article.Markdown = await _editor.GetValueAsync();
-        _article.Content = Markdig.Markdown.ToHtml(_article.Markdown);
 
-        if (string.IsNullOrEmpty(_article.Content) || string.IsNullOrEmpty(_article.Markdown))
+        if (string.IsNullOrWhiteSpace(_article.Introduction))
+        {
+            dialogService.Toast("请输入文章简介", ToastType.Warning);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_article.Markdown))
         {
             dialogService.Toast("请输入文章内容", ToastType.Warning);
             return;

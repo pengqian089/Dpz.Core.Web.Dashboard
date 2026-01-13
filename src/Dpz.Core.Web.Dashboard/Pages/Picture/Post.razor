@@ -24,12 +24,8 @@
                             <div class="upload-area__icon">
                                 <i class="fas fa-image"></i>
                             </div>
-                            <div class="upload-area__title">点击选择要上传的图片</div>
+                            <div class="upload-area__title">点击或拖拽图片到此处上传</div>
                             <div class="upload-area__hint">支持 @string.Join(", ", AppTools.ImageExtensions.Take(5)) 等格式</div>
-                            <div class="upload-area__button" role="button">
-                                <i class="fas fa-folder-open"></i>
-                                <span>浏览文件</span>
-                            </div>
                         </label>
 
                         @if (_selectedFiles.Any())

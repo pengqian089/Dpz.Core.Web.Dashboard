@@ -1,3 +1,6 @@
+import PhotoSwipeLightbox from 'https://dpangzi.com/library/photoswipe/photoswipe.esm.min.js';
+import PhotoSwipe from 'https://dpangzi.com/library/photoswipe/photoswipe.esm.min.js';
+
 export async function setImagePreview(imageElementId, imageStream) {
     const arrayBuffer = await imageStream.arrayBuffer();
     const blob = new Blob([arrayBuffer]);

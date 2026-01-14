@@ -1,4 +1,3 @@
-// Dashboard Chart & Carousel interactions using ES Modules
 import Chart from 'https://esm.sh/chart.js/auto';
 
 let dashboardChart = null;

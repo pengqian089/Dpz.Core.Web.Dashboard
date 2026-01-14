@@ -99,6 +99,19 @@
     max-width: 200px;
 }
 
+.music-table__tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--primary-light), rgba(59, 130, 246, 0.15));
+    color: var(--primary);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    white-space: nowrap;
+}
+
 .music-table__actions {
     display: flex;
     gap: var(--spacing-sm);

@@ -166,8 +166,9 @@
                                 @foreach (var group in _groups)
                                 {
                                     <button type="button"
-                                        class="tag-selector__tag @(_selectedGroups.Contains(group) ? "is-active" : "")"
-                                        @onclick="() => ToggleGroup(group)">
+                                            class="tag-selector__item @(_selectedGroups.Contains(group) ? "tag-selector__item--active" : "")"
+                                            @onclick="() => ToggleGroup(group)">
+                                        <i class="fas @(_selectedGroups.Contains(group) ? "fa-check-circle" : "fa-circle")"></i>
                                         @group
                                     </button>
                                 }

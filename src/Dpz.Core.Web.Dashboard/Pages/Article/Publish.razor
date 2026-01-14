@@ -32,7 +32,7 @@
                             <label class="form-label form-label--required" for="title">文章标题</label>
                             <input type="text"
                                    id="title"
-                                   class="form-group"
+                                   class="form-input"
                                    placeholder="请输入一个吸引人的标题"
                                    @bind="_article.Title"
                                    @bind:event="oninput"/>
@@ -63,7 +63,7 @@
                             <div class="input-with-icon">
                                 <input type="text"
                                        id="addTag"
-                                       class="form-group"
+                                       class="form-input"
                                        placeholder="输入新标签并回车添加"
                                        @bind="_addTag"
                                        @bind:event="oninput"
@@ -88,7 +88,7 @@
                         <div class="form-group">
                             <label class="form-label form-label--required" for="introduction">简介内容</label>
                             <textarea id="introduction"
-                                      class="form-group form-textarea"
+                                      class="form-input form-textarea"
                                       placeholder="用一段精彩的简介吸引读者..."
                                       rows="4"
                                       @bind="_article.Introduction"

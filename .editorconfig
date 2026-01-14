@@ -1,0 +1,13 @@
+root = true
+
+[*.cs]
+charset = utf-8
+indent_style = space
+indent_size = 4
+max_line_length = 100
+# 强制所有控制语句（if/else/for/while等）必须使用大括号
+csharp_prefer_braces = true:warning
+csharp_style_var_for_built_in_types = true:warning
+# 命名空间使用文件作用域
+csharp_style_namespace_declarations = file_scoped:warning
+

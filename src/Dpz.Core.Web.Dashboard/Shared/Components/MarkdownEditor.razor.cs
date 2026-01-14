@@ -180,8 +180,5 @@ public partial class MarkdownEditor(
         _objRef?.Dispose();
     }
 
-    private class UploadImageResult
-    {
-        public string? Url { get; set; }
-    }
+    private record UploadImageResult(string? Url);
 }

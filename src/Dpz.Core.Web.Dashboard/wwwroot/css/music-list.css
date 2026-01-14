@@ -1,0 +1,312 @@
+/* Music List Page - Matching Article List Style */
+.music-list {
+    max-width: 100%;
+}
+
+.music-list__toolbar {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.music-list__toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.music-list__toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-left: auto;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+/* Music Table */
+.music-table {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.music-table__wrapper {
+    overflow-x: auto;
+}
+
+.music-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.music-table thead {
+    background-color: rgba(30, 41, 59, 0.5);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.music-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.music-table td {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.music-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.music-table tbody tr:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+.music-table__title {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.music-table__filename {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+}
+
+.music-table__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 200px;
+}
+
+.music-table__tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--primary-light), rgba(59, 130, 246, 0.15));
+    color: var(--primary);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    white-space: nowrap;
+}
+
+.music-table__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    white-space: nowrap;
+}
+
+.music-table__has-lyric {
+    color: var(--success);
+}
+
+.music-table__no-lyric {
+    color: var(--text-muted);
+}
+
+/* Loading & Empty State */
+.music-list__empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+/* Loading Skeleton */
+.music-list-skeleton__table {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+}
+
+.music-list-skeleton__row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr 1fr 0.5fr 1fr 1.5fr 1.5fr 1.5fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.music-list-skeleton__row:last-child {
+    border-bottom: none;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-surface-hover) 25%, rgba(30, 41, 59, 0.8) 50%, var(--bg-surface-hover) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton--text {
+    height: 16px;
+}
+
+.skeleton--text-lg {
+    height: 20px;
+}
+
+.skeleton--button {
+    height: 32px;
+    width: 60px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+    .music-table__title {
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 960px) {
+    .music-list__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .music-list__toolbar-left,
+    .music-list__toolbar-right {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .music-list__toolbar-right {
+        margin-left: 0;
+    }
+
+    .form-control {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .music-table__wrapper {
+        overflow-x: auto;
+    }
+
+    .music-table td,
+    .music-table th {
+        padding: var(--spacing-sm);
+        font-size: 0.8rem;
+    }
+
+    .music-table__title {
+        max-width: 150px;
+    }
+
+    .music-list-skeleton__row {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .music-list__toolbar {
+        gap: var(--spacing-sm);
+    }
+
+    .music-list__toolbar-left,
+    .music-list__toolbar-right {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .music-table {
+        border: none;
+        background: transparent;
+    }
+
+    .music-table__wrapper {
+        overflow-x: visible;
+    }
+
+    .music-table thead {
+        display: none;
+    }
+
+    .music-table tbody {
+        display: block;
+    }
+
+    .music-table tbody tr {
+        display: block;
+        margin-bottom: var(--spacing-md);
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+    }
+
+    .music-table td {
+        display: flex;
+        align-items: flex-start;
+        text-align: left;
+        border: none;
+        padding: var(--spacing-xs) 0;
+        gap: var(--spacing-sm);
+    }
+
+    .music-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        min-width: 80px;
+        flex-shrink: 0;
+    }
+
+    .music-table__title,
+    .music-table__filename {
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .music-table__tags {
+        max-width: 100%;
+        flex: 1;
+    }
+
+    .music-table__actions {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        margin-top: var(--spacing-sm);
+        width: 100%;
+    }
+
+    .music-table__actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

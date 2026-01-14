@@ -1,128 +1,155 @@
 ﻿@page "/music"
 @page "/music/list"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">音乐列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex -1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       Href="/music/add"
-                       Class="ma-2" />
-        <MudSpacer />
-        
-        <MudTextField T="string"
-                      Placeholder="搜索音乐"
-                      @bind-value="_title"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2" />
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            歌曲名
-        </MudTh>
-        <MudTh>
-            歌手
-        </MudTh>
-        <MudTh>
-            文件名
-        </MudTh>
-        <MudTh>
-            分组
-        </MudTh>
-        <MudTh>
-            时长
-        </MudTh>
-        <MudTh>
-            来源
-        </MudTh>
-        <MudTh>
-            歌词
-        </MudTh>
-        <MudTh>
-            文件大小
-        </MudTh>
-        <MudTh>
-            上传时间
-        </MudTh>
-        <MudTh>
-            最后修改时间
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="歌曲名">
-            <div style="max-width: 20em">
-                <MudHighlighter Text="@context.Title" HighlightedText="@_title"/>
+@using Dpz.Core.Web.Dashboard.Shared.Components
+
+<div class="music-list">
+    <div class="music-list__header">
+        <h1 class="page-title">音乐管理</h1>
+        <p class="page-description">管理和维护网站的所有音乐内容</p>
+    </div>
+
+    <div class="music-list__toolbar">
+        <div class="music-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="AddMusic">
+                <i class="fas fa-plus"></i>
+                发布音乐
+            </button>
+        </div>
+
+        <div class="music-list__toolbar-right">
+            <input type="text"
+                   class="form-control"
+                   placeholder="搜索音乐标题..."
+                   @bind="_title"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown" />
+
+            <button class="btn btn-primary" @onclick="Search">
+                <i class="fas fa-search"></i>
+                搜索
+            </button>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="music-list-skeleton">
+            <div class="music-list-skeleton__table">
+                @for (var i = 0; i < 5; i++)
+                {
+                    <div class="music-list-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
             </div>
-        </MudTd>
-        <MudTd DataLabel="歌手">
-            @context.Artist
-        </MudTd>
-        <MudTd DataLabel="文件名">
-            <div style="max-width: 20em">
-                <MudHighlighter Text="@context.FileName" HighlightedText="@_title" />
+        </div>
+    }
+    else if (Items is null || !Items.Any())
+    {
+        <div class="music-list__empty">
+            <i class="fas fa-music fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无音乐数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="music-table">
+            <div class="music-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>歌曲名</th>
+                            <th>歌手</th>
+                            <th>文件名</th>
+                            <th>分组</th>
+                            <th>时长</th>
+                            <th>来源</th>
+                            <th>歌词</th>
+                            <th>文件大小</th>
+                            <th>上传时间</th>
+                            <th>最后修改时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var music in Items)
+                        {
+                            <tr>
+                                <td data-label="歌曲名">
+                                    <div class="music-table__title">
+                                        <span title="@music.Title">@music.Title</span>
+                                    </div>
+                                </td>
+                                <td data-label="歌手">@music.Artist</td>
+                                <td data-label="文件名">
+                                    <div class="music-table__filename" title="@music.FileName">
+                                        @music.FileName
+                                    </div>
+                                </td>
+                                <td data-label="分组">
+                                    <div class="music-table__tags">
+                                        @if (music.Group != null)
+                                        {
+                                            foreach (var g in music.Group)
+                                            {
+                                                <span class="music-table__tag">@g</span>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                                <td data-label="时长">
+                                    @{
+                                        var duration = TimeSpan.TryParse(music.Duration, out var d) ? d : TimeSpan.Zero;
+                                    }
+                                    @string.Format("{0:00}:{1:00}:{2:00}", duration.Hours, duration.Minutes, duration.Seconds)
+                                </td>
+                                <td data-label="来源">@music.From</td>
+                                <td data-label="歌词">
+                                    @if (string.IsNullOrEmpty(music.LyricUrl))
+                                    {
+                                        <span class="music-table__no-lyric">无</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="music-table__has-lyric">有</span>
+                                    }
+                                </td>
+                                <td data-label="文件大小">@music.MusicLength.FileSize()</td>
+                                <td data-label="上传时间">@music.UploadTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td data-label="最后修改时间">@music.LastUpdateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td data-label="操作">
+                                    <div class="music-table__actions">
+                                        <button class="btn btn-primary btn-sm" @onclick="() => ViewDetail(music.Id)">
+                                            <i class="fas fa-eye"></i>
+                                            详情
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(music.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-        </MudTd>
-        <MudTd DataLabel="分组">
-            @foreach (var item in context.Group)
-            {
-                <div>@item</div>    
-            }
-        </MudTd>
-        <MudTd DataLabel="时长">
-            @{
-                var duration = TimeSpan.Parse(context.Duration);
-            }
-            @($"{duration.Hours:00}:{duration.Minutes:00}:{duration.Seconds:00}.{duration.Milliseconds / 10:00}")
-        </MudTd>
-        <MudTd DataLabel="来源">
-            @context.From
-        </MudTd>
-        <MudTd DataLabel="歌词">
-            @if (string.IsNullOrEmpty(context.LyricUrl))
-            {
-                <MudText Color="Color.Error">没有歌词</MudText>
-            }
-            else
-            {
-                <MudText Color="Color.Success">有歌词</MudText>
-            }
-        </MudTd>
-        <MudTd DataLabel="文件大小">
-            @context.MusicLength.FileSize()
-        </MudTd>
-        <MudTd DataLabel="上传时间">
-           @context.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="最后修改时间">
-            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/music/detail/{context.Id}")">详情</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new []{15,20,30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条" />
-    </PagerContent>
-</MudTable>
+
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged" />
+        </div>
+    }
+</div>

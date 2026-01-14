@@ -39,7 +39,7 @@ public partial class Detail
 
     private bool _isLoading;
 
-    private MusicModel _musicModel = new();
+    private MusicModel _musicModel = new() { Id = "", MusicUrl = "" };
 
     private string _lrcContent = "";
 

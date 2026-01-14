@@ -90,9 +90,9 @@
 }
 
 .tag-selector__item:hover {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-primary);
-    border-color: var(--text-sized);
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+    border-color: rgba(59, 130, 246, 0.3);
     transform: translateY(-1px);
 }
 

@@ -9,6 +9,7 @@
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     overflow: hidden;
+    padding: var(--spacing-sm);
 }
 
 .form-section:hover {
@@ -246,14 +247,15 @@ select.form-input {
 }
 
 .btn-secondary {
-    background-color: rgba(30, 41, 59, 0.5);
-    color: var(--text-primary);
-    border-color: var(--border-color);
+    background-color: rgba(30, 41, 59, 0.4);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background-color: var(--bg-surface-hover);
-    border-color: var(--text-secondary);
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .btn-success {
@@ -265,6 +267,18 @@ select.form-input {
 .btn-success:hover:not(:disabled) {
     filter: brightness(1.1);
     transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger), #dc2626);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(239, 68, 68, 0.4);
 }
 
 /* Button Sizes */

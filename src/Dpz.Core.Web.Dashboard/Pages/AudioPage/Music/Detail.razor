@@ -1,224 +1,209 @@
-﻿@page "/music/detail/{Id}"
+@page "/music/detail/{Id}"
 @attribute [Authorize]
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="music-container">
-    <MudPaper Class="music-hero pa-6 mb-6" Elevation="1">
-        <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center">
-            <MudAvatar Size="Size.Large" Class="music-hero__avatar">
-                <MudIcon Icon="@Icons.Material.Filled.Album" Size="Size.Large" />
-            </MudAvatar>
-            <MudStack Spacing="1">
-                <MudText Typo="Typo.h4" Class="music-hero__title">音乐详情</MudText>
-                <MudText Typo="Typo.subtitle1" Class="music-hero__subtitle">
-                    预览已上传的音乐素材，快速调整封面与歌词信息
-                </MudText>
-            </MudStack>
-        </MudStack>
-    </MudPaper>
+<div class="music-form">
+    <div class="music-form__header">
+        <h1 class="music-form__title">音乐详情</h1>
+        <p class="music-form__description">预览已上传的音乐素材，快速调整封面与歌词信息</p>
+    </div>
 
     @if (_isLoading)
     {
-        <MudPaper Elevation="3" Class="music-form-card pa-6">
-            <MudStack Spacing="2">
-                <MudSkeleton Width="30%" Height="42px"/>
-                <MudSkeleton Width="80%" Height="24px"/>
-                <MudSkeleton Width="100%" Height="160px"/>
-                <MudStack Row="true" Spacing="2">
-                    <MudSkeleton Width="120px" Height="40px"/>
-                    <MudSkeleton Width="140px" Height="40px"/>
-                </MudStack>
-            </MudStack>
-        </MudPaper>
+        <div class="music-form__content">
+            <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: var(--spacing-xl);">
+                <div class="skeleton skeleton--text-lg" style="margin-bottom: var(--spacing-md);"></div>
+                <div class="skeleton skeleton--text" style="margin-bottom: var(--spacing-md); width: 80%;"></div>
+                <div class="skeleton skeleton--text" style="height: 160px; margin-bottom: var(--spacing-md);"></div>
+                <div style="display: flex; gap: var(--spacing-md);">
+                    <div class="skeleton skeleton--button"></div>
+                    <div class="skeleton skeleton--button"></div>
+                </div>
+            </div>
+        </div>
     }
     else
     {
-        <MudOverlay Visible="_isPosting" ZIndex="9999" DarkBackground="true">
-            <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-        </MudOverlay>
+        @if (_isPosting)
+        {
+            <div class="publishing-overlay">
+                <div>
+                    <div class="publishing-overlay__spinner"></div>
+                    <p class="publishing-overlay__text">正在保存...</p>
+                </div>
+            </div>
+        }
 
         <EditForm Model="_t" OnValidSubmit="PostInformationAsync">
-            <MudGrid Justify="Justify.Center">
-                <MudItem xs="12" md="10" lg="8">
-                    <MudPaper Elevation="3" Class="music-form-card pa-6">
-                        <DataAnnotationsValidator/>
-                        <MudStack Spacing="4">
-                            <section class="upload-block">
-                                <MudStack Spacing="1" Class="upload-block__header">
-                                    <MudText Typo="Typo.h6">音频信息</MudText>
-                                    <MudText Typo="Typo.body2" Class="upload-block__hint">查看文件信息并试播音频
-                                    </MudText>
-                                </MudStack>
-                                <MudPaper Class="file-panel" Elevation="0">
-                                    @if (_selectMusic?.Any() == true)
-                                    {
-                                        <MudList Dense="true" T="string" Class="file-list">
-                                            @foreach (var file in _selectMusic)
-                                            {
-                                                <MudListItem @key="@file" Class="file-list__item">
-                                                    <MudChip Color="Color.Primary" Variant="Variant.Filled"
-                                                             Class="file-chip">@(file.Key.Split(".").Last())</MudChip>
-                                                    <span class="file-list__name">@file.Key</span>
-                                                    <MudText Typo="Typo.caption"
-                                                             Class="file-list__size">@(file.Value.FileSize())</MudText>
-                                                </MudListItem>
-                                            }
-                                        </MudList>
-                                    }
-                                    <div class="audio-preview">
-                                        <audio controls src="@_musicModel.MusicUrl" preload="metadata"></audio>
+            <DataAnnotationsValidator />
+            
+            <div class="music-form__content">
+                <div class="music-form__main">
+                    <!-- 音频信息区域 -->
+                    <section class="form-section">
+                        <div class="form-section__header">
+                            <h3 class="form-section__title">音频信息</h3>
+                            <p class="form-section__description">查看文件信息并试播音频</p>
+                        </div>
+
+                        @if (_selectMusic?.Any() == true)
+                        {
+                            <div class="file-info-display">
+                                @foreach (var file in _selectMusic)
+                                {
+                                    <div class="file-info-display__item" key="@file.Key">
+                                        <span class="file-info-display__badge">@(file.Key.Split(".").Last().ToUpperInvariant())</span>
+                                        <span class="file-info-display__name">@file.Key</span>
+                                        <span class="file-info-display__meta">@(file.Value.FileSize())</span>
                                     </div>
-                                </MudPaper>
-                            </section>
+                                }
+                            </div>
+                        }
 
-                            <MudDivider Class="section-divider"/>
+                        <div class="audio-preview">
+                            <audio controls src="@_musicModel.MusicUrl" preload="metadata"></audio>
+                        </div>
+                    </section>
 
-                            <section class="upload-block">
-                                <InputFile OnChange="OnCoverChanged" id="fileCover" hidden
-                                           accept="@(string.Join(',', AppTools.ImageExtensions.Select(x => '.' + x)))"/>
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
-                                          Class="upload-block__header">
-                                    <MudStack Spacing="1">
-                                        <MudText Typo="Typo.h6">封面图片</MudText>
-                                        <MudText Typo="Typo.body2" Class="upload-block__hint">
-                                            替换封面即可实时查看预览效果
-                                        </MudText>
-                                    </MudStack>
-                                    <MudButton HtmlTag="label"
-                                               Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               StartIcon="@Icons.Material.Filled.CloudUpload"
-                                               Class="upload-block__button"
-                                               for="fileCover">
-                                        更新封面
-                                    </MudButton>
-                                </MudStack>
-                                <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true"
-                                          Class="upload-alert">
-                                    支持格式：@string.Join("、", AppTools.ImageExtensions.Select(x => x.ToUpperInvariant()))
-                                </MudAlert>
-                                <MudPaper Class="file-panel" Elevation="0">
-                                    <MudList Dense="true" T="string" Class="file-list">
-                                        @if (!string.IsNullOrEmpty(_musicModel.CoverUrl) && _showCover)
-                                        {
-                                            <MudListItem @key="Guid.NewGuid()" Class="file-list__item">
-                                                <img src="@_musicModel.CoverUrl" alt="封面预览"/>
-                                                <span class="file-list__name">当前封面</span>
-                                            </MudListItem>
-                                        }
-                                        <Preview></Preview>
-                                        @if (_selectCover.Any())
-                                        {
-                                            @foreach (var file in _selectCover)
-                                            {
-                                                <MudListItem @key="@file" Class="file-list__item">
-                                                    <MudChip Color="Color.Secondary" Variant="Variant.Filled"
-                                                             Class="file-chip">@(file.Key.Split(".").Last())</MudChip>
-                                                    <span class="file-list__name">@file.Key</span>
-                                                    <MudText Typo="Typo.caption"
-                                                             Class="file-list__size">@(file.Value.FileSize())</MudText>
-                                                </MudListItem>
-                                            }
-                                        }
-                                    </MudList>
-                                </MudPaper>
-                            </section>
+                    <!-- 封面图片区域 -->
+                    <section class="form-section">
+                        <div class="form-section__header">
+                            <div>
+                                <h3 class="form-section__title">封面图片</h3>
+                                <p class="form-section__description">替换封面即可实时查看预览效果</p>
+                            </div>
+                            <label for="fileCover" class="btn btn-primary">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                更新封面
+                            </label>
+                        </div>
 
-                            <MudDivider Class="section-divider"/>
+                        <InputFile OnChange="OnCoverChanged" id="fileCover" class="file-upload-zone__input" 
+                                   accept="@(string.Join(',', AppTools.ImageExtensions.Select(x => '.' + x)))" />
 
-                            <section class="upload-block">
-                                <InputFile OnChange="OnLrcChanged" id="fileLrc" hidden accept=".lrc"/>
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
-                                          Class="upload-block__header">
-                                    <MudStack Spacing="1">
-                                        <MudText Typo="Typo.h6">歌词文件</MudText>
-                                        <MudText Typo="Typo.body2" Class="upload-block__hint">上传 .LRC
-                                            文件，自动刷新下方预览
-                                        </MudText>
-                                    </MudStack>
-                                    <MudButton HtmlTag="label"
-                                               Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               StartIcon="@Icons.Material.Filled.CloudUpload"
-                                               Class="upload-block__button"
-                                               for="fileLrc">
-                                        更新歌词
-                                    </MudButton>
-                                </MudStack>
-                                <MudPaper Class="file-panel" Elevation="0">
-                                    @if (_selectLrc.Any())
-                                    {
-                                        <MudList Dense="true" T="string" Class="file-list">
-                                            @foreach (var file in _selectLrc)
-                                            {
-                                                <MudListItem @key="@file" Class="file-list__item">
-                                                    <MudChip Color="Color.Info" Variant="Variant.Filled"
-                                                             Class="file-chip">@(file.Key.Split(".").Last())</MudChip>
-                                                    <span class="file-list__name">@file.Key</span>
-                                                    <MudText Typo="Typo.caption"
-                                                             Class="file-list__size">@(file.Value.FileSize())</MudText>
-                                                </MudListItem>
-                                            }
-                                        </MudList>
-                                    }
-                                    <div class="lyrics-panel">
-                                        <pre><code>@_lrcContent</code></pre>
+                        <div class="form-hint" style="margin-bottom: var(--spacing-md);">
+                            <i class="fas fa-info-circle"></i>
+                            支持格式：@string.Join("、", AppTools.ImageExtensions.Select(x => x.ToUpperInvariant()))
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(_musicModel.CoverUrl) && _showCover)
+                        {
+                            <div class="cover-preview" style="margin-bottom: var(--spacing-md);">
+                                <img src="@_musicModel.CoverUrl" alt="当前封面" 
+                                     style="max-width: 300px; border-radius: var(--border-radius); border: 1px solid var(--border-color);" />
+                                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: var(--spacing-sm);">当前封面</p>
+                            </div>
+                        }
+
+                        @if (_selectCover.Any())
+                        {
+                            <div class="file-info-display">
+                                @foreach (var file in _selectCover)
+                                {
+                                    <div class="file-info-display__item" key="@file.Key">
+                                        <span class="file-info-display__badge file-info-display__badge--secondary">@(file.Key.Split(".").Last().ToUpperInvariant())</span>
+                                        <span class="file-info-display__name">@file.Key</span>
+                                        <span class="file-info-display__meta">@(file.Value.FileSize())</span>
                                     </div>
-                                </MudPaper>
-                            </section>
+                                }
+                            </div>
+                        }
+                    </section>
 
-                            <MudDivider Class="section-divider"/>
+                    <!-- 歌词文件区域 -->
+                    <section class="form-section">
+                        <div class="form-section__header">
+                            <div>
+                                <h3 class="form-section__title">歌词文件</h3>
+                                <p class="form-section__description">上传 .LRC 文件，自动刷新下方预览</p>
+                            </div>
+                            <label for="fileLrc" class="btn btn-primary">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                更新歌词
+                            </label>
+                        </div>
 
-                            <section class="group-block">
-                                <MudStack Spacing="1">
-                                    <MudText Typo="Typo.h6">分类与标签</MudText>
-                                    <MudText Typo="Typo.body2" Class="upload-block__hint">调整分组或新增标签便于检索
-                                    </MudText>
-                                </MudStack>
-                                <MudSelect T="string"
-                                           HelperText="分组"
-                                           Immediate="true"
-                                           Label="请选择分组"
-                                           MultiSelection="true"
-                                           @bind-SelectedValues="_selectedGroups"
-                                           Variant="Variant.Outlined"
-                                           Class="group-select">
-                                    @foreach (var group in _groups)
-                                    {
-                                        <MudSelectItem T="string" Value="@group">@group</MudSelectItem>
-                                    }
-                                </MudSelect>
-                                <MudTextField T="string"
-                                              Immediate="true"
-                                              Label="补充分组"
-                                              @bind-value="_addGroup"
-                                              For="@(() => _addGroup)"
-                                              Variant="Variant.Outlined"
-                                              Placeholder="输入新的分组名称"
-                                              Class="group-input">
-                                </MudTextField>
-                            </section>
+                        <InputFile OnChange="OnLrcChanged" id="fileLrc" class="file-upload-zone__input" accept=".lrc" />
 
-                            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="actions-row">
-                                <MudButton Variant="Variant.Outlined" Color="Color.Default" Href="/music">返回列表
-                                </MudButton>
-                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPosting"
-                                           Color="Color.Primary" Class="submit-button">
-                                    @if (_isPosting)
-                                    {
-                                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                                        <MudText Class="ms-2">正在修改</MudText>
-                                    }
-                                    else
-                                    {
-                                        <MudText>保存修改</MudText>
-                                    }
-                                </MudButton>
-                            </MudStack>
-                        </MudStack>
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
+                        @if (_selectLrc.Any())
+                        {
+                            <div class="file-info-display" style="margin-bottom: var(--spacing-md);">
+                                @foreach (var file in _selectLrc)
+                                {
+                                    <div class="file-info-display__item" key="@file.Key">
+                                        <span class="file-info-display__badge file-info-display__badge--info">@(file.Key.Split(".").Last().ToUpperInvariant())</span>
+                                        <span class="file-info-display__name">@file.Key</span>
+                                        <span class="file-info-display__meta">@(file.Value.FileSize())</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(_lrcContent))
+                        {
+                            <div class="lyric-preview">
+                                <pre><code>@_lrcContent</code></pre>
+                            </div>
+                        }
+                    </section>
+
+                    <!-- 分组管理区域 -->
+                    <section class="form-section">
+                        <div class="form-section__header">
+                            <h3 class="form-section__title">分类与标签</h3>
+                            <p class="form-section__description">调整分组或新增标签便于检索</p>
+                        </div>
+
+                        <div class="tag-selector">
+                            @foreach (var group in _groups)
+                            {
+                                <button type="button" 
+                                        class="tag-selector__tag @(_selectedGroups.Contains(group) ? "is-active" : "")"
+                                        @onclick="() => ToggleGroup(group)">
+                                    @group
+                                </button>
+                            }
+                        </div>
+
+                        <div class="form-group" style="margin-top: var(--spacing-md);">
+                            <label class="form-label">添加新分组</label>
+                            <div style="display: flex; gap: var(--spacing-sm);">
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="输入新的分组名称" 
+                                       @bind="_addGroup"
+                                       @onkeydown="HandleAddGroupKeyDown"
+                                       @onkeydown:preventDefault="@_preventDefault" />
+                                <button type="button" class="btn btn-primary" @onclick="AddNewGroup">
+                                    <i class="fas fa-plus"></i>
+                                    添加
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="music-form__actions">
+                <button type="button" class="btn" @onclick='() => navigation.NavigateTo("/music")'>
+                    <i class="fas fa-arrow-left"></i>
+                    返回列表
+                </button>
+                <button type="submit" class="btn btn-primary" disabled="@_isPosting">
+                    @if (_isPosting)
+                    {
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            <span>正在保存</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-save"></i>
+                        <span>保存修改</span>
+                    }
+                </button>
+            </div>
         </EditForm>
     }
-</MudContainer>
+</div>
  

@@ -1,4 +1,4 @@
-/* Picture List Page */
+﻿/* Picture List Page */
 .picture-list {
     max-width: 100%;
 }
@@ -175,18 +175,6 @@
     margin-bottom: var(--spacing-md);
 }
 
-.picture-card__tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
-    color: var(--success);
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
 .picture-card__footer {
     display: flex;
     gap: var(--spacing-sm);
@@ -274,19 +262,6 @@
     max-width: 200px;
 }
 
-.picture-table__tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
-    color: var(--success);
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    white-space: nowrap;
-}
-
 .picture-table__actions {
     display: flex;
     gap: var(--spacing-sm);
@@ -303,7 +278,7 @@
     border-radius: var(--border-radius);
 }
 
-/* Skeleton Grid */
+/* Skeletons */
 .picture-grid-skeleton {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

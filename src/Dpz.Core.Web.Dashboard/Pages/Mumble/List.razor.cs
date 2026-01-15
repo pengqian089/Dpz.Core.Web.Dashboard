@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Web;
-using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
@@ -15,8 +15,8 @@ namespace Dpz.Core.Web.Dashboard.Pages.Mumble;
 public partial class List(
     IMumbleService mumbleService,
     NavigationManager navigation,
-    IAppDialogService dialogService)
-    : ComponentBase
+    IAppDialogService dialogService
+) : ComponentBase
 {
     private int _pageIndex = 1;
     private int _totalCount;

@@ -1,0 +1,7 @@
+﻿@using Markdig
+
+<div class="markdown-preview" style="@Style">
+    <div class="markdown-preview__content markdown-body" @ref="_contentRef">
+        @((MarkupString)_htmlContent)
+    </div>
+</div>

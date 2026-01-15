@@ -32,10 +32,10 @@ public partial class FriendForm(IAppOptionService optionService, IAppDialogServi
     {
         if (!_isInitialized || IsEdit)
         {
-            _name = Model?.Name ?? "";
-            _avatar = Model?.Avatar ?? "";
-            _link = Model?.Link ?? "";
-            _description = Model?.Description ?? "";
+            _name = Model.Name ?? "";
+            _avatar = Model.Avatar ?? "";
+            _link = Model.Link ?? "";
+            _description = Model.Description ?? "";
             _isInitialized = true;
         }
     }

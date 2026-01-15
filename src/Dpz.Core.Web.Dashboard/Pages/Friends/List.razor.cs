@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
@@ -48,7 +47,7 @@ public partial class List(IAppOptionService optionService, IAppDialogService dia
             "720px"
         );
 
-        if (result == true)
+        if (result)
         {
             await LoadDataAsync();
         }
@@ -71,7 +70,7 @@ public partial class List(IAppOptionService optionService, IAppDialogService dia
             "720px"
         );
 
-        if (result == true)
+        if (result)
         {
             await LoadDataAsync();
         }

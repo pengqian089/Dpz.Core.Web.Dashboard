@@ -1,150 +1,131 @@
-﻿@page "/mumble"
+@page "/mumble"
 @page "/mumble/list"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">碎碎念列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       title="发布"
-                       Size="Size.Medium"
-                       Href="/mumble/post"
-                       Class="ma-2"/>
-        <MudSpacer/>
 
-        <MudTextField T="string"
-                      Placeholder="搜索"
-                      @bind-value="_content"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            Markdown
-        </MudTh>
-        <MudTh>
-            Html
-        </MudTh>
-        <MudTh>
-            点赞数量
-        </MudTh>
-        <MudTh>
-            回复量
-        </MudTh>
-        <MudTh>
-            发表人
-        </MudTh>
-        <MudTh>
-            预览
-        </MudTh>
-        <MudTh>
-            发布时间
-        </MudTh>
-        <MudTh>
-            最后修改时间
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd HideSmall DataLabel="Markdown">
-            <MudButton
-                Variant="Variant.Outlined"
-                Color="Color.Default"
-                Size="Size.Small"
-                OnClick="@(() => context.ShowMarkdown = !context.ShowMarkdown)">
-                @((context.ShowMarkdown) ? "收起" : "展开")
-            </MudButton>
-        </MudTd>
-        <MudTd HideSmall DataLabel="Html">
-            <MudButton
-                Variant="Variant.Outlined"
-                Color="Color.Default"
-                Size="Size.Small"
-                OnClick="@(() => context.ShowHtmlContent = !context.ShowHtmlContent)">
-                @((context.ShowHtmlContent) ? "收起" : "展开")
-            </MudButton>
-        </MudTd>
-        <MudTd DataLabel="点赞数量">
-            @context.Zan
-        </MudTd>
-        <MudTd DataLabel="回复量">
-            <MudLink Href="@($"/comment?node=Mumble&relation={@context.Id}")">@context.CommentCount 个回复</MudLink>
-        </MudTd>
-        <MudTd DataLabel="发表人">
-            @context.Author.Name
-        </MudTd>
-        <MudTd DataLabel="预览">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@($"{Program.WebHost}/talk/comment/{context.Id}")" Target="_blank">打开</MudButton>
-            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => Preview(context.HtmlContent)">预览</MudButton>
-        </MudTd>
-        <MudTd DataLabel="发布时间">
-            @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="最后修改时间">
-            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/mumble/edit/{context.Id}")">修改</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <ChildRowContent>
-        @if (context.ShowMarkdown)
-        {
-            <MudTr>
-                <td colspan="9">
-                    <MudCard>
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.body1">Markdown内容</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <pre class="line-numbers language-markdown"><code>@context.Markdown</code></pre>
-                        </MudCardContent>
-                    </MudCard>
-                </td>
-            </MudTr>
-        }
-        @if (context.ShowHtmlContent)
-        {
-            <MudTr>
-                <td colspan="9">
-                    <MudCard>
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.body1">Html内容</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <pre class="line-numbers language-html"><code>@context.HtmlContent</code></pre>
-                        </MudCardContent>
-                    </MudCard>
+<div class="mumble-list">
+    <div class="mumble-list__header">
+        <h1 class="page-title">碎碎念管理</h1>
+        <p class="page-description">管理和发布碎碎念动态</p>
+    </div>
 
-                </td>
-            </MudTr>
-        }
-    </ChildRowContent>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] {15, 20, 30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+    <div class="mumble-list__toolbar">
+        <div class="mumble-list__toolbar-left">
+            <a href="/mumble/publish" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                发布动态
+            </a>
+        </div>
+
+        <div class="mumble-list__toolbar-right">
+            <input type="text"
+                   class="form-control"
+                   placeholder="搜索内容..."
+                   @bind="_content"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown" />
+
+            <button class="btn btn-primary" @onclick="OnSearch">
+                <i class="fas fa-search"></i>
+                搜索
+            </button>
+        </div>
+    </div>
+
+@if (!_isLoading)
+{
+    @if (_data.Count > 0)
+    {
+        <div class="mumble-list__cards">
+            @foreach (var item in _data)
+            {
+                <div class="mumble-card">
+                    <div class="mumble-card__header">
+                        <div class="mumble-card__author">
+                            @if (string.IsNullOrEmpty(item.Author.Avatar))
+                            {
+                                <div class="mumble-card__avatar flex items-center justify-center" style="background-color: var(--primary);">
+                                    <span class="text-white text-xs">@item.Author.Name.FirstOrDefault()</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <img src="@item.Author.Avatar" class="mumble-card__avatar" alt="@item.Author.Name" />
+                            }
+                            <span>@item.Author.Name</span>
+                        </div>
+                        
+                        <div class="mumble-card__meta">
+                            <span title="发布时间">
+                                <i class="far fa-clock"></i> @item.CreateTime.ToString("yyyy-MM-dd HH:mm")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mumble-card__content">
+                        @item.Markdown
+                    </div>
+
+                    <div class="mumble-card__footer">
+                        <div class="mumble-card__stats">
+                            <span title="点赞数">
+                                <i class="fas fa-heart text-danger"></i> @item.Zan
+                            </span>
+                            <span title="评论数">
+                                <i class="fas fa-comment text-info"></i> @item.CommentCount
+                            </span>
+                             <span title="最后更新">
+                                 <i class="fas fa-history"></i> @item.LastUpdateTime.ToString("MM-dd")
+                            </span>
+                        </div>
+
+                        <div class="mumble-card__actions">
+                            <button class="btn btn-sm btn-secondary" @onclick="() => Preview(item)">
+                                <i class="fas fa-eye"></i> 预览
+                            </button>
+                            <a href="/mumble/edit/@item.Id" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i> 编辑
+                            </a>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(item.Id)">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <Pagination CurrentPage="_pageIndex"
+                    TotalPages="_totalPages"
+                    TotalCount="_totalCount"
+                    PageSize="PageSize"
+                    OnPageChanged="HandlePageChanged" />
+    }
+    else
+    {
+        <div class="mumble-list__empty">
+            <i class="fas fa-comments fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无碎碎念数据</p>
+        </div>
+    }
+}
+else
+{
+    <div class="mumble-list-skeleton">
+        <div class="mumble-list-skeleton__grid">
+            @for (var i = 0; i < 6; i++)
+            {
+                <div class="mumble-list-skeleton__card">
+                    <div class="skeleton skeleton--text-lg" style="margin-bottom: var(--spacing-md);"></div>
+                    <div class="skeleton skeleton--text" style="margin-bottom: var(--spacing-sm);"></div>
+                    <div class="skeleton skeleton--text" style="width: 80%; margin-bottom: var(--spacing-md);"></div>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <div class="skeleton skeleton--button"></div>
+                        <div class="skeleton skeleton--button"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+</div>

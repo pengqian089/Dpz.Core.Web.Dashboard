@@ -203,6 +203,55 @@
     padding: var(--spacing-xl) 0;
 }
 
+.btn-lg {
+    padding: 14px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    min-width: 140px;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success), #06b6d4);
+    border: none;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-success::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-success:hover::before {
+    left: 100%;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669, #0891b2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-surface-hover);
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
 /* Loading Overlay */
 .picture-form__loading-overlay {
     position: fixed;
@@ -374,12 +423,25 @@
         padding: var(--spacing-lg) 0;
     }
 
+    .btn-lg {
+        width: 100%;
+    }
+
     .upload-area {
         padding: var(--spacing-lg);
     }
 
     .upload-area__icon {
         font-size: 2rem;
+    }
+
+    .tag-selector {
+        min-height: 80px;
+    }
+
+    .tag-selector__item {
+        padding: 6px 12px;
+        font-size: 0.8125rem;
     }
 }
 
@@ -396,5 +458,27 @@
     .file-list__item {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+/* PhotoSwipe Custom Styles */
+.pswp__caption {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.875rem;
+    max-width: 90%;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .preview-image img,
+    .current-image-section__img {
+        max-height: 400px;
     }
 }

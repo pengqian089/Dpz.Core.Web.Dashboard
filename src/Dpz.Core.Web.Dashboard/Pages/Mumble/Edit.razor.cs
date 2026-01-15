@@ -34,7 +34,7 @@ public partial class Edit
 
     private bool _isPublishing = false;
 
-    private MumbleModel _model = new();
+    private MumbleModel? _model;
     private MarkdownEditor? _editor;
 
     protected override async Task OnInitializedAsync()
@@ -47,7 +47,7 @@ public partial class Edit
 
     private async Task PostDataAsync(EditContext context)
     {
-        if (string.IsNullOrEmpty(_model.Id))
+        if (string.IsNullOrEmpty(_model?.Id))
         {
             Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
             Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;

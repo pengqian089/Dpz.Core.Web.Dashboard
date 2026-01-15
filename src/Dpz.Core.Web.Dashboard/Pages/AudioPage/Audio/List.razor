@@ -5,14 +5,21 @@
 
 <div class="audio-list">
     <div class="audio-list__header">
-        <div>
-            <h1 class="audio-list__title">录音管理</h1>
-            <p class="audio-list__description">管理和预览已上传的录音文件</p>
+        <h1 class="page-title">录音管理</h1>
+        <p class="page-description">管理和预览已上传的录音文件</p>
+    </div>
+
+    <div class="audio-list__toolbar">
+        <div class="audio-list__toolbar-left">
+            <!-- 预留左侧操作按钮区域 -->
         </div>
-        <button class="btn btn-secondary" @onclick="RefreshAsync" disabled="@_isLoading">
-            <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
-            刷新
-        </button>
+
+        <div class="audio-list__toolbar-right">
+            <button class="btn btn-secondary" @onclick="RefreshAsync" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+                刷新
+            </button>
+        </div>
     </div>
 
     @if (_isLoading)

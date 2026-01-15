@@ -32,21 +32,21 @@ public class CommentService(IHttpService httpService) : ICommentService
     public async Task<List<CommentRelationResponse>> GetArticleRelationAsync()
     {
         return await httpService.GetAsync<List<CommentRelationResponse>>(
-            "/api/Comment/relation/article"
-        );
+                "/api/Comment/relation/article"
+            ) ?? [];
     }
 
     public async Task<List<CommentRelationResponse>> CodeRelationAsync()
     {
         return await httpService.GetAsync<List<CommentRelationResponse>>(
-            "/api/Comment/relation/code"
-        );
+                "/api/Comment/relation/code"
+            ) ?? [];
     }
 
     public async Task<List<CommentRelationResponse>> OtherRelationAsync()
     {
         return await httpService.GetAsync<List<CommentRelationResponse>>(
-            "/api/Comment/relation/other"
-        );
+                "/api/Comment/relation/other"
+            ) ?? [];
     }
 }

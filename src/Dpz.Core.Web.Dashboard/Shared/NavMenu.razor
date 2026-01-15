@@ -38,16 +38,19 @@
     <NavLink href="comment" Match="NavLinkMatch.All" Class="nav-item">
         <i class="fas fa-comments"></i> 所有评论
     </NavLink>
-    <NavLink href="comment?node=Article" Match="NavLinkMatch.All" Class="nav-item">
+    <NavLink href="comment/Article" Match="NavLinkMatch.All" Class="nav-item">
         <i class="fas fa-file-alt"></i> 文章评论
     </NavLink>
-    <NavLink href="comment?node=Friends" Match="NavLinkMatch.All" Class="nav-item">
+    <NavLink href="comment/Friends" Match="NavLinkMatch.All" Class="nav-item">
         <i class="fas fa-link"></i> 友链评论
     </NavLink>
-    <NavLink href="comment?node=Code" Match="NavLinkMatch.All" Class="nav-item">
+    <NavLink href="comment/Code" Match="NavLinkMatch.All" Class="nav-item">
         <i class="fas fa-code"></i> 源码评论
     </NavLink>
-    <NavLink href="comment?node=Other" Match="NavLinkMatch.All" Class="nav-item">
+    <NavLink href="comment/Mumble" Match="NavLinkMatch.All" Class="nav-item">
+        <i class="fas fa-comment-dots"></i> 碎碎念评论
+    </NavLink>
+    <NavLink href="comment/Other" Match="NavLinkMatch.All" Class="nav-item">
         <i class="fas fa-comment"></i> 其他评论
     </NavLink>
 
@@ -68,7 +71,3 @@
         <i class="fas fa-info-circle"></i> 页脚内容
     </NavLink>
 </div>
-
-@code {
-    
-}

@@ -17,7 +17,9 @@
             @if (Model.Type == DialogType.Component)
             {
                 <div class="dialog__content">
-                    @Model.Content
+                    <CascadingValue Value="@CloseAction">
+                        @Model.Content
+                    </CascadingValue>
                 </div>
             }
             else

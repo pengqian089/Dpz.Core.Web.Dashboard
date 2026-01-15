@@ -16,10 +16,23 @@ public static class AppTools
         return Program.BaseAddress;
     }
 
-    public static Dictionary<int, string> PictureTypes =>
-        typeof(PictureType).GetFields()
-            .Where(x => x.IsPublic && x.IsStatic)
-            .ToDictionary(x => (int)x.GetValue(null), x => x.Name);
+    public static readonly Lazy<Dictionary<int, string>> PictureTypes = new(() =>
+        typeof(PictureType)
+            .GetFields()
+            .Where(x => x is { IsPublic: true, IsStatic: true })
+            .Select(x =>
+            {
+                var key = -1;
+                var typeValue = (int?)x.GetValue(null);
+                if (typeValue.HasValue)
+                {
+                    key = typeValue.Value;
+                }
+                return new KeyValuePair<int, string>(key, x.Name);
+            })
+            .Where(x => x.Key >= 0)
+            .ToDictionary(x => x.Key, x => x.Value)
+    );
 
     /// <summary>
     /// 客户端最大读取文件大小 unit byte
@@ -29,7 +42,19 @@ public static class AppTools
     /// <summary>
     /// 图片扩展名
     /// </summary>
-    public static string[] ImageExtensions = ["jpg", "jpge", "png", "gif", "webp", "svg", "tiff", "psd", "bmp", "jiff"];
+    public static string[] ImageExtensions =
+    [
+        "jpg",
+        "jpge",
+        "png",
+        "gif",
+        "webp",
+        "svg",
+        "tiff",
+        "psd",
+        "bmp",
+        "jiff",
+    ];
 
     /// <summary>
     /// 显示文件大小
@@ -61,11 +86,20 @@ public static class AppTools
     /// <typeparam name="T"></typeparam>
     /// <param name="source"></param>
     /// <param name="destination"></param>
-    public static void CopyTo<T>(this T source, out T destination) where T : class, new()
+    public static void CopyTo<T>(this T source, out T? destination)
+        where T : class, new()
     {
-        destination = default;
-        var json = JsonSerializer.Serialize(source);
-        destination = JsonSerializer.Deserialize<T>(json);
+        try
+        {
+            var json = JsonSerializer.Serialize(source);
+            destination = JsonSerializer.Deserialize<T>(json);
+            return;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+        destination = null;
     }
 
     public static string TimeAgo(this DateTime time)
@@ -102,34 +136,34 @@ public static class AppTools
         }
     }
 
-    public static StandaloneEditorConstructionOptions EditorConstructionOptions(this StandaloneCodeEditor editor,
-        string language, string value, bool? isReadonly = null)
+    extension(StandaloneCodeEditor editor)
     {
-        return new StandaloneEditorConstructionOptions
+        public StandaloneEditorConstructionOptions EditorConstructionOptions(
+            string language,
+            string value,
+            bool? isReadonly = null
+        )
         {
-            Theme = "vs-dark",
-            Language = language,
-            GlyphMargin = true,
-            Value = value ?? "",
-            AutomaticLayout = true,
-            ReadOnly = isReadonly
-        };
-    }
+            return new StandaloneEditorConstructionOptions
+            {
+                Theme = "vs-dark",
+                Language = language,
+                GlyphMargin = true,
+                Value = value,
+                AutomaticLayout = true,
+                ReadOnly = isReadonly,
+            };
+        }
 
-    public static StandaloneEditorConstructionOptions HtmlEditorOptions(this StandaloneCodeEditor editor, string value)
-    {
-        return editor.EditorConstructionOptions("html", value);
-    }
+        public StandaloneEditorConstructionOptions HtmlEditorOptions(string value)
+        {
+            return editor.EditorConstructionOptions("html", value);
+        }
 
-    public static StandaloneEditorConstructionOptions MarkdownEditorOptions(this StandaloneCodeEditor editor,
-        string value)
-    {
-        Console.WriteLine($"MarkdownEditorOptions has value:{!string.IsNullOrEmpty(value)}");
-        return editor.EditorConstructionOptions("markdown", value);
-    }
-
-    public static void DebugOutPut(object obj)
-    {
-        Console.WriteLine(JsonSerializer.Serialize(obj));
+        public StandaloneEditorConstructionOptions MarkdownEditorOptions(string value)
+        {
+            Console.WriteLine($"MarkdownEditorOptions has value:{!string.IsNullOrEmpty(value)}");
+            return editor.EditorConstructionOptions("markdown", value);
+        }
     }
 }

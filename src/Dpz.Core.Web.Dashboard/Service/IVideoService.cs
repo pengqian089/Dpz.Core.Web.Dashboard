@@ -10,7 +10,7 @@ public interface IVideoService
     /// 获取视频列表
     /// </summary>
     /// <returns></returns>
-    Task<IList<VideoModel>> GetVideosAsync();
+    Task<List<VideoModel>> GetVideosAsync();
 
     /// <summary>
     /// 保存视频信息
@@ -24,7 +24,7 @@ public interface IVideoService
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    Task<VideoMetaDataModel> GetVideoMetadataAsync(string id);
+    Task<VideoMetaDataModel?> GetVideoMetadataAsync(string id);
 
     /// <summary>
     /// 设置视频截图

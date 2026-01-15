@@ -2,33 +2,33 @@
 
 public class VideoModel
 {
-    public string Id { get; set; }
+    public required string Id { get; set; }
 
     /// <summary>
     /// 文件夹、目录 名称
     /// 视频位于云储存中所在的文件夹名称
     /// </summary>
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// 名称 方便弹幕管理友好名称
     /// </summary>
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
     /// 视频标题
     /// </summary>
-    public string VideoTitle { get; set; }
+    public string? VideoTitle { get; set; }
 
     /// <summary>
     /// 视频副标题
     /// </summary>
-    public string SubTitle { get; set; }
+    public string? SubTitle { get; set; }
 
     /// <summary>
     /// 视频描述
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// 播放次数
@@ -48,25 +48,18 @@ public class VideoModel
     /// <summary>
     /// 封面
     /// </summary>
-    public string Cover { get; set; }
+    public string? Cover { get; set; }
 
     /// <summary>
     /// m3u8 地址
     /// </summary>
-    public string M3u8 { get; set; }
+    public required string M3u8 { get; set; }
 
+    public string[] Tags { get; set; } = [];
 
-    private string[] _tags;
-
-    public string[] Tags
+    public string? TagsValue
     {
-        get => _tags;
-        set
-        {
-            TagsValue = value == null ? null : string.Join(',', value);
-            _tags = value;
-        }
+        get;
+        set => field = string.IsNullOrWhiteSpace(value) ? string.Join(',', Tags) : value;
     }
-    
-    public string TagsValue { get; set; }
 }

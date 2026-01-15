@@ -1,28 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
-using Dpz.Core.Web.Dashboard.Pages.AudioPage.Music;
 using Dpz.Core.Web.Dashboard.Service;
-using Dpz.Core.Web.Dashboard.Shared;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using MudBlazor;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Video
+public partial class Video(IVideoService videoService, IAppDialogService dialogService)
+    : ComponentBase
 {
-    [Inject]
-    private IVideoService VideoService { get; set; }
-
-    [Inject]
-    private IDialogService DialogService { get; set; }
-
-    private IList<VideoModel> _source = new List<VideoModel>();
-
+    private List<VideoModel> _source = [];
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -34,71 +22,67 @@ public partial class Video
     private async Task LoadVideosAsync()
     {
         _isLoading = true;
-        _source = await VideoService.GetVideosAsync();
-        _isLoading = false;
-    }
-
-    private VideoModel _beforeEdit;
-
-    private void BackupVideo(object element)
-    {
-        var json = JsonSerializer.Serialize(element);
-        _beforeEdit = JsonSerializer.Deserialize<VideoModel>(json);
-    }
-
-    private VideoModel _commitModel;
-
-    private void ItemHasBeenCommitted(object element)
-    {
-        if (element is VideoModel videoModel)
+        try
         {
-            videoModel.Tags = string.IsNullOrEmpty(videoModel.TagsValue)
-                ? null
-                : videoModel.TagsValue.Split(",");
-            videoModel.CopyTo(out _commitModel);
-            _isLoading = true;
+            _source = await videoService.GetVideosAsync();
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"加载失败：{ex.Message}", Models.Dialog.ToastType.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 
-    private void ResetItemToOriginalValues(object element)
+    private async Task PreviewVideo(string url, string? title)
     {
-        if (element is VideoModel videoModel)
+        await dialogService.ShowComponentAsync(
+            title ?? "视频预览",
+            builder =>
+            {
+                builder.OpenComponent<Player>(0);
+                builder.AddAttribute(1, nameof(Player.VideoUrl), url);
+                builder.CloseComponent();
+            },
+            width: "900px"
+        );
+    }
+
+    private async Task EditVideo(string id)
+    {
+        var result = await dialogService.ShowComponentAsync<bool>(
+            "编辑视频信息",
+            builder =>
+            {
+                builder.OpenComponent<Edit>(0);
+                builder.AddAttribute(1, nameof(Edit.Id), id);
+                builder.CloseComponent();
+            },
+            width: "600px"
+        );
+
+        if (result)
         {
-            videoModel.Name = _beforeEdit.Name;
-            videoModel.VideoTitle = _beforeEdit.VideoTitle;
-            videoModel.SubTitle = _beforeEdit.SubTitle;
-            videoModel.Tags = _beforeEdit.Tags;
-            videoModel.Description = _beforeEdit.Description;
+            await LoadVideosAsync();
         }
     }
 
-    private async Task CommitInformationAsync(MouseEventArgs arg)
-    {
-        await Task.Delay(100);
-        await VideoService.SaveVideoInformationAsync(_commitModel);
-        _source = await VideoService.GetVideosAsync();
-        _commitModel = null;
-        _isLoading = false;
-    }
-
-    private void PreviewVideo(string url, string title)
-    {
-        var parameters = new DialogParameters { ["VideoUrl"] = url, ["Title"] = title };
-        DialogService.Show<Player>("", parameters, new DialogOptions { CloseButton = true });
-    }
-
-    private void PreviewCover(string previewUrl)
-    {
-        var parameters = new DialogParameters { ["Src"] = previewUrl, };
-        DialogService.Show<PreviewImage>("", parameters, new DialogOptions { CloseButton = true });
-    }
-    
     private async Task ShowSettingCover(string id)
     {
-        var parameters = new DialogParameters { ["Id"] = id, };
-        var dialog = await DialogService.ShowAsync<Screenshot>("", parameters, new DialogOptions { CloseButton = true });
-        var result = await dialog.Result;
-        if (result?.Canceled == false)
+        var result = await dialogService.ShowComponentAsync<bool>(
+            "设置缩略图",
+            builder =>
+            {
+                builder.OpenComponent<Screenshot>(0);
+                builder.AddAttribute(1, nameof(Screenshot.Id), id);
+                builder.CloseComponent();
+            },
+            width: "500px"
+        );
+
+        if (result)
         {
             await LoadVideosAsync();
         }

@@ -22,6 +22,8 @@ public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
     private ElementReference _dialogRef;
     private IJSObjectReference? _dialogModule;
 
+    private Action<object?> CloseAction => Close;
+
     protected override async Task OnInitializedAsync()
     {
         _inputValue = Model.DefaultValue;

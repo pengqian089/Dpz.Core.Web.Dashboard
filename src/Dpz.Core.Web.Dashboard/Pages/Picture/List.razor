@@ -41,7 +41,7 @@
 
             <select class="form-control form-select" @bind="_pictureType" @bind:after="Search">
                 <option value="-1">全部类型</option>
-                @foreach (var item in AppTools.PictureTypes)
+                @foreach (var item in AppTools.PictureTypes.Value)
                 {
                     <option value="@item.Key">@item.Value</option>
                 }
@@ -211,7 +211,7 @@
                                             }
                                         </div>
                                     </td>
-                                    <td data-label="上传人">@picture.Creator?.Name</td>
+                                    <td data-label="上传人">@picture.Creator.Name</td>
                                     <td data-label="上传时间">@picture.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                     <td data-label="类型">@picture.Category</td>
                                     <td data-label="尺寸">@(picture.Width) × @(picture.Height)</td>

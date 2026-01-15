@@ -1,12 +1,15 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 
+#nullable enable
+
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Screenshot(
+public partial class Edit(
     IVideoService videoService,
     IAppDialogService dialogService) : ComponentBase
 {
@@ -16,17 +19,22 @@ public partial class Screenshot(
     [CascadingParameter]
     public Action<object?>? Close { get; set; }
 
-    private double _seconds = 1;
+    private VideoModel? _model;
     private bool _isLoading = true;
     private bool _isSaving;
-    private VideoMetaDataModel? _model;
-    private string _validationError = "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _model = await videoService.GetVideoMetadataAsync(Id);
+            var videos = await videoService.GetVideosAsync();
+            _model = videos.FirstOrDefault(v => v.Id == Id);
+            if (_model == null)
+            {
+                dialogService.Toast("视频不存在", Models.Dialog.ToastType.Error);
+                Cancel();
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -53,29 +61,20 @@ public partial class Screenshot(
             return;
         }
 
-        // 验证时间范围
-        _validationError = "";
-        if (_seconds < 0.01)
-        {
-            _validationError = "时间不能小于0.01秒";
-            return;
-        }
-        if (_seconds > _model.Duration)
-        {
-            _validationError = $"时间不能超过视频时长（{_model.Duration:F2}秒）";
-            return;
-        }
-
         _isSaving = true;
         try
         {
-            await videoService.SetVideoScreenshotAsync(Id, _seconds);
-            dialogService.Toast("设置成功", Models.Dialog.ToastType.Success);
+            _model.Tags = string.IsNullOrWhiteSpace(_model.TagsValue)
+                ? []
+                : _model.TagsValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            await videoService.SaveVideoInformationAsync(_model);
+            dialogService.Toast("保存成功", Models.Dialog.ToastType.Success);
             Close?.Invoke(true);
         }
         catch (Exception ex)
         {
-            dialogService.Toast($"设置失败：{ex.Message}", Models.Dialog.ToastType.Error);
+            dialogService.Toast($"保存失败：{ex.Message}", Models.Dialog.ToastType.Error);
         }
         finally
         {

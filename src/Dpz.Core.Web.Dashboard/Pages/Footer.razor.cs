@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;

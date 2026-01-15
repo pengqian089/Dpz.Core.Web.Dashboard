@@ -45,8 +45,11 @@
     <script src="https://dpangzi.com/library/vditor/index.min.js"></script>
     <script src="_content/BlazorMonaco/jsInterop.js"></script>
     <script>
+        // Configure Monaco Editor locale before loading
         var require = {
-            paths: { vs: 'https://dpangzi.com/scripts/monaco-editor/min/vs' },
+            paths: { 
+                'vs': '_content/BlazorMonaco/lib/monaco-editor/min/vs'
+            },
             'vs/nls': {
                 availableLanguages: {
                     '*': 'zh-cn'
@@ -54,8 +57,8 @@
             }
         };
     </script>
-    <script src="https://dpangzi.com/scripts/monaco-editor/min/vs/loader.js"></script>
-    <script src="https://dpangzi.com/scripts/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script src="_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js"></script>
+    <script src="_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js"></script>
     <script src="/js/app.js?version=1.1.1"></script>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>

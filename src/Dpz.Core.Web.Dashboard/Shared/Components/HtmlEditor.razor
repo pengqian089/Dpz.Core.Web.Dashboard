@@ -1,0 +1,10 @@
+﻿@using BlazorMonaco.Editor
+
+@if (!string.IsNullOrEmpty(_elementId))
+{
+    <StandaloneCodeEditor
+        CssClass="monaco-editor"
+        @ref="_editor"
+        Id="@_elementId"
+        ConstructionOptions="x => x.HtmlEditorOptions(Html)"/>
+}

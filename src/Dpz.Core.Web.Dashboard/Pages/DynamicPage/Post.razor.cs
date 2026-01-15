@@ -6,6 +6,7 @@ using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
@@ -15,12 +16,14 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
 {
     public partial class Post
     {
+        [Inject]
+        private IDynamicPageService DynamicPageService { get; set; }
 
-        [Inject] private IDynamicPageService DynamicPageService { get; set; }
+        [Inject]
+        private ISnackbar Snackbar { get; set; }
 
-        [Inject] private ISnackbar Snackbar { get; set; }
-
-        [Inject] private NavigationManager Navigation { get; set; }
+        [Inject]
+        private NavigationManager Navigation { get; set; }
 
         private string _name = "";
 
@@ -36,7 +39,7 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
         {
             var htmlContext = BrowsingContext.New(Configuration.Default);
             var html = await htmlContext.OpenAsync(x => x.Content("<!DOCTYPE html>"));
-            
+
             html.DocumentElement.SetAttribute("lang", "zh-Hans");
             html.Title = "新建动态页";
             var h1 = html.CreateElement("h1");
@@ -71,14 +74,12 @@ namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
                 return;
             }
             StateHasChanged();
-            await DynamicPageService.CreateDynamicPage(new SaveDynamicRequest
-            {
-                HtmlContent = new HtmlContent
+            await DynamicPageService.CreateDynamicPage(
+                new SaveDynamicRequest
                 {
-                    Content = content,
-                    Name = _name
+                    HtmlContent = new HtmlContent { Content = content, Name = _name },
                 }
-            });
+            );
             await _editor.DisposeAsync();
             // bug 在回车提交时，返回列表不加载数据
             Navigation.NavigateTo("/dynamic");

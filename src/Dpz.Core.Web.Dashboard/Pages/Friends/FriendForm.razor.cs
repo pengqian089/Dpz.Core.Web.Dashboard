@@ -1,88 +1,127 @@
 ﻿using System;
-using System.Text.Json;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Friends;
 
-public partial class FriendForm
+public partial class FriendForm(IAppOptionService optionService, IAppDialogService dialogService)
 {
-    [Parameter] public string Title { get; set; }
-    
-    [Parameter] public FriendAddModel Model { get; set; }
-    
+    [Parameter]
+    public FriendAddModel Model { get; set; } = new();
+
     [CascadingParameter]
-    MudDialogInstance MudDialog { get; set; }
-    
-    [Inject] IDialogService DialogService { get; set; }
-    
-    [Inject] private IAppOptionService OptionService { get; set; }
+    public Action<object?>? CloseDialog { get; set; }
 
-    private bool _loading = false;
+    private string _name = "";
+    private string _avatar = "";
+    private string _link = "";
+    private string _description = "";
+    private bool _isSubmitting;
+    private bool _isInitialized;
 
-    protected override void OnInitialized()
+    private bool IsEdit => Model is FriendEditModel;
+    private string FormTitle => IsEdit ? "编辑友链" : "新增友链";
+    private string PreviewName => string.IsNullOrWhiteSpace(_name) ? "站点名称" : _name;
+    private string PreviewDescription =>
+        string.IsNullOrWhiteSpace(_description) ? "友链描述将在这里展示" : _description;
+
+    protected override void OnParametersSet()
     {
-        Console.WriteLine(Model.GetType());
-        Console.WriteLine(JsonSerializer.Serialize(Model));
-        base.OnInitialized();
+        if (!_isInitialized || IsEdit)
+        {
+            _name = Model?.Name ?? "";
+            _avatar = Model?.Avatar ?? "";
+            _link = Model?.Link ?? "";
+            _description = Model?.Description ?? "";
+            _isInitialized = true;
+        }
     }
 
     private void Cancel()
     {
-        MudDialog.Cancel();
+        CloseDialog?.Invoke(null);
     }
     
     private async Task SaveAsync()
     {
-        _loading = true;
-
-        if (!await CheckInput())
+        if (!ValidateInput())
         {
-            _loading = false;
             return;
         }
-        
-        if (Model is FriendEditModel editModel && !string.IsNullOrEmpty(editModel.Id))
+        _isSubmitting = true;
+
+        try
         {
-            await OptionService.EditFriendAsync(editModel);
+            if (Model is FriendEditModel editModel && !string.IsNullOrWhiteSpace(editModel.Id))
+            {
+                var payload = new FriendEditModel
+                {
+                    Id = editModel.Id,
+                    Name = _name.Trim(),
+                    Avatar = _avatar.Trim(),
+                    Link = _link.Trim(),
+                    Description = _description.Trim(),
+                };
+                await optionService.EditFriendAsync(payload);
+            }
+            else
+            {
+                var payload = new FriendAddModel
+                {
+                    Name = _name.Trim(),
+                    Avatar = _avatar.Trim(),
+                    Link = _link.Trim(),
+                    Description = _description.Trim(),
+                };
+                await optionService.AddFriendAsync(payload);
+            }
+
+            dialogService.Toast("保存成功", ToastType.Success);
+            CloseDialog?.Invoke(true);
         }
-        else
+        catch (Exception ex)
         {
-            await OptionService.AddFriendAsync(Model);
+            dialogService.Toast($"保存失败：{ex.Message}", ToastType.Error);
         }
-        MudDialog.Close(DialogResult.Ok(true));
-        _loading = false;
+        finally
+        {
+            _isSubmitting = false;
+        }
     }
 
-    private async Task<bool> CheckInput()
+    private bool ValidateInput()
     {
-        if (string.IsNullOrEmpty(Model?.Name))
+        if (string.IsNullOrWhiteSpace(_name))
         {
-            await DialogService.ShowMessageBox(
-                "提示",
-                "请输入友链名称！",
-                yesText: "确定", cancelText: "取消");
+            dialogService.Toast("请输入友链名称", ToastType.Warning);
             return false;
         }
-        if (string.IsNullOrEmpty(Model?.Link))
+
+        if (string.IsNullOrWhiteSpace(_link))
         {
-            await DialogService.ShowMessageBox(
-                "提示",
-                "请输入友情链接！",
-                yesText: "确定", cancelText: "取消");
+            dialogService.Toast("请输入友情链接地址", ToastType.Warning);
             return false;
         }
-        if (string.IsNullOrEmpty(Model?.Avatar))
+
+        if (string.IsNullOrWhiteSpace(_avatar))
         {
-            await DialogService.ShowMessageBox(
-                "提示",
-                "请输入友链图标！",
-                yesText: "确定", cancelText: "取消");
+            dialogService.Toast("请输入友链图标地址", ToastType.Warning);
             return false;
         }
+
         return true;
+    }
+
+    private static string GetAvatarInitial(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "?";
+        }
+
+        return name.Trim()[0].ToString().ToUpperInvariant();
     }
 }

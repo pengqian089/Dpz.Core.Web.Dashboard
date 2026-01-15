@@ -2,71 +2,128 @@
 @page "/firends/list"
 @attribute [Authorize]
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">友情链接</MudText>
-<MudTable Hover="true"
-          Items="_list"
-          Loading="_tableLoading">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Add"
-                               Variant="Variant.Outlined"
-                               Color="Color.Primary"
-                               title="新增友链"
-                               Size="Size.Medium"
-                               OnClick="AddAsync"
-                               Class="ma-2"/>
-        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       title="刷新"
-                       Size="Size.Medium"
-                       OnClick="LoadDataAsync"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            名称
-        </MudTh>
-        <MudTh>
-            图标
-        </MudTh>
-        <MudTh>
-            链接
-        </MudTh>
-        <MudTh>
-            描述
-        </MudTh>
-        <MudTh>
-            创建时间
-        </MudTh>
-        <MudTh>
-            最后修改时间
-        </MudTh>
-        <MudTh>
-            操作
-        </MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="名称">
-            @context.Name
-        </MudTd>
-        <MudTd DataLabel="图标">
-            <img src="@context.Avatar" alt="friend" style="width: 50px;height: 50px"/>
-        </MudTd>
-        <MudTd DataLabel="链接">
-            <MudLink Href="@context.Link" Target="_blank">@context.Link</MudLink>
-        </MudTd>
-        <MudTd DataLabel="描述">
-            @context.Description
-        </MudTd>
-        <MudTd DataLabel="创建时间">
-            @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="最后修改时间">
-            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => EditAsync(context)">编辑</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-</MudTable>
+<div class="friends-list">
+    <div class="friends-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-link"></i>
+            友情链接
+        </h1>
+        <p class="page-description">管理站点展示的友情链接资源</p>
+    </div>
+
+    <div class="friends-list__toolbar">
+        <div class="friends-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="AddAsync" disabled="@_isLoading">
+                <i class="fas fa-plus"></i>
+                新增友链
+            </button>
+            <button class="btn-icon" title="刷新" @onclick="LoadDataAsync" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+
+        <div class="friends-list__toolbar-right">
+            <div class="friends-list__summary">
+                <span class="friends-list__summary-label">总计</span>
+                <span class="friends-list__summary-value">@_friends.Count</span>
+                <span class="friends-list__summary-unit">个友链</span>
+            </div>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="friends-list-skeleton">
+            <div class="friends-list-skeleton__table">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="friends-list-skeleton__row">
+                        <div class="skeleton skeleton--avatar"></div>
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_friends.Count == 0)
+    {
+        <div class="friends-list__empty">
+            <i class="fas fa-link-slash fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无友情链接数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="friends-table">
+            <div class="friends-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>友链</th>
+                            <th>链接</th>
+                            <th>描述</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _friends)
+                        {
+                            <tr>
+                                <td data-label="友链">
+                                    <div class="friends-table__name">
+                                        @if (!string.IsNullOrWhiteSpace(item.Avatar))
+                                        {
+                                            <img src="@item.Avatar" alt="@item.Name" class="friends-table__avatar" loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <div class="friends-table__avatar-fallback">@GetAvatarInitial(item.Name)</div>
+                                        }
+                                        <div class="friends-table__name-text">
+                                            <div class="friends-table__name-title">@item.Name</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="链接">
+                                    <a class="friends-table__link" href="@item.Link" target="_blank" rel="noreferrer">
+                                        @item.Link
+                                    </a>
+                                </td>
+                                <td data-label="描述">
+                                    <div class="friends-table__description" title="@item.Description">
+                                        @item.Description
+                                    </div>
+                                </td>
+                                <td data-label="创建时间">
+                                    <span class="friends-table__time">@item.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                </td>
+                                <td data-label="更新时间">
+                                    <span class="friends-table__time">@item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                </td>
+                                <td data-label="操作">
+                                    <div class="friends-table__actions">
+                                        <button class="btn btn-primary btn-sm" @onclick="() => EditAsync(item)">
+                                            <i class="fas fa-edit"></i>
+                                            编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

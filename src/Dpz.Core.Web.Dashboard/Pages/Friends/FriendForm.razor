@@ -1,75 +1,103 @@
-﻿<MudDialog>
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
-            @Title
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudGrid>
-            <MudItem xs="12" md="12">
-                <MudTextField T="string"
-                              HelperText="此项必填"
-                              Immediate="true"
-                              Label="名称"
-                              Required="true"
-                              RequiredError="此项必填"
-                              @bind-value="Model.Name"
-                              For="@(() => Model.Name)"
-                              Text="@Model.Name"
-                              Variant="Variant.Text">
-                </MudTextField>
-            </MudItem>
-            <MudItem xs="12" md="12">
-                <MudTextField T="string"
-                              HelperText="此项必填"
-                              Immediate="true"
-                              Label="图标"
-                              Required="true"
-                              RequiredError="此项必填"
-                              @bind-value="Model.Avatar"
-                              For="@(() => Model.Avatar)"
-                              Text="@Model.Avatar"
-                              Variant="Variant.Text">
-                </MudTextField>
-            </MudItem>
-            <MudItem xs="12" md="12">
-                <MudTextField T="string"
-                              HelperText="此项必填"
-                              Immediate="true"
-                              Label="链接"
-                              Required="true"
-                              RequiredError="此项必填"
-                              @bind-value="Model.Link"
-                              For="@(() => Model.Link)"
-                              Text="@Model.Link"
-                              Variant="Variant.Text">
-                </MudTextField>
-            </MudItem>
-            <MudItem xs="12" md="12">
-                <MudTextField T="string"
-                              HelperText="描述"
-                              Immediate="true"
-                              Label="描述"
-                              @bind-value="Model.Description"
-                              For="@(() => Model.Description)"
-                              Text="@Model.Description"
-                              Variant="Variant.Text">
-                </MudTextField>
-            </MudItem>
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">取消</MudButton>
-        <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="_loading">
-            @if (_loading)
+﻿<div class="friends-form">
+    <div class="friends-form__header">
+        <div>
+            <div class="friends-form__title">@FormTitle</div>
+            <div class="friends-form__subtitle">完善友情链接展示信息</div>
+        </div>
+        <div class="friends-form__icon">
+            <i class="fas fa-link"></i>
+        </div>
+    </div>
+
+    <div class="friends-form__body">
+        <div class="friends-form__grid">
+            <div class="friends-form__fields">
+                <div class="form-group">
+                    <label class="form-label form-label--required">名称</label>
+                    <input type="text"
+                           class="form-control"
+                           placeholder="请输入友链名称"
+                           @bind="_name"
+                           @bind:event="oninput" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label form-label--required">链接</label>
+                    <input type="text"
+                           class="form-control"
+                           placeholder="https://example.com"
+                           @bind="_link"
+                           @bind:event="oninput" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label form-label--required">图标</label>
+                    <input type="text"
+                           class="form-control"
+                           placeholder="图标地址 (SVG/PNG/JPG)"
+                           @bind="_avatar"
+                           @bind:event="oninput" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <textarea class="form-control friends-form__textarea"
+                              placeholder="简要描述该站点的特点"
+                              rows="4"
+                              @bind="_description"
+                              @bind:event="oninput"></textarea>
+                </div>
+            </div>
+
+            <div class="friends-form__preview">
+                <div class="friends-form__preview-title">展示预览</div>
+                <div class="friends-form__preview-card">
+                    <div class="friends-form__preview-avatar">
+                        @if (!string.IsNullOrWhiteSpace(_avatar))
+                        {
+                            <img src="@_avatar" alt="@PreviewName" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span>@GetAvatarInitial(_name)</span>
+                        }
+                    </div>
+                    <div class="friends-form__preview-info">
+                        <div class="friends-form__preview-name">@PreviewName</div>
+                        @if (!string.IsNullOrWhiteSpace(_link))
+                        {
+                            <a class="friends-form__preview-link" href="@_link" target="_blank" rel="noreferrer">
+                                @_link
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="friends-form__preview-link friends-form__preview-link--placeholder">
+                                https://example.com
+                            </span>
+                        }
+                        <div class="friends-form__preview-desc">@PreviewDescription</div>
+                    </div>
+                </div>
+                <p class="friends-form__preview-tip">实时预览友链卡片在页面中的展示效果</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="friends-form__footer">
+        <button class="btn btn-secondary" @onclick="Cancel" disabled="@_isSubmitting">取消</button>
+        <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_isSubmitting">
+            @if (_isSubmitting)
             {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <span class="btn-loading">
+                    <span class="btn-loading__spinner"></span>
+                    保存中
+                </span>
             }
             else
             {
-                <MudText>保存</MudText>
+                <span>保存</span>
             }
-        </MudButton>
-    </DialogActions>
-</MudDialog>
+        </button>
+    </div>
+</div>

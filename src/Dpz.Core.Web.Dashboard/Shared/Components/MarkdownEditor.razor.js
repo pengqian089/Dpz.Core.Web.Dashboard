@@ -1,85 +1,97 @@
-import Cherry from 'https://dpangzi.com/library/cherry-markdown/cherry-markdown.esm.js';
+let vditorInstance = null;
 
-let cherryInstance = null;
-
-export function createEditor(elementId, markdown, editOnly, dotNetHelper) {    
+export function createEditor(elementId, markdown, editOnly, dotNetHelper) {
     const element = document.getElementById(elementId);
-    if (!element) {        
+    if (!element) {
         return;
     }
-    
-    const editorMode = editOnly ? 'editOnly' : 'edit&preview';
-    
+
     try {
-        cherryInstance = new Cherry({
-            id: elementId,
+        vditorInstance = new Vditor(elementId, {
             value: markdown,
-            height: "100%",
-            themeSettings: {
-                mainTheme: "dark",
-                codeBlockTheme: 'one-dark',
+            minHeight: 500,
+            height: '100%',
+            width: '100%',
+            theme: 'dark',
+            mode: 'ir',
+            cache: {
+                enable: false,
             },
-            editor: {
-                defaultModel: editorMode,
-            },
-            engine: {
-                syntax: {
-                    codeBlock: {
-                        editCode: false,
-                        changeLang: false,
-                    },
+            preview: {
+                mode: editOnly ? 'editor' : 'both',
+                theme: {
+                    current: 'dark',
+                    path: 'https://dpangzi.com/library/vditor/css/content-theme'
+                },
+                hljs: {
+                    enable: true,
+                    style: 'dracula',
+                    lineNumber: true
                 }
             },
-            toolbars: {
-                toolbar: ['bold', 'italic', 'size', '|', 'color', 'header', '|', 'theme',
-                    {insert: ['image', 'link', 'hr', 'br', 'code', 'table']}
-                ],
-                sidebar: ['mobilePreview', 'copy', 'theme'],
+            counter: {
+                enable: true,
             },
-            fileUpload: async (file, callback) => {
-                if (file.type.startsWith('image/')) {
-                    const streamRef = DotNet.createJSStreamReference(file);
-                    try {
-                        const url = await dotNetHelper.invokeMethodAsync('UploadImage', streamRef, file.name, file.type);
-                        if (url) callback(url);
-                    } catch (e) {
-                        console.error('Upload error:', e);
+            toolbar: [
+                'emoji', 'headings', 'bold', 'italic', 'strike', 'link', '|',
+                'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
+                'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after', '|',
+                'upload', 'table', '|',
+                'undo', 'redo', '|',
+                'edit-mode', 'content-theme', 'code-theme', '|',
+                'both', 'preview', 'fullscreen'
+            ],
+            upload: {
+                accept: 'image/*',
+                handler: async (files) => {
+                    if (!files || files.length === 0) return;
+
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        const streamRef = DotNet.createJSStreamReference(file);
+                        try {
+                            const url = await dotNetHelper.invokeMethodAsync('UploadImage', streamRef, file.name, file.type);
+                            if (url) {
+                                const imageMarkdown = `![${file.name}](${url})`;
+                                vditorInstance.insertValue(imageMarkdown);
+                            }
+                        } catch (e) {
+                            console.error('Upload error:', e);
+                        }
+                    } else {
+                        console.error('Only image uploads are supported via this handler.');
                     }
                 }
             },
-            callback: {
-                afterChange: () => {},
-                afterInit: () => {
-                    console.log('Cherry editor initialized');
-                },
-                beforeImageMounted: (srcProp, src) => srcProp,
+            after: () => {
+                console.log('Vditor editor initialized');
             }
         });
-        console.log('Cherry instance created successfully');
+        console.log('Vditor instance created successfully');
     } catch (e) {
-        console.error('Failed to create Cherry editor:', e);
+        console.error('Failed to create Vditor editor:', e);
     }
 }
 
 export function getMarkdown() {
-    return cherryInstance?.getMarkdown() ?? "";
+    return vditorInstance?.getValue() ?? "";
 }
 
 export function setMarkdown(markdown) {
-    if (cherryInstance) {
-        cherryInstance.setMarkdown(markdown);
+    if (vditorInstance) {
+        vditorInstance.setValue(markdown);
     }
 }
 
 export function insertValue(value, isSelect = false) {
-    if (cherryInstance) {
-        cherryInstance.insert(value, isSelect);
+    if (vditorInstance) {
+        vditorInstance.insertValue(value, true);
     }
 }
 
 export function destroy() {
-    if (cherryInstance) {
-        cherryInstance.destroy();
-        cherryInstance = null;
+    if (vditorInstance) {
+        vditorInstance.destroy();
+        vditorInstance = null;
     }
 }

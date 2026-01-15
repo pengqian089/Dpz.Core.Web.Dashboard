@@ -185,10 +185,6 @@
             </div>
 
             <div class="music-form__actions">
-                <button type="button" class="btn" @onclick='() => navigation.NavigateTo("/music")'>
-                    <i class="fas fa-arrow-left"></i>
-                    返回列表
-                </button>
                 <button type="submit" class="btn btn-primary" disabled="@_isPosting">
                     @if (_isPosting)
                     {
@@ -202,6 +198,10 @@
                         <i class="fas fa-save"></i>
                         <span>保存修改</span>
                     }
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick='() => navigation.NavigateTo("/music")'>
+                    <i class="fas fa-arrow-left"></i>
+                    返回列表
                 </button>
             </div>
         </EditForm>

@@ -1,0 +1,156 @@
+/* 
+ * _loading.css
+ * App loading screen styles
+ */
+
+.app-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-body);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: var(--text-primary);
+    font-family: 'Fira Code', monospace;
+}
+
+.app-loading__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    position: relative;
+}
+
+/* Logo / Title Animation */
+.app-loading__title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    position: relative;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+}
+
+.app-loading__title::before {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    color: var(--primary);
+    border-right: 2px solid var(--primary);
+    overflow: hidden;
+    animation: type 3.5s steps(15) infinite alternate;
+    white-space: nowrap;
+}
+
+@keyframes type {
+    0% { width: 0; }
+    50% { width: 100%; }
+    100% { width: 100%; }
+}
+
+@media (max-width: 768px) {
+    .app-loading__title {
+        font-size: 1.5rem;
+    }
+}
+
+/* Progress Container */
+.app-loading__progress-container {
+    width: 300px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Actual Progress Bar using Blazor Variable */
+.app-loading__progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--info));
+    width: var(--blazor-load-percentage, 0%);
+    box-shadow: 0 0 10px var(--primary);
+    transition: width 0.1s linear;
+    position: relative;
+}
+
+/* Shimmer effect on progress bar */
+.app-loading__progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0) 25%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 75%
+    );
+    background-size: 50px 50px;
+    animation: shimmer 1s linear infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
+}
+
+/* Text status */
+.app-loading__text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    height: 1.5rem; /* Prevent layout shift */
+}
+
+/* Percentage text */
+.app-loading__text::after {
+    content: var(--blazor-load-percentage-text, "Initialize...");
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Decorative circles */
+.app-loading__circle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+    filter: blur(20px);
+    z-index: -1;
+    opacity: 0.5;
+    animation: float 6s ease-in-out infinite;
+}
+
+.app-loading__circle--1 {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    right: -100px;
+    animation-delay: 0s;
+}
+
+.app-loading__circle--2 {
+    width: 300px;
+    height: 300px;
+    bottom: -50px;
+    left: -50px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+    animation-delay: -3s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+}

@@ -1,47 +1,60 @@
-﻿using System.Net.Http;
+﻿using System;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Timeline;
 
-public partial class Post : ComponentBase
+public partial class Post(
+    ITimelineService timelineService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+) : ComponentBase
 {
-    [Inject]
-    private IJSRuntime JsRuntime { get; set; }
-
-    [Inject]
-    private ITimelineService TimelineService { get; set; }
-
-    [Inject]
-    private ISnackbar Snackbar { get; set; }
-
-    [Inject]
-    private NavigationManager Navigation { get; set; }
-
     private TimelineCreateRequest _timeline = new();
-
-    private bool _isPublishing = false;
-
+    private bool _isPublishing;
     private MarkdownEditor? _editor;
 
     private async Task PostDataAsync(EditContext context)
     {
+        if (_editor == null)
+        {
+            dialogService.Toast("编辑器未初始化", ToastType.Error);
+            return;
+        }
+
         _timeline.Content = await _editor.GetValueAsync();
+        if (string.IsNullOrWhiteSpace(_timeline.Content))
+        {
+            dialogService.Toast("请输入内容", ToastType.Warning);
+            return;
+        }
 
         _isPublishing = true;
         StateHasChanged();
-        await TimelineService.CreateTimelineAsync(_timeline);
-        Navigation.NavigateTo("/timeline");
+        try
+        {
+            await timelineService.CreateTimelineAsync(_timeline);
+            dialogService.Toast("发布成功", ToastType.Success);
+            navigation.NavigateTo("/timeline");
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"发布失败：{ex.Message}", ToastType.Error);
+        }
+        finally
+        {
+            _isPublishing = false;
+            StateHasChanged();
+        }
     }
 
-    private async Task<string> UploadPicture(MultipartFormDataContent arg)
+    private void BackToList()
     {
-        return await TimelineService.UploadAsync(arg);
+        navigation.NavigateTo("/timeline");
     }
 }

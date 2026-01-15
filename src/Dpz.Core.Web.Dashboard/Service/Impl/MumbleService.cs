@@ -27,17 +27,9 @@ public class MumbleService(IHttpService httpService) : IMumbleService
         await httpService.PostAsync("/api/Mumble", new { markdown, htmlContent });
     }
 
-    public async Task EditAsync(string id, string markdown, string htmlContent)
+    public async Task EditAsync(string id, string markdown)
     {
-        await httpService.PatchAsync(
-            "/api/Mumble",
-            new
-            {
-                id,
-                markdown,
-                htmlContent,
-            }
-        );
+        await httpService.PatchAsync("/api/Mumble", new { id, markdown });
     }
 
     public async Task<MumbleModel?> GetMumbleAsync(string id)

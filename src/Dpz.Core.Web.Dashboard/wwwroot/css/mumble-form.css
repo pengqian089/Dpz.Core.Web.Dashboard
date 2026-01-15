@@ -1,0 +1,107 @@
+/* Mumble Form Page (Post & Edit) */
+.mumble-form {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.mumble-form__header {
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+.mumble-form__title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.mumble-form__description {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Form Content */
+.mumble-form__content {
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Form Actions */
+.mumble-form__actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    padding: var(--spacing-xl) 0;
+}
+
+/* Publishing Overlay */
+.publishing-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(2, 6, 23, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.publishing-overlay__spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spinner-rotate 1s linear infinite;
+}
+
+@keyframes spinner-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.publishing-overlay__text {
+    margin-top: var(--spacing-lg);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* Form Helper Text */
+.form-helper {
+    margin-top: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.form-helper i {
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mumble-form__title {
+        font-size: 1.5rem;
+    }
+
+    .mumble-form__actions {
+        flex-direction: column;
+    }
+
+    .mumble-form__actions .btn {
+        width: 100%;
+    }
+}

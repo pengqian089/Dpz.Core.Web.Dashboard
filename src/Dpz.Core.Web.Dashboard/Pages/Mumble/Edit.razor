@@ -1,55 +1,95 @@
 ﻿@page "/mumble/edit/{Id}"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">编辑碎碎念</MudText>
-@if (_isLoading)
-{
-    <MudCard>
-        <MudCardContent>
-            <MudSkeleton Width="30%" Height="42px;"/>
-            <MudSkeleton Width="80%"/>
-            <MudSkeleton Width="100%"/>
-        </MudCardContent>
-        <MudCardActions>
-            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
-            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
-        </MudCardActions>
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
-    </MudCard>
-}
-else
-{
-    <MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
-        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-    </MudOverlay>
-    <EditForm Model="@_t" OnValidSubmit="PostDataAsync">
-        <MudCard>
-            <MudCardContent>
-                <DataAnnotationsValidator/>
-                <MudGrid>
-                    <MudItem xs="12" md="12">
-                        <MarkdownEditor
-                            @ref="_editor"
-                            Height="600"
-                            Markdown="@_model.Markdown"
-                            UploadAction="/api/Mumble/upload">
-                        </MarkdownEditor>
-                    </MudItem>
-                </MudGrid>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+
+<div class="mumble-form">
+    <div class="mumble-form__header">
+        <h1 class="mumble-form__title">编辑碎碎念</h1>
+        <p class="mumble-form__description">修改你的想法和感受</p>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="form-section">
+            <div class="form-section__body">
+                <div class="skeleton skeleton--text-lg" style="margin-bottom: var(--spacing-md);"></div>
+                <div class="skeleton" style="height: 600px; margin-bottom: var(--spacing-md);"></div>
+                <div style="display: flex; gap: var(--spacing-sm);">
+                    <div class="skeleton skeleton--button"></div>
+                    <div class="skeleton skeleton--button"></div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (_model != null)
+    {
+        @if (_isPublishing)
+        {
+            <div class="publishing-overlay">
+                <div style="text-align: center;">
+                    <div class="publishing-overlay__spinner"></div>
+                    <div class="publishing-overlay__text">正在保存...</div>
+                </div>
+            </div>
+        }
+
+        <EditForm Model="@_editModel" OnValidSubmit="PostDataAsync">
+            <DataAnnotationsValidator/>
+
+            <div class="mumble-form__content">
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <h3 class="form-section__title">
+                            <i class="fas fa-comment"></i> 内容编辑
+                        </h3>
+                    </div>
+                    <div class="form-section__body">
+                        <div class="form-group">
+                            <label class="form-label form-label--required">碎碎念内容</label>
+                            <MarkdownEditor
+                                @ref="_editor"
+                                Height="600"
+                                Markdown="@_model.Markdown"
+                                UploadAction="/api/Mumble/upload">
+                            </MarkdownEditor>
+                            <ValidationMessage For="@(() => _editModel)" />
+                            <div class="form-helper">
+                                <i class="fas fa-info-circle"></i>
+                                支持 Markdown 语法，可上传图片和链接
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mumble-form__actions">
+                <button type="submit" class="btn btn-primary btn-lg" disabled="@_isPublishing">
                     @if (_isPublishing)
                     {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                        <MudText Class="ms-2">正在发布</MudText>
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            保存中...
+                        </span>
                     }
                     else
                     {
-                        <MudText>发布</MudText>
+                        <i class="fas fa-save"></i>
+                        <span>保存修改</span>
                     }
-                </MudButton>
-                <MudButton Variant="Variant.Filled" Href="/mumble">返回列表</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </EditForm>
-}
+                </button>
+                <a href="/mumble" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i>
+                    <span>取消</span>
+                </a>
+            </div>
+        </EditForm>
+    }
+    else
+    {
+        <div class="form-section">
+            <div class="form-section__body" style="text-align: center; padding: var(--spacing-xxxl);">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--danger); margin-bottom: var(--spacing-md);"></i>
+                <p style="color: var(--text-secondary);">数据加载失败</p>
+            </div>
+        </div>
+    }
+</div>

@@ -16,7 +16,7 @@ public interface IMumbleService
 
     Task CreateAsync(string markdown, string htmlContent);
 
-    Task EditAsync(string id, string markdown, string htmlContent);
+    Task EditAsync(string id, string markdown);
 
     Task<MumbleModel?> GetMumbleAsync(string id);
 

@@ -1,54 +1,58 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
-namespace Dpz.Core.Web.Dashboard.Pages.AudioPage.Audio
+namespace Dpz.Core.Web.Dashboard.Pages.AudioPage.Audio;
+
+public partial class List(IAudioService audioService, IAppDialogService dialogService)
+    : ComponentBase
 {
-    public partial class List
+    private int _pageIndex = 1;
+
+    private const int PageSize = 12;
+
+    private IPagedList<AudioModel> _audios = PagedList<AudioModel>.Empty();
+
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject] private IAudioService AudioService { get; set; }
+        await LoadDataAsync();
+    }
 
-        [Inject] private IDialogService DialogService { get; set; }
-
-        #region query parameter
-        private int _pageIndex = 1;
-
-        private const int PageSize = 12;
-
-        #endregion
-
-        private MudTable<AudioModel> _table;
-
-        private async Task<TableData<AudioModel>> LoadDataAsync(TableState state)
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        try
         {
-            _pageIndex = state.Page + 1;
-            var list = await AudioService.GetPageAsync( _pageIndex, PageSize);
-            return new TableData<AudioModel>()
-            {
-                TotalItems = list.TotalItemCount,
-                Items = list
-            };
+            _audios = await audioService.GetPageAsync(_pageIndex, PageSize);
         }
-
-        private void Search()
+        finally
         {
-            _table.ReloadServerData();
+            _isLoading = false;
         }
+    }
 
-        private async Task DeleteAsync(string id)
+    private async Task HandlePageChanged(int page)
+    {
+        _pageIndex = page;
+        await LoadDataAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        var result = await dialogService.ConfirmAsync("删除后不能恢复，确定删除？", "提示");
+        if (result)
         {
-            var result = await DialogService.ShowMessageBox(
-                "提示",
-                "删除后不能恢复，确定删除？",
-                yesText: "删除!", cancelText: "取消");
-            if (result == true)
-            {
-                await AudioService.DeleteAsync(id);
-                await _table.ReloadServerData();
-            }
+            await audioService.DeleteAsync(id);
+            await LoadDataAsync();
         }
     }
 }

@@ -25,13 +25,17 @@ export function createEditor(elementId, markdown, editOnly, dotNetHelper) {
                 },
                 hljs: {
                     enable: true,
-                    style: 'dracula',
+                    style: 'vs2015',
                     lineNumber: true
                 }
             },
             counter: {
                 enable: true,
             },
+            link: {
+                isOpen: false,
+            },
+            tab: '    ',
             toolbar: [
                 'emoji', 'headings', 'bold', 'italic', 'strike', 'link', '|',
                 'list', 'ordered-list', 'check', 'outdent', 'indent', '|',

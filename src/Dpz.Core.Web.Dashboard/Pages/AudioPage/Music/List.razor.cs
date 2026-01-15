@@ -24,7 +24,7 @@ public partial class List(
     private List<MusicModel>? _items;
     private bool _isLoading = true;
 
-    private IEnumerable<MusicModel> Items => _items ?? [];
+    private List<MusicModel> Items => _items ?? [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,9 +72,9 @@ public partial class List(
         StateHasChanged();
 
         var list = await musicService.GetPageAsync(_title, _pageIndex, PageSize);
-        _items = list?.ToList();
-        _totalCount = list?.TotalItemCount ?? 0;
-        _totalPages = (int)Math.Ceiling((double)_totalCount / PageSize);
+        _items = list.ToList();
+        _totalCount = list.TotalItemCount;
+        _totalPages = list.TotalPageCount;
 
         _isLoading = false;
         StateHasChanged();

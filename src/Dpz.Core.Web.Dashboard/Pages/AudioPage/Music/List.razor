@@ -1,7 +1,6 @@
 ﻿@page "/music"
 @page "/music/list"
 @attribute [Authorize]
-@using Dpz.Core.Web.Dashboard.Shared.Components
 
 <div class="music-list">
     <div class="music-list__header">
@@ -54,7 +53,7 @@
             </div>
         </div>
     }
-    else if (Items is null || !Items.Any())
+    else if (Items.Count == 0)
     {
         <div class="music-list__empty">
             <i class="fas fa-music fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>

@@ -1,129 +1,250 @@
-﻿@page "/danmaku"
+@page "/danmaku"
 @page "/danmaku/list"
 @attribute [Authorize]
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">弹幕列表</MudText>
-<MudTable Hover="true"
-          SelectedItems="_selectedItems"
-          T="DanmakuModel"
-          SelectedItemsChanged="delegate(HashSet<DanmakuModel> set) { OnDanmakuSelected(set); }"
-          Loading="_isLoading"
-          MultiSelection="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="OnDeleteClick"
-                       Class="ma-2"/>
-        <MudButton
-            Variant="Variant.Outlined"
-            StartIcon="@Icons.Material.Filled.CloudUpload"
-            Size="Size.Medium"
-            Color="Color.Primary"
-            OnClick="OnImportAcfun"
-            Class="ma-2">
-            导入Acfun弹幕
-        </MudButton>
-        <MudButton
-            Variant="Variant.Outlined"
-            StartIcon="@Icons.Material.Filled.CloudUpload"
-            Color="Color.Primary"
-            OnClick="OnImportBilibili"
-            Class="ma-2">
-            导入bilibili弹幕
-        </MudButton>
-        <MudSpacer/>
-        <MudTextField T="string"
-                      Placeholder="弹幕"
-                      @bind-value="_text"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudSelect T="string"
-                   Placeholder="请选择分组"
-                   @bind-value="_group"
-                   Clearable="true"
-                   AdornmentIcon="@Icons.Material.Filled.Tag"
-                   Adornment="Adornment.Start"
-                   IconSize="Size.Medium"
-                   Class="mt-2"
-                   AdornmentColor="Color.Primary">
-            @foreach (var item in _groupDic)
+<div class="danmaku-list">
+    <div class="danmaku-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-comments"></i>
+            弹幕管理
+        </h1>
+        <p class="page-description">管理和导入视频弹幕数据，支持批量操作</p>
+    </div>
+
+    <div class="danmaku-list__toolbar">
+        <div class="danmaku-list__toolbar-left">
+            <button class="btn btn-danger" @onclick="OnDeleteClick" disabled="@(!_selectedItems.Any())">
+                <i class="fas fa-trash"></i>
+                删除选中 (@_selectedItems.Count)
+            </button>
+            <button class="btn btn-primary" @onclick="OnImportAcfun">
+                <i class="fas fa-file-import"></i>
+                导入 AcFun
+            </button>
+            <button class="btn btn-primary" @onclick="OnImportBilibili">
+                <i class="fas fa-file-import"></i>
+                导入 Bilibili
+            </button>
+        </div>
+
+        <div class="danmaku-list__toolbar-right">
+            <select class="form-control form-select" @bind="_group">
+                <option value="">全部分组</option>
+                @foreach (var item in _groupDic)
+                {
+                    <option value="@item.Key">@item.Value</option>
+                }
+            </select>
+
+            <input type="text"
+                   class="form-control"
+                   placeholder="搜索弹幕内容..."
+                   @bind="_text"
+                   @bind:event="oninput"
+                   @onkeydown="HandleSearchKeyDown" />
+
+            <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                <i class="fas fa-search"></i>
+                搜索
+            </button>
+            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="danmaku-grid">
+            @for (var i = 0; i < PageSize; i++)
             {
-                <MudSelectItem Value="@item.Key">@item.Value</MudSelectItem>
+                <div class="danmaku-card danmaku-card--skeleton">
+                    <div class="skeleton skeleton-checkbox"></div>
+                    <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                    <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                    <div class="danmaku-card__meta">
+                        <span class="skeleton skeleton-badge"></span>
+                        <span class="skeleton skeleton-badge"></span>
+                        <span class="skeleton skeleton-badge"></span>
+                        <span class="skeleton skeleton-badge"></span>
+                    </div>
+                </div>
             }
-        </MudSelect>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            弹幕内容
-        </MudTh>
-        <MudTh>
-            分组
-        </MudTh>
-        <MudTh>
-            位置
-        </MudTh>
-        <MudTh>
-            大小
-        </MudTh>
-        <MudTh>
-            出现时间
-        </MudTh>
-        <MudTh>
-            发送时间
-        </MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="弹幕内容">
-            @if (!string.IsNullOrWhiteSpace(_text))
+        </div>
+    }
+    else if (_danmakuList != null && _danmakuList.Any())
+    {
+        <div class="danmaku-grid">
+            @foreach (var item in _danmakuList)
             {
-                <MudHighlighter Text="@context.Text" HighlightedText="@_text"/>
-            }else if (context.Color.StartsWith("#"))
-            {
-                <MudText title="@context.Color" Style="@($"color:{context.Color}")">@context.Text</MudText>
+                <div class="danmaku-card @(_selectedItems.Contains(item) ? "danmaku-card--selected" : "")"
+                    @onclick="() => ToggleSelection(item)">
+                    <input type="checkbox"
+                           class="danmaku-card__checkbox"
+                           checked="@(_selectedItems.Contains(item))"
+                           @onclick:stopPropagation="true"
+                           @onchange="() => ToggleSelection(item)" />
+
+                    <div class="danmaku-card__content" style="@GetDanmakuColorStyle(item)">
+                        @if (!string.IsNullOrWhiteSpace(_text) && item.Text.Contains(_text, StringComparison.OrdinalIgnoreCase))
+                        {
+                            @HighlightText(item.Text, _text)
+                        }
+                        else
+                        {
+                            @item.Text
+                        }
+                    </div>
+
+                    <div class="danmaku-card__meta">
+                        <span class="danmaku-card__group">
+                            <i class="fas fa-tag"></i>
+                            @(_groupDic.TryGetValue(item.Group, out var groupName) ? groupName : item.Group)
+                        </span>
+                        <span class="danmaku-card__time-badge">
+                            <i class="fas fa-clock"></i>
+                            @item.Time.ToString("F2")s
+                        </span>
+                        <span class="danmaku-card__meta-item">
+                            <i class="fas fa-align-left"></i>
+                            @GetPositionText(item.Position)
+                        </span>
+                        <span class="danmaku-card__meta-item">
+                            <i class="fas fa-text-height"></i>
+                            @item.Size
+                        </span>
+                        <span class="danmaku-card__meta-item">
+                            <i class="fas fa-calendar"></i>
+                            @item.SendTime.ToString("yyyy-MM-dd HH:mm:ss")
+                        </span>
+                    </div>
+                </div>
             }
-            else if (int.TryParse(context.Color, out var color))
-            {
-                var colorRgb = System.Drawing.Color.FromArgb(color);
-                <MudText title="@context.Color" Style="@($"color:rgb({colorRgb.R},{colorRgb.G},{colorRgb.B})")">@context.Text</MudText>
-            }
-            else
-            {
-                <MudText>@context.Text</MudText>
-            }
-        </MudTd>
-        <MudTd DataLabel="分组">
-            <MudHighlighter Text="@_groupDic[context.Group]" HighlightedText="@(_groupDic.ContainsKey(_group) ? _groupDic[_group] : "")"/>
-        </MudTd>
-        <MudTd DataLabel="位置">
-            @context.Position
-        </MudTd>
-        <MudTd DataLabel="大小">
-            @context.Size
-        </MudTd>
-        <MudTd DataLabel="出现时间">@context.Time</MudTd>
-        <MudTd DataLabel="发送时间">@context.SendTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] { 15, 20, 30 }"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+        </div>
+
+        <Pagination CurrentPage="@_pageIndex"
+                    TotalPages="@_totalPages"
+                    TotalCount="@_totalCount"
+                    PageSize="@PageSize"
+                    OnPageChanged="OnPageChanged" />
+    }
+    else
+    {
+        <div class="danmaku-list__empty">
+            <i class="fas fa-inbox"></i>
+            <p>暂无弹幕数据</p>
+            <p class="danmaku-list__empty-hint">可以通过导入功能添加弹幕数据</p>
+        </div>
+    }
+</div>
+
+@if (_showImportDialog)
+{
+    <div class="dialog-overlay dialog-overlay--visible" @onclick="CloseImportDialog">
+        <div class="dialog dialog--medium" @onclick:stopPropagation="true">
+            <div class="dialog__header">
+                <h3 class="dialog__title">
+                    <i class="fas fa-file-import"></i>
+                    @_importDialogTitle
+                </h3>
+                <button class="dialog__close" @onclick="CloseImportDialog" disabled="@_isImporting">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="dialog__body">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label class="form-label form-label--required">
+                            <i class="fas fa-layer-group"></i>
+                            选择弹幕分组
+                        </label>
+                        <select class="form-control" @bind="_importGroup" disabled="@_isImporting">
+                            <option value="">请选择分组</option>
+                            @foreach (var item in _groupDic)
+                            {
+                                <option value="@item.Key">@item.Value</option>
+                            }
+                        </select>
+                        <span class="form-hint">选择弹幕所属的视频分组</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label form-label--required">
+                            <i class="fas fa-file"></i>
+                            选择文件
+                        </label>
+                        <InputFile OnChange="OnInputFileChanged"
+                                   id="importDanmakuFile"
+                                   class="file-input"
+                                   accept="@_importExtension"
+                                   disabled="@_isImporting" />
+                        <label for="importDanmakuFile"
+                               class="file-upload @(_isImporting ? "file-upload--disabled" : "")">
+                            <div class="file-upload__icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="file-upload__content">
+                                <div class="file-upload__text">
+                                    @if (_selectedFile != null)
+                                    {
+                                        <span>已选择文件</span>
+                                    }
+                                    else
+                                    {
+                                        <span>点击选择要导入的弹幕文件</span>
+                                    }
+                                </div>
+                                <div class="file-upload__hint">
+                                    支持格式: @_importExtension
+                                </div>
+                            </div>
+                        </label>
+
+                        @if (_selectedFile != null)
+                        {
+                            <div class="file-selected">
+                                <div class="file-selected__info">
+                                    <i class="fas fa-file-alt"></i>
+                                    <div class="file-selected__details">
+                                        <div class="file-selected__name">@_selectedFile.Name</div>
+                                        <div class="file-selected__size">@_selectedFile.Size.FileSize()</div>
+                                    </div>
+                                </div>
+                                @if (!_isImporting)
+                                {
+                                    <button class="file-selected__remove" @onclick="ClearSelectedFile" type="button">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="dialog__footer">
+                <button class="btn btn-secondary" @onclick="CloseImportDialog" disabled="@_isImporting">
+                    <i class="fas fa-times"></i>
+                    取消
+                </button>
+                <button class="btn btn-primary" @onclick="ImportDanmakuAsync" disabled="@(_isImporting || _selectedFile == null)">
+                    @if (_isImporting)
+                    {
+                        <span class="btn__loading">
+                            <span class="spinner"></span>
+                            导入中...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            <i class="fas fa-check"></i>
+                            确认导入
+                        </span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}

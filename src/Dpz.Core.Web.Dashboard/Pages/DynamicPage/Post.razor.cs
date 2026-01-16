@@ -1,88 +1,108 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Html;
-using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
 
-namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
+namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage;
+
+public partial class Post(
+    IDynamicPageService dynamicPageService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+)
 {
-    public partial class Post
+    private string _name = "";
+    private readonly StringWriter _htmlContent = new();
+    private readonly object _t = new();
+    private bool _isPublishing;
+    private HtmlEditor? _editor;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject]
-        private IDynamicPageService DynamicPageService { get; set; }
+        var htmlContext = BrowsingContext.New(Configuration.Default);
+        var html = await htmlContext.OpenAsync(x => x.Content("<!DOCTYPE html>"));
 
-        [Inject]
-        private ISnackbar Snackbar { get; set; }
+        html.DocumentElement.SetAttribute("lang", "zh-Hans");
+        html.Title = "新建动态页";
+        var h1 = html.CreateElement("h1");
+        h1.TextContent = "新建动态页";
+        html.Body?.Append(h1);
+        html.ToHtml(_htmlContent, new PrettyMarkupFormatter());
+    }
 
-        [Inject]
-        private NavigationManager Navigation { get; set; }
-
-        private string _name = "";
-
-        private readonly StringWriter _htmlContent = new();
-
-        private readonly object _t = new();
-
-        private bool _isPublishing = false;
-
-        private HtmlEditor _editor;
-
-        protected override async Task OnInitializedAsync()
+    private async Task PostDataAsync(EditContext context)
+    {
+        if (_editor == null)
         {
-            var htmlContext = BrowsingContext.New(Configuration.Default);
-            var html = await htmlContext.OpenAsync(x => x.Content("<!DOCTYPE html>"));
-
-            html.DocumentElement.SetAttribute("lang", "zh-Hans");
-            html.Title = "新建动态页";
-            var h1 = html.CreateElement("h1");
-            h1.TextContent = "新建动态页";
-            html.Body?.Append(h1);
-            html.ToHtml(_htmlContent, new PrettyMarkupFormatter());
-            await base.OnInitializedAsync();
+            dialogService.Toast("编辑器未初始化", ToastType.Error);
+            return;
         }
 
-        private async Task PostDataAsync(EditContext context)
+        if (string.IsNullOrWhiteSpace(_name))
         {
-            var content = await _editor.GetValueAsync();
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            if (string.IsNullOrEmpty(_name))
+            dialogService.Toast("请输入页面名称", ToastType.Warning);
+            return;
+        }
+
+        var content = await _editor.GetValueAsync();
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            dialogService.Toast("请输入内容", ToastType.Warning);
+            return;
+        }
+
+        _isPublishing = true;
+        StateHasChanged();
+        try
+        {
+            if (await dynamicPageService.ExistsAsync(_name))
             {
-                Snackbar.Add("请输入页面名称", Severity.Warning);
+                dialogService.Toast("该页面名称已存在", ToastType.Warning);
                 return;
             }
 
-            if (string.IsNullOrEmpty(content))
-            {
-                Snackbar.Add("请输入内容", Severity.Warning);
-                return;
-            }
-            _isPublishing = true;
-            if (await DynamicPageService.ExistsAsync(_name))
-            {
-                Snackbar.Add("该页面名称已存在", Severity.Warning);
-                _isPublishing = false;
-                return;
-            }
-            StateHasChanged();
-            await DynamicPageService.CreateDynamicPage(
+            await dynamicPageService.CreateDynamicPage(
                 new SaveDynamicRequest
                 {
                     HtmlContent = new HtmlContent { Content = content, Name = _name },
                 }
             );
             await _editor.DisposeAsync();
-            // bug 在回车提交时，返回列表不加载数据
-            Navigation.NavigateTo("/dynamic");
+            dialogService.Toast("发布成功", ToastType.Success);
+            navigation.NavigateTo("/dynamic");
         }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"发布失败：{ex.Message}", ToastType.Error);
+        }
+        finally
+        {
+            _isPublishing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void BackToList()
+    {
+        navigation.NavigateTo("/dynamic");
+    }
+
+    private static string BuildPreviewUrl(string name)
+    {
+        var baseUrl = Program.WebHost.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return $"{baseUrl}/act/<name>";
+        }
+
+        return $"{baseUrl}/act/{name}";
     }
 }

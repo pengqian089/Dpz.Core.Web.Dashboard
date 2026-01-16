@@ -2,87 +2,149 @@
 @page "/dynamic/list"
 @attribute [Authorize]
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">动态页列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       Href="/dynamic/post"
-                       Class="ma-2"/>
-        <MudSpacer/>
+<div class="dynamic-list">
+    <div class="dynamic-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-bolt"></i>
+            动态页管理
+        </h1>
+        <p class="page-description">发布活动页面与示例页面，统一管理动态内容</p>
+    </div>
 
-        <MudTextField T="string"
-                      Placeholder="搜索页面名称"
-                      @bind-value="_id"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            页面名称
-        </MudTh>
-        <MudTh>
-            Content-Type
-        </MudTh>
-        <MudTh>
-            查看
-        </MudTh>
-        <MudTh>
-            发表人
-        </MudTh>
-        <MudTh>
-            创建时间
-        </MudTh>
-        <MudTh>
-            最后修改时间
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="页面名称">
-            @context.Id
-        </MudTd>
-        <MudTd DataLabel="Content-Type">
-            @context.ContentTypeStr
-        </MudTd>
-        <MudTd DataLabel="查看">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@($"{Program.WebHost}/act/{context.Id}")" Target="_blank">查看</MudButton>
-        </MudTd>
-        <MudTd DataLabel="发表人">
-            @context.Creator?.Name
-        </MudTd>
-        <MudTd DataLabel="创建时间">
-            @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="最后修改时间">
-            @context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
-        </MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/dynamic/edit/{context.Id}")">修改</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] {15, 20, 30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+    <div class="dynamic-list__toolbar">
+        <div class="dynamic-list__toolbar-left">
+            <a class="btn btn-primary" href="/dynamic/post">
+                <i class="fas fa-plus"></i>
+                新建动态页
+            </a>
+            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+
+        <div class="dynamic-list__toolbar-right">
+            <div class="dynamic-list__search">
+                <input type="text"
+                       class="form-control"
+                       placeholder="搜索页面名称"
+                       @bind="_keyword"
+                       @bind:event="oninput"
+                       @onkeydown="HandleSearchKeyDown" />
+                <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+            <div class="dynamic-list__summary">
+                <span class="dynamic-list__summary-label">共</span>
+                <span class="dynamic-list__summary-value">@_totalCount</span>
+                <span class="dynamic-list__summary-label">条</span>
+            </div>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="dynamic-list-skeleton">
+            <div class="dynamic-list-skeleton__table">
+                @for (var i = 0; i < PageSize; i++)
+                {
+                    <div class="dynamic-list-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_pages.Count == 0)
+    {
+        <div class="dynamic-list__empty">
+            <i class="fas fa-layer-group"></i>
+            <p>暂无动态页数据</p>
+            <p class="dynamic-list__empty-hint">点击“新建动态页”创建活动或示例页面</p>
+        </div>
+    }
+    else
+    {
+        <div class="dynamic-table">
+            <div class="dynamic-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>页面名称</th>
+                            <th>Content-Type</th>
+                            <th>访问</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _pages)
+                        {
+                            <tr>
+                                <td data-label="页面名称">
+                                    <div class="dynamic-table__title">@item.Id</div>
+                                    <div class="dynamic-table__meta">
+                                        <span class="dynamic-table__meta-item">
+                                            <i class="fas fa-user"></i>
+                                            @GetCreatorName(item)
+                                        </span>
+                                    </div>
+                                </td>
+                                <td data-label="Content-Type">
+                                    <span class="dynamic-table__badge">
+                                        @GetContentType(item)
+                                    </span>
+                                </td>
+                                <td data-label="访问">
+                                    <a class="dynamic-table__link"
+                                       href="@BuildPreviewUrl(item.Id)"
+                                       target="_blank"
+                                       rel="noreferrer">
+                                        查看页面
+                                    </a>
+                                </td>
+                                <td data-label="创建时间">
+                                    <span class="dynamic-table__time">
+                                        @item.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </span>
+                                </td>
+                                <td data-label="更新时间">
+                                    <span class="dynamic-table__time">
+                                        @item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </span>
+                                </td>
+                                <td data-label="操作">
+                                    <div class="dynamic-table__actions">
+                                        <a class="btn btn-secondary btn-sm"
+                                           href="@($"/dynamic/edit/{item.Id}")">
+                                            <i class="fas fa-edit"></i>
+                                            编辑
+                                        </a>
+                                        <button class="btn btn-danger btn-sm"
+                                                @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <Pagination CurrentPage="_pageIndex"
+                    TotalPages="_totalPages"
+                    TotalCount="_totalCount"
+                    PageSize="PageSize"
+                    OnPageChanged="HandlePageChanged" />
+    }
+</div>

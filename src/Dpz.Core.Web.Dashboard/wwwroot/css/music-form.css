@@ -83,8 +83,8 @@
 
 /* Music Form Specific */
 .music-form {
-    max-width: 1200px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 .music-form__header {

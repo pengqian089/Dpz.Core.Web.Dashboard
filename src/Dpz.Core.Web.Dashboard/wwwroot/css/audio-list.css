@@ -1,8 +1,8 @@
 /* audio-list.css */
 .audio-list {
     padding: var(--spacing-md);
-    max-width: 1600px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 /* 头部区域 */

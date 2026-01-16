@@ -1,7 +1,7 @@
 /* Timeline Form Page (Publish & Edit) */
 .timeline-form {
-    max-width: 1200px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 .timeline-form__header {

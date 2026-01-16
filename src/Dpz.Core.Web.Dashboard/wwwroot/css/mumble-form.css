@@ -1,7 +1,7 @@
 /* Mumble Form Page (Post & Edit) */
 .mumble-form {
-    max-width: 1200px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 .mumble-form__header {

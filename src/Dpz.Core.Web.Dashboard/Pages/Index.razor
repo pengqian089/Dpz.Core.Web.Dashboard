@@ -134,7 +134,7 @@
                     <a href="/article/edit/@item.Id" class="list-group-item">
                         <span class="text-truncate" style="max-width: 70%;">@item.Title</span>
                         <div class="flex items-center gap-2">
-                             @if(item.ImagesAddress != null && item.ImagesAddress.Count > 0)
+                             @if(item.ImagesAddress.Count > 0)
                             {
                                  <span class="badge badge-secondary"><i class="fas fa-image"></i> @item.ImagesAddress.Count</span>
                             }

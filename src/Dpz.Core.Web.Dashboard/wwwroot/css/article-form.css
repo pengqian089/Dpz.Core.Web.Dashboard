@@ -1,7 +1,7 @@
 ﻿/* Article Form Page (Publish & Edit) */
 .article-form {
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 .article-form__header {

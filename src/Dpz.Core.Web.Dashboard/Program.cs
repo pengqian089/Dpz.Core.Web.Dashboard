@@ -3,13 +3,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using Dpz.Core.Web.Dashboard;
-using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -41,8 +39,6 @@ builder.Services.AddOidcAuthentication(options =>
     options.ProviderOptions.DefaultScopes.Add("roles");
     options.UserOptions.RoleClaim = "role";
 });
-
-builder.Services.AddMudServices();
 
 CdnBaseAddress =
     builder.Configuration["CDNBaseAddress"] ?? throw new Exception("CDNBaseAddress is null.");

@@ -123,6 +123,14 @@
     .app-header__toggle {
         display: block;
     }
+
+    .hidden-sm-down {
+        display: none !important;
+    }
+
+    .user-profile span {
+        max-width: 100px;
+    }
 }
 
 @media (min-width: 769px) {
@@ -342,6 +350,14 @@
 }
 .user-profile:hover {
     background-color: var(--bg-surface-hover);
+}
+
+.user-profile span {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
 }
 
 /* Page Header Styles */

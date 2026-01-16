@@ -11,7 +11,7 @@ public partial class List(IAudioService audioService, IAppDialogService dialogSe
 {
     private int _pageIndex = 1;
 
-    private const int PageSize = 12;
+    private const int PageSize = 10;
 
     private IPagedList<AudioModel> _audios = PagedList<AudioModel>.Empty();
 

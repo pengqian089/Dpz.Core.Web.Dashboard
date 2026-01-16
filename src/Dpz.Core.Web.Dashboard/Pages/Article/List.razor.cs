@@ -20,7 +20,7 @@ public partial class List(
     private int _pageIndex = 1;
     private int _totalCount;
     private int _totalPages;
-    private const int PageSize = 15;
+    private const int PageSize = 10;
     private string _tag = "";
     private string _title = "";
     private List<string> _tags = [];

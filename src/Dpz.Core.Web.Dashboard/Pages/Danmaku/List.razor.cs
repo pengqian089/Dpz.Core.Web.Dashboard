@@ -21,7 +21,7 @@ public partial class List(
     IAppDialogService dialogService
 )
 {
-    private const int PageSize = 12;
+    private const int PageSize = 20;
 
     private int _pageIndex = 1;
     private int _totalCount;

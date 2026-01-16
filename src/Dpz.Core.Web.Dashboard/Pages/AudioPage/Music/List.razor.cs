@@ -19,7 +19,7 @@ public partial class List(
     private int _pageIndex = 1;
     private int _totalCount;
     private int _totalPages;
-    private const int PageSize = 12;
+    private const int PageSize = 10;
     private string _title = "";
     private List<MusicModel>? _items;
     private bool _isLoading = true;

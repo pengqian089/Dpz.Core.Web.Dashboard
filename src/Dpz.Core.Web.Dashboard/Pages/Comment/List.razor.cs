@@ -23,7 +23,7 @@ public partial class List(
     [Parameter]
     public string? NodeParam { get; set; }
 
-    private const int PageSize = 12;
+    private const int PageSize = 10;
     private int _pageIndex = 1;
     private int _totalCount;
     private int _totalPages;

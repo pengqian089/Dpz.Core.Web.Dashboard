@@ -115,6 +115,16 @@
     color: var(--text-primary);
 }
 
+/* Version display */
+.app-loading__version {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+    opacity: 0.7;
+}
+
 /* Decorative circles */
 .app-loading__circle {
     position: absolute;

@@ -84,27 +84,50 @@ if (Test-Path $indexHtmlPath) {
     Write-Host "Updating index.html..." -ForegroundColor cyan
     
     $indexContent = Get-Content $indexHtmlPath -Raw -Encoding UTF8
-    # 匹配任何 global.min 开头的 CSS 文件引用
+    
+    # 1. 更新 CSS 引用
     $pattern = '<link href="css/global\.min\.[^"]*\.css" rel="stylesheet" />'
     $replacement = '<link href="css/{0}" rel="stylesheet" />' -f $outputFile
     
     if ($indexContent -match $pattern) {
         $indexContent = $indexContent -replace $pattern, $replacement
-        Set-Content -Path $indexHtmlPath -Value $indexContent -NoNewline -Encoding UTF8
-        Write-Host "  index.html updated successfully!" -ForegroundColor green
+        Write-Host "  CSS reference updated" -ForegroundColor green
     }
     else {
         # 如果找不到带 hash 的引用，尝试替换原始引用
         $pattern = '<link href="css/global\.min\.css" rel="stylesheet" />'
         if ($indexContent -match $pattern) {
             $indexContent = $indexContent -replace $pattern, $replacement
-            Set-Content -Path $indexHtmlPath -Value $indexContent -NoNewline -Encoding UTF8
-            Write-Host "  index.html updated successfully!" -ForegroundColor green
+            Write-Host "  CSS reference updated" -ForegroundColor green
         }
         else {
-            Write-Host "  Warning: Could not find global.min.css reference in index.html" -ForegroundColor yellow
+            Write-Host "  Warning: Could not find global.min.css reference" -ForegroundColor yellow
         }
     }
+    
+    # 2. 更新版本号
+    $csprojPath = [System.IO.Path]::Combine($path, 'Dpz.Core.Web.Dashboard.csproj')
+    if (Test-Path $csprojPath) {
+        [xml]$csproj = Get-Content $csprojPath
+        $version = $csproj.Project.PropertyGroup.Version
+        
+        if (-not [string]::IsNullOrWhiteSpace($version)) {
+            $versionPattern = '(<div class="app-loading__version">)v[\d\.]+(<\/div>)'
+            $versionReplacement = "`${1}v$version`${2}"
+            
+            if ($indexContent -match $versionPattern) {
+                $indexContent = $indexContent -replace $versionPattern, $versionReplacement
+                Write-Host "  Version updated to v$version" -ForegroundColor green
+            }
+            else {
+                Write-Host "  Warning: Version element not found in HTML" -ForegroundColor yellow
+            }
+        }
+    }
+    
+    # 保存更新后的内容
+    Set-Content -Path $indexHtmlPath -Value $indexContent -NoNewline -Encoding UTF8
+    Write-Host "  index.html updated successfully!" -ForegroundColor green
 }
 else {
     Write-Host "  Warning: index.html not found" -ForegroundColor yellow

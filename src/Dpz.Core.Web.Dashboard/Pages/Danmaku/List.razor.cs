@@ -249,7 +249,11 @@ public partial class List(
 
     private string GetDanmakuColorStyle(DanmakuModel danmaku)
     {
-        if (danmaku.Color.StartsWith("#"))
+        if (string.IsNullOrWhiteSpace(danmaku.Color))
+        {
+            return "";
+        }
+        if (danmaku.Color.StartsWith('#'))
         {
             return $"color: {danmaku.Color}";
         }
@@ -270,7 +274,17 @@ public partial class List(
             0 => "滚动",
             1 => "顶部",
             2 => "底部",
-            _ => position.ToString()
+            _ => position.ToString(),
+        };
+    }
+    
+    private static string GetSizeText(int size)
+    {
+        return size switch
+        {
+            0 => "小字",
+            1 => "大字",
+            _ => size.ToString(),
         };
     }
 

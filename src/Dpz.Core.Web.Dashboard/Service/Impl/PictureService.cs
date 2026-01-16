@@ -58,6 +58,6 @@ public class PictureService(IHttpService httpService) : IPictureService
 
     public async Task<List<string>> GetTagsAsync()
     {
-        return await httpService.GetAsync<List<string>>("/api/Picture/tags");
+        return await httpService.GetAsync<List<string>>("/api/Picture/tags") ?? [];
     }
 }

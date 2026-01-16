@@ -49,11 +49,11 @@ public class MusicService(IHttpService httpService) : IMusicService
 
     public async Task<string> GetLyricAsync(string id)
     {
-        return await httpService.GetAsync<string>($"/api/Music/lrc/{id}");
+        return await httpService.GetAsync<string>($"/api/Music/lrc/{id}") ?? "";
     }
 
     public async Task<List<string>> GetGroupsAsync()
     {
-        return await httpService.GetAsync<List<string>>("/api/Music/groups");
+        return await httpService.GetAsync<List<string>>("/api/Music/groups") ?? [];
     }
 }

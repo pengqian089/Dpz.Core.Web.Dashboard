@@ -36,7 +36,13 @@ public partial class Edit(
         StateHasChanged();
         try
         {
-            _model = await dynamicPageService.GetDynamicPageAsync(Id);
+            var model = await dynamicPageService.GetDynamicPageAsync(Id);
+            if (model == null)
+            {
+                dialogService.Toast("未找到该页面", ToastType.Warning);
+                return;
+            }
+            _model = model;
             _name = _model.Id ?? Id;
             var htmlContext = BrowsingContext.New(Configuration.Default);
             var html = await htmlContext.OpenAsync(x => x.Content(_model.Content ?? ""));

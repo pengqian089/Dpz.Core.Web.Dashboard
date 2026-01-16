@@ -12,7 +12,7 @@
 
         <div class="picture-form__content">
             <div class="picture-form__main">
-                @if (!string.IsNullOrWhiteSpace(_picture?.ImageUrl))
+                @if (!string.IsNullOrWhiteSpace(_picture.ImageUrl))
                 {
                     <div class="current-image-section">
                         <div class="current-image-section__header">
@@ -44,9 +44,9 @@
                                 @foreach (var tag in _tags)
                                 {
                                     <button type="button" 
-                                            class="tag-selector__item @(_picture.Tags?.Contains(tag) == true ? "tag-selector__item--active" : "")"
+                                            class="tag-selector__item @(_picture.Tags.Contains(tag) ? "tag-selector__item--active" : "")"
                                             @onclick="() => ToggleTag(tag)">
-                                        <i class="fas @(_picture.Tags?.Contains(tag) == true ? "fa-check-circle" : "fa-circle")"></i>
+                                        <i class="fas @(_picture.Tags.Contains(tag) ? "fa-check-circle" : "fa-circle")"></i>
                                         <span>@tag</span>
                                     </button>
                                 }

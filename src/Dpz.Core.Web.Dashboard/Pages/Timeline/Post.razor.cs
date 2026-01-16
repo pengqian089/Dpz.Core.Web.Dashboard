@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
@@ -15,7 +15,7 @@ public partial class Post(
     IAppDialogService dialogService
 ) : ComponentBase
 {
-    private TimelineCreateRequest _timeline = new();
+    private readonly TimelineCreateRequest _timeline = new() { Date = DateTime.Now, Title = "" };
     private bool _isPublishing;
     private MarkdownEditor? _editor;
 

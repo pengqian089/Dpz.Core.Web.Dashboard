@@ -9,7 +9,7 @@ public class FriendAddModel
     /// </summary>
     [Required(ErrorMessage = "请输入名称")]
     public string? Name { get; set; }
-    
+
     /// <summary>
     /// 图标
     /// </summary>

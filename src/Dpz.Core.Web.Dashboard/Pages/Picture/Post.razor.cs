@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
-using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
@@ -25,7 +24,8 @@ public partial class Post(
     private readonly PostPictureModel _picture = new();
     private List<string> _tags = [];
     private Dictionary<string, long> _selectedFiles = [];
-    private int _uploadProgress;
+
+    //private int _uploadProgress;
     private IJSObjectReference? _jsModule;
 
     protected override async Task OnInitializedAsync()

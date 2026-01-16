@@ -41,12 +41,28 @@
                         <a href="https://www.dpangzi.com" target="_blank" class="dropdown-item">
                             <i class="fas fa-globe"></i> 主站点
                         </a>
+                        <a href="https://auth.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-podcast"></i> 认证中心
+                        </a>
+                        <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                        <a href="https://pan.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-cloud"></i> 网盘
+                        </a>
+                        <a href="https://www.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-book"></i> 笔记
+                        </a>
+                        <a href="https://terminal.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-terminal"></i> 服务器终端管理
+                        </a>
+                        <a href="https://git.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-brands fa-git"></i> git托管
+                        </a>
                         <a href="https://www.dpangzi.com" target="_blank" class="dropdown-item">
                             <i class="fas fa-book"></i> 日志
                         </a>
                         <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
                         <a href="https://config.dpangzi.com" target="_blank" class="dropdown-item">
-                            <i class="fas fa-cogs"></i> 系统配置
+                            <i class="fas fa-cogs"></i> 配置中心
                         </a>
                     </div>
                 </div>
@@ -60,7 +76,7 @@
                         <div class="dropdown">
                             <div class="user-profile flex items-center gap-2" style="cursor: pointer">
                                 @{
-                                    var avatar = auth.User?.FindFirst("picture")?.Value;
+                                    var avatar = auth.User.FindFirst("picture")?.Value;
                                 }
                                 @if (!string.IsNullOrWhiteSpace(avatar))
                                 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
@@ -18,7 +18,12 @@ public partial class Edit(
     [Parameter]
     public string Id { get; set; } = "";
 
-    private TimelineEditRequest _timeline = new();
+    private TimelineEditRequest _timeline = new()
+    {
+        Id = "",
+        Date = DateTime.Now,
+        Title = "",
+    };
 
     private bool _isPublishing;
     private bool _isLoading;

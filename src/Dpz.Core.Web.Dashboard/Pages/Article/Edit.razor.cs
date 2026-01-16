@@ -34,6 +34,12 @@ public partial class Edit(
 
         _isLoading = true;
         var article = await articleService.GetArticleAsync(Id);
+        if (article == null)
+        {
+            dialogService.Toast("文章不存在", ToastType.Error);
+            navigation.NavigateTo("/article");
+            return;
+        }
         _article = new ArticleEditRequest
         {
             Id = article.Id,

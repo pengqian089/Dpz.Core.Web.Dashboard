@@ -17,7 +17,7 @@ public interface IArticleService
 
     Task PublishAsync(ArticlePublishRequest request);
 
-    Task<ArticleModel> GetArticleAsync(string id);
+    Task<ArticleModel?> GetArticleAsync(string id);
 
     Task<List<string>> GetTagsAsync();
 
@@ -31,5 +31,5 @@ public interface IArticleService
 
     Task<bool> ExistsAsync(string title);
 
-    Task<string> UploadAsync(MultipartFormDataContent content);
+    Task<string?> UploadAsync(MultipartFormDataContent content);
 }

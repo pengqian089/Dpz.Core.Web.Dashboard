@@ -68,8 +68,7 @@ public partial class List(
             _tag,
             _description,
             _pictureType,
-            _pageIndex,
-            PageSize
+            _pageIndex
         );
 
         _pictures = result.ToList();

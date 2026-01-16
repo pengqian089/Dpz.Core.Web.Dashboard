@@ -1,6 +1,5 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Component;
+﻿using System.Threading.Tasks;
+
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;

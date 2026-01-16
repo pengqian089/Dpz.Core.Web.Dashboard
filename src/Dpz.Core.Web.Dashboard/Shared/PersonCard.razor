@@ -6,7 +6,7 @@
             <div class="person-card__header">
                 <div class="person-card__avatar">
                     @{
-                        var avatar = auth.User?.FindFirst("picture")?.Value;
+                        var avatar = auth.User.FindFirst("picture")?.Value;
                     }
                     @if (!string.IsNullOrWhiteSpace(avatar))
                     {
@@ -27,6 +27,6 @@
 </AuthorizeView>
 
 @code {
-    [Parameter] public string Class { get; set; }
-    [Parameter] public string Style { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
 }

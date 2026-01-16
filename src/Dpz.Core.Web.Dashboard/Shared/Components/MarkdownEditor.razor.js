@@ -69,6 +69,14 @@ export function createEditor(elementId, markdown, editOnly, dotNetHelper) {
             },
             after: () => {
                 console.log('Vditor editor initialized');
+                // Fix toolbar buttons to prevent form submission
+                const toolbar = element.querySelector('.vditor-toolbar');
+                if (toolbar) {
+                    const buttons = toolbar.querySelectorAll('button:not([type])');
+                    buttons.forEach(button => {
+                        button.setAttribute('type', 'button');
+                    });
+                }
             }
         });
         console.log('Vditor instance created successfully');

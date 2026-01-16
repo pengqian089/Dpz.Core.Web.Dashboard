@@ -106,7 +106,7 @@
         <div class="panel-header">
             <h3 class="panel-title">系统日志</h3>
         </div>
-        <div class="panel-body">
+        <div class="panel-body" style="max-height: 300px;overflow-y: auto;">
             @if (!string.IsNullOrEmpty(_summary?.LatestLogs))
             {
                  <pre class="log-scroll log-content"><code class="language-bash">@_summary.LatestLogs</code></pre>

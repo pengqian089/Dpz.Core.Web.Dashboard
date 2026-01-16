@@ -1,48 +1,68 @@
 ﻿@page "/footer"
 @attribute [Authorize]
 
-@if (_isLoading)
-{
-    <MudCard>
-        <MudCardContent>
-            <MudSkeleton Width="30%" Height="42px;" />
-            <MudSkeleton Width="80%" />
-            <MudSkeleton Width="100%" />
-        </MudCardContent>
-        <MudCardActions>
-            <MudSkeleton Width="64px" Height="40px" Class="ml-2" />
-            <MudSkeleton Width="105px" Height="40px" Class="ml-3" />
-        </MudCardActions>
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
-    </MudCard>
-}
-else
-{
-    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">页脚内容</MudText>
+<div class="footer-form">
+    <div class="footer-form__header">
+        <h1 class="footer-form__title">页脚管理</h1>
+        <p class="footer-form__description">维护前台页脚内容，支持 HTML 编辑</p>
+    </div>
 
-    <EditForm Model="@_t" OnValidSubmit="SaveAsync">
-        <MudCard>
-            <MudCardContent>
-                <DataAnnotationsValidator/>
-                <MudGrid>
-                    <MudItem xs="12" md="12">
-                        <HtmlEditor @ref="_editor" Html="@_content"></HtmlEditor>
-                    </MudItem>
-                </MudGrid>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isLoading" Color="Color.Primary">
-                    @if (_isLoading)
+    @if (_isLoading)
+    {
+        <div class="footer-form__skeleton">
+            <div class="skeleton skeleton--title skeleton--half"></div>
+            <div class="skeleton skeleton--input skeleton--full"></div>
+            <div class="skeleton skeleton--editor skeleton--full"></div>
+            <div class="footer-form__skeleton-actions">
+                <div class="skeleton skeleton--button"></div>
+                <div class="skeleton skeleton--button"></div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="@_formState" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator/>
+            <div class="footer-form__content">
+                <div class="footer-form__section">
+                    <div class="footer-form__section-title">页脚内容</div>
+                    <div class="footer-form__editor">
+                        <HtmlEditor @ref="_editor" Html="@_content" />
+                    </div>
+                    <div class="footer-form__hint">
+                        建议保持内容简洁，支持 HTML 标签与链接
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-form__actions">
+                <button class="btn btn-secondary" type="button" @onclick="ReloadAsync" disabled="@_isSaving">
+                    重新加载
+                </button>
+                <button class="btn btn-primary" type="submit" disabled="@_isSaving">
+                    @if (_isSaving)
                     {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                        <MudText Class="ms-2">正在保存</MudText>
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            保存中
+                        </span>
                     }
                     else
                     {
-                        <MudText>保存</MudText>
+                        <span>保存</span>
                     }
-                </MudButton>
-            </MudCardActions>
-        </MudCard>
-    </EditForm>
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@if (_isSaving)
+{
+    <div class="footer-form__loading-overlay">
+        <div class="footer-form__loading-content">
+            <div class="footer-form__loading-spinner"></div>
+            <div class="footer-form__loading-text">正在保存...</div>
+        </div>
+    </div>
 }

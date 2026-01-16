@@ -30,7 +30,7 @@ public partial class FriendForm(IAppOptionService optionService, IAppDialogServi
 
     protected override void OnParametersSet()
     {
-        if (!_isInitialized || IsEdit)
+        if (!_isInitialized)
         {
             _name = Model.Name ?? "";
             _avatar = Model.Avatar ?? "";

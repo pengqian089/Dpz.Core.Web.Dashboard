@@ -1,70 +1,51 @@
-﻿<MudDialog>
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-3 mb-n1"/>
-            保存代码描述
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudGrid>
-            <MudItem xs="12" md="12">
-                Path:@(Model.Path is not null ? string.Join("/",Model.Path) : "")
-            </MudItem>
-            <MudItem xs="12" md="12">
-                Name:@Model.Name
-            </MudItem>
-            <MudItem xs="12" md="12">
-                <MudTextField T="string"
-                              HelperText="代码目录或文件的描述"
-                              Immediate="true"
-                              Label="描述"
-                              @bind-value="Model.Note"
-                              For="@(() => Model.Note)"
-                              Text="@Model.Note"
-                              Variant="Variant.Text">
-                </MudTextField>
-            </MudItem>
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">取消</MudButton>
-        <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="_loading">
-            @if (_loading)
+﻿<div class="code-note">
+    <div class="code-note__header">
+        <div>
+            <div class="code-note__title">保存说明</div>
+            <div class="code-note__subtitle">为目录或文件补充简要描述</div>
+        </div>
+        <div class="code-note__icon">
+            <i class="fas fa-sticky-note"></i>
+        </div>
+    </div>
+
+    <div class="code-note__body">
+        <div class="code-note__meta">
+            <div class="code-note__meta-item">
+                <span class="code-note__meta-label">路径</span>
+                <span class="code-note__meta-value">@DisplayPath</span>
+            </div>
+            <div class="code-note__meta-item">
+                <span class="code-note__meta-label">名称</span>
+                <span class="code-note__meta-value">@Model.Name</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">说明</label>
+            <textarea class="form-control code-note__textarea"
+                      rows="4"
+                      placeholder="输入目录或文件的说明"
+                      @bind="_note"
+                      @bind:event="oninput"></textarea>
+            <div class="code-note__hint">支持留空以清除已有说明</div>
+        </div>
+    </div>
+
+    <div class="code-note__footer">
+        <button class="btn btn-secondary" @onclick="Cancel" disabled="@_isSubmitting">取消</button>
+        <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_isSubmitting">
+            @if (_isSubmitting)
             {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <span class="btn-loading">
+                    <span class="btn-loading__spinner"></span>
+                    保存中
+                </span>
             }
             else
             {
-                <MudText>保存</MudText>
+                <span>保存</span>
             }
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-
-@code{
-
-    [Parameter]
-    public CodeSaveModel Model { get; set; }
-
-    [Inject]
-    private ICodeService CodeService { get; set; }
-
-    [CascadingParameter]
-    MudDialogInstance MudDialog { get; set; }
-
-    private bool _loading = false;
-
-    private async Task SaveAsync()
-    {
-        _loading = true;
-        await CodeService.SaveNoteAsync(Model);
-        MudDialog.Close(DialogResult.Ok(true));
-        _loading = false;
-    }
-
-    private void Cancel()
-    {
-        MudDialog.Cancel();
-    }
-
-}
+        </button>
+    </div>
+</div>

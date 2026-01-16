@@ -1,0 +1,296 @@
+/* Dynamic Page List */
+.dynamic-list {
+    max-width: 100%;
+}
+
+.dynamic-list__header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.dynamic-list__toolbar {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.dynamic-list__toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.dynamic-list__toolbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.dynamic-list__search {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.dynamic-list__summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--text-secondary);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    font-size: 0.8125rem;
+}
+
+.dynamic-list__summary-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Table */
+.dynamic-table {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.dynamic-table__wrapper {
+    overflow-x: auto;
+}
+
+.dynamic-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dynamic-table thead {
+    background-color: rgba(30, 41, 59, 0.5);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dynamic-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.dynamic-table td {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    vertical-align: top;
+}
+
+.dynamic-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.dynamic-table tbody tr:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+.dynamic-table__title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.dynamic-table__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+}
+
+.dynamic-table__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dynamic-table__meta-item i {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.dynamic-table__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.dynamic-table__link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.dynamic-table__link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+.dynamic-table__time {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.dynamic-table__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    white-space: nowrap;
+}
+
+/* Empty */
+.dynamic-list__empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.dynamic-list__empty i {
+    font-size: 3rem;
+    opacity: 0.4;
+    margin-bottom: var(--spacing-md);
+}
+
+.dynamic-list__empty-hint {
+    margin-top: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Skeleton */
+.dynamic-list-skeleton__table {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+}
+
+.dynamic-list-skeleton__row {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr 0.6fr 0.9fr 0.9fr 1fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dynamic-list-skeleton__row:last-child {
+    border-bottom: none;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .dynamic-list__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dynamic-list__toolbar-right {
+        margin-left: 0;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .dynamic-list__search {
+        flex: 1;
+    }
+
+    .dynamic-table td,
+    .dynamic-table th {
+        padding: var(--spacing-sm);
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .dynamic-list__toolbar-right {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dynamic-list__search {
+        width: 100%;
+    }
+
+    .dynamic-table {
+        border: none;
+        background: transparent;
+    }
+
+    .dynamic-table__wrapper {
+        overflow-x: visible;
+    }
+
+    .dynamic-table thead {
+        display: none;
+    }
+
+    .dynamic-table tbody {
+        display: block;
+    }
+
+    .dynamic-table tbody tr {
+        display: block;
+        margin-bottom: var(--spacing-md);
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+    }
+
+    .dynamic-table td {
+        display: flex;
+        align-items: flex-start;
+        text-align: left;
+        border: none;
+        padding: var(--spacing-xs) 0;
+        gap: var(--spacing-sm);
+    }
+
+    .dynamic-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        min-width: 80px;
+        flex-shrink: 0;
+    }
+
+    .dynamic-table__actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .dynamic-table__actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

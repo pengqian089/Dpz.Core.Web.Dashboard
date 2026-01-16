@@ -1,0 +1,41 @@
+@implements IDisposable
+
+<div class="notification-box notification-box--@GetClass() @(_isLeaving ? "notification-box--exit" : "notification-box--enter")"
+    style="position: relative; opacity: 1; transform: none; margin-bottom: 15px;">
+    
+    <!-- Status Indicator Stripe -->
+    <div class="notification-box__status-indicator"></div>
+    
+    @if (!string.IsNullOrEmpty(Model.Options.Title))
+    {
+        <div class="notification-box__title">@Model.Options.Title</div>
+    }
+
+    <div class="notification-box__content-container">
+        <div class="notification-box__content">@((MarkupString)Model.Options.Content)</div>
+
+        @if (Model.Options.Bars is { Length: > 0 })
+        {
+            @for (int i = 0; i < Model.Options.Bars.Length; i++)
+            {
+                var val = Model.Options.Bars[i];
+                var clamped = Math.Max(0, Math.Min(100, val));
+                var pct = $"{clamped:F1}%";
+
+                <div class="notification-box__progress">
+                    <div class="notification-box__progress-track">
+                        <div class="notification-box__progress-bar"
+                            style="width: @(clamped > 0 ? $"{clamped}%" : "0%"); display: @(clamped > 0 ? "block" : "none")">
+                        </div>
+                        <span class="notification-box__progress-text">@pct</span>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <button class="notification-box__close" aria-label="关闭通知" @onclick="StartClose">
+        &times;
+    </button>
+</div>
+

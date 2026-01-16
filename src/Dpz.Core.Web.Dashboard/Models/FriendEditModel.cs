@@ -1,6 +1,6 @@
 ﻿namespace Dpz.Core.Web.Dashboard.Models;
 
-public class FriendEditModel:FriendAddModel
+public class FriendEditModel : FriendAddModel
 {
-    public string Id { get; set; }
+    public required string Id { get; set; }
 }

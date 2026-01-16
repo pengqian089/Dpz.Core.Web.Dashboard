@@ -1,0 +1,67 @@
+/* 
+ * _vendors.css
+ * Third-party library overrides and global helper classes 
+ */
+
+/* Code Toolbar */
+.code-toolbar {
+    width: fit-content;
+}
+
+/* Image Preview */
+.preview-content img {
+    max-width: 100%;
+}
+
+/* Mark Highlight */
+mark {
+    background-color: transparent;
+    font-weight: bold;
+    color: #8881ff;
+}
+
+/* Blazor Error UI Dismiss */
+.dismiss {
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* Prism Line Highlight */
+.line-highlight {
+    margin-top: 1em !important;
+}
+
+/* Monaco Editor */
+.monaco-editor {
+    height: 800px;
+    width: 100%;
+}
+
+/* Markdown Body Overrides */
+.markdown-body ul, 
+.markdown-body ol {
+    display: block;
+    list-style: disc outside none;
+    margin: 1em 0;
+    padding: 0 0 0 40px;
+}
+
+.markdown-body ol {
+    list-style-type: decimal;
+}
+
+.markdown-body li {
+    display: list-item;
+}
+
+.markdown-body ul ul,
+.markdown-body ol ul {
+    list-style-type: circle;
+    margin-left: 15px;
+}
+
+.markdown-body ol ol,
+.markdown-body ul ol {
+    list-style-type: lower-latin;
+    margin-left: 15px;
+}

@@ -1,0 +1,126 @@
+﻿.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.stat-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.stat-card__icon--primary { background: var(--primary-light); color: var(--primary); }
+.stat-card__icon--success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.stat-card__icon--warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.stat-card__icon--info { background: rgba(6, 182, 212, 0.1); color: var(--info); }
+
+.stat-card__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-card__label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.dashboard-hero {
+    background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(30, 41, 59, 0.5) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.dashboard-hero h1 {
+    font-size: 2rem;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.dashboard-hero p {
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 600px;
+}
+
+/* Mobile adjustments for Hero and Stats */
+@media (max-width: 768px) {
+    .dashboard-hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .dashboard-hero h1 {
+        font-size: 1.5rem;
+    }
+    .stat-card__value {
+        font-size: 1.5rem;
+    }
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+/* Crucial for responsive charts inside grid */
+.content-grid > * {
+    min-width: 0;
+}
+
+.panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    overflow: hidden; /* Prevent content overflow */
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Stack earlier (Laptops/Tablets) to prevent squeezing */
+@media (max-width: 1280px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

@@ -1,0 +1,191 @@
+/* Dynamic Page Form (Post & Edit) */
+.dynamic-form {
+    max-width: 100%;
+    margin: 0;
+}
+
+.dynamic-form__header {
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+.dynamic-form__title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.dynamic-form__description {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.dynamic-form__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.dynamic-form__section {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+}
+
+.dynamic-form__section--editor {
+    padding: var(--spacing-md);
+}
+
+.dynamic-form__section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.dynamic-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.dynamic-form__hint {
+    margin-top: 6px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.dynamic-form__editor {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background-color: var(--bg-elevated);
+}
+
+.dynamic-form__link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.dynamic-form__link .form-control {
+    flex: 1;
+}
+
+.dynamic-form__validation {
+    color: var(--danger);
+    font-size: 0.875rem;
+}
+
+.dynamic-form__actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    padding: var(--spacing-xl) 0;
+}
+
+.dynamic-form__loading-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.dynamic-form__loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    min-width: 280px;
+    max-width: 90%;
+}
+
+.dynamic-form__loading-spinner {
+    width: 56px;
+    height: 56px;
+    border: 4px solid rgba(59, 130, 246, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: dynamic-spin 1s linear infinite;
+}
+
+.dynamic-form__loading-text {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.dynamic-form__skeleton {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.dynamic-form__skeleton-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+}
+
+@keyframes dynamic-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .dynamic-form {
+        max-width: 100%;
+    }
+
+    .dynamic-form__header {
+        text-align: left;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .dynamic-form__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dynamic-form__link {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dynamic-form__link .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .dynamic-form__title {
+        font-size: 1.5rem;
+    }
+
+    .dynamic-form__actions {
+        flex-direction: column;
+    }
+}

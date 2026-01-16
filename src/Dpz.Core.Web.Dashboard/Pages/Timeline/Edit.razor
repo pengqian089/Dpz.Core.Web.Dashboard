@@ -1,94 +1,100 @@
 ﻿@page "/timeline/edit/{Id}"
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Forms
+@using Dpz.Core.Web.Dashboard.Shared.Components
 @if (_isLoading)
 {
-    <MudCard>
-        <MudCardContent>
-            <MudSkeleton Width="30%" Height="42px;"/>
-            <MudSkeleton Width="80%"/>
-            <MudSkeleton Width="100%"/>
-        </MudCardContent>
-        <MudCardActions>
-            <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
-            <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
-        </MudCardActions>
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
-    </MudCard>
+    <div class="timeline-form timeline-form--loading">
+        <div class="timeline-form__skeleton">
+            <div class="skeleton skeleton--text-lg"></div>
+            <div class="skeleton skeleton--text"></div>
+            <div class="skeleton skeleton--text"></div>
+            <div class="skeleton skeleton--text"></div>
+            <div class="skeleton skeleton--text-lg"></div>
+            <div class="skeleton skeleton--card"></div>
+        </div>
+    </div>
 }
 else
 {
-    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">发布文章</MudText>
-    <MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
-        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-    </MudOverlay>
-    <EditForm Model="@_timeline" OnValidSubmit="PostDataAsync">
-        <MudExpansionPanels>
-            <MudExpansionPanel Text="表单验证">
-                <MudText Color="@Color.Error">
+    <div class="timeline-form">
+        <div class="timeline-form__header">
+            <h1 class="timeline-form__title">编辑时间轴</h1>
+            <p class="timeline-form__description">更新节点内容，保持信息及时准确</p>
+        </div>
+
+        <EditForm Model="@_timeline" OnValidSubmit="PostDataAsync">
+            <DataAnnotationsValidator/>
+            <div class="timeline-form__content">
+                <div class="timeline-form__section">
+                    <div class="timeline-form__section-title">基础信息</div>
+                    <div class="timeline-form__grid">
+                        <div class="form-group">
+                            <label class="form-label form-label--required">标题</label>
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="请输入时间轴标题"
+                                   @bind="_timeline.Title"
+                                   @bind:event="oninput" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">链接</label>
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="关联链接 (可选)"
+                                   @bind="_timeline.More"
+                                   @bind:event="oninput" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label form-label--required">时间节点</label>
+                            <InputDate class="form-control"
+                                       @bind-Value="_timeline.Date" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-form__section timeline-form__section--editor">
+                    <div class="timeline-form__section-title">内容编辑</div>
+                    <MarkdownEditor @ref="_editor"
+                                    UploadAction="/api/Timeline/upload"
+                                    Markdown="@_timeline.Content" />
+                </div>
+
+                <div class="timeline-form__validation">
                     <ValidationSummary/>
-                </MudText>
-            </MudExpansionPanel>
-        </MudExpansionPanels>
-        <MudCard>
-            <MudCardContent>
-                <DataAnnotationsValidator/>
-                <MudGrid>
-                    <MudItem xs="12" md="12">
-                        <MudTextField T="string"
-                                      HelperText="此项必填"
-                                      Immediate="true"
-                                      Label="标题"
-                                      Required="true"
-                                      Text="@_timeline.Title"
-                                      RequiredError="请输入时间轴标题"
-                                      @bind-value="_timeline.Title"
-                                      For="@(() => _timeline.Title)"
-                                      Variant="Variant.Text">
-                        </MudTextField>
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <MudTextField T="string"
-                                      HelperText="时间轴的链接"
-                                      Immediate="true"
-                                      Label="链接"
-                                      Text="@_timeline.More"
-                                      @bind-value="_timeline.More"
-                                      For="@(() => _timeline.More)"
-                                      Variant="Variant.Text">
-                        </MudTextField>
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <MudDatePicker
-                            Label="时间"
-                            HelperText="时间轴节点"
-                            @bind-Date="_timeline.Date"
-                            Required="true"
-                            RequiredError="此项必填"
-                            For="@(() => _timeline.Date)"
-                            Variant="Variant.Text"/>
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <MarkdownEditor 
-                            @ref="_editor" 
-                            UploadAction="/api/Timeline/upload" 
-                            Markdown="@_timeline.Content"/>
-                    </MudItem>
-                </MudGrid>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+                </div>
+            </div>
+
+            <div class="timeline-form__actions">
+                <button class="btn btn-secondary" type="button" @onclick="BackToList" disabled="@_isPublishing">
+                    返回列表
+                </button>
+                <button class="btn btn-primary" type="submit" disabled="@_isPublishing">
                     @if (_isPublishing)
                     {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                        <MudText Class="ms-2">正在发布</MudText>
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            保存中
+                        </span>
                     }
                     else
                     {
-                        <MudText>发布</MudText>
+                        <span>保存</span>
                     }
-                </MudButton>
-                <MudButton Variant="Variant.Filled" Href="/timeline">返回列表</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </EditForm>
+                </button>
+            </div>
+        </EditForm>
+    </div>
+
+    @if (_isPublishing)
+    {
+        <div class="timeline-form__loading-overlay">
+            <div class="timeline-form__loading-content">
+                <div class="timeline-form__loading-spinner"></div>
+                <div class="timeline-form__loading-text">正在保存...</div>
+            </div>
+        </div>
+    }
 }

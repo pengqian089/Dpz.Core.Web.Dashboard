@@ -1,0 +1,212 @@
+/* mumble-list.css */
+
+/* 页面容器 */
+.mumble-list {
+    min-height: 100vh;
+}
+
+/* 头部区域 */
+.mumble-list__header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.page-description {
+    margin-top: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+/* 工具栏 */
+.mumble-list__toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+}
+
+.mumble-list__toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.mumble-list__toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.mumble-list__toolbar-right .form-control {
+    min-width: 250px;
+}
+
+/* 卡片容器 */
+.mumble-list__cards {
+    margin-bottom: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* 空状态 */
+.mumble-list__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xxxl) var(--spacing-md);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* 卡片样式 */
+.mumble-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    transition: box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.mumble-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.mumble-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mumble-card__author {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.mumble-card__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--bg-surface-hover);
+}
+
+.mumble-card__meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.mumble-card__content {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    border-left: 3px solid var(--primary-light);
+}
+
+/* Gradient fade at bottom of content if long? 
+   We can just let it cut off or use a mask. 
+   Let's keep it simple. */
+
+.mumble-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+}
+
+.mumble-card__stats {
+    display: flex;
+    gap: var(--spacing-lg);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.mumble-card__stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mumble-card__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+/* 骨架屏 */
+.mumble-list-skeleton__grid {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.mumble-list-skeleton__card {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+}
+
+/* 响应式设计 */
+@media (max-width: 960px) {
+    .mumble-list__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mumble-list__toolbar-left,
+    .mumble-list__toolbar-right {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .mumble-list__toolbar-right .form-control {
+        min-width: unset;
+        flex: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .mumble-card__footer {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .mumble-card__actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .mumble-card__actions .btn {
+        flex: 1;
+    }
+}
+
+/* Specific styling for the preview dialog if needed */
+.mumble-preview-dialog {
+    max-height: 70vh;
+    overflow-y: auto;
+}

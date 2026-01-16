@@ -1,151 +1,115 @@
 ﻿@using Dpz.Core.EnumLibrary
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Dpz.Core.Web.Dashboard.Shared.Components.Dialog
 @inherits LayoutComponentBase
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject NavigationManager Navigation
 
-<MudThemeProvider @ref="@_mudThemeProvider" IsDarkMode="@_isDarkMode"/>
-<MudPopoverProvider/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
+<div class="app-layout">
+    <aside class="app-sidebar @(_drawerOpen ? "is-open" : "")">
+        <div class="app-sidebar__header">
+            <div class="app-sidebar__logo">
+                <img src="https://dpangzi.com/core/images/Lara-Croft.png" alt="logo"/>
+                <span>后台管理</span>
+            </div>
+        </div>
+        <NavMenu />
+    </aside>
 
-<MudLayout>
-    <MudAppBar Elevation="25">
-        <MudHidden Breakpoint="Breakpoint.SmAndDown">
-            <img src="https://dpangzi.com/core/images/Lara-Croft.png" style="width: 50px" alt="logo"/>
-        </MudHidden>
-        <MudHidden Breakpoint="Breakpoint.MdAndUp">
-            <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start"
-                           OnClick="@((e) => DrawerToggle())"/>
-        </MudHidden>
-        <MudHidden Breakpoint="Breakpoint.Xs">
-            <MudText Typo="Typo.h6" Class="ml-4">后台管理系统</MudText>
-        </MudHidden>
-        <MudHidden Breakpoint="Breakpoint.Xs" Invert="true">
-            <MudText Typo="Typo.subtitle2">后台管理系统</MudText>
-        </MudHidden>
-        <MudSpacer/>
-        @* <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"  Dense="true"> *@
-        @*     <MudMenuItem>简体中文</MudMenuItem> *@
-        @* </MudMenu> *@
-        <MudMenu Icon="@Icons.Material.Outlined.Widgets" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter"
-                 Dense="true">
-            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://core.dpangzi.com" Target="_blank">
-                Core站点
-            </MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.Domain" Href="https://www.dpangzi.com" Target="_blank">主站点
-            </MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.EventNote" Href="https://www.dpangzi.com" Target="_blank">日志
-            </MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Outlined.SettingsApplications" Href="https://config.dpangzi.com"
-                         Target="_blank">系统配置
-            </MudMenuItem>
-        </MudMenu>
-        <AuthorizeView>
-            <Authorized Context="auth">
-                <MudMenu AnchorOrigin="Origin.TopLeft" Dense="true" Class="mt-1 ml-4">
-                    <ActivatorContent>
-                        @{
-                            var avatar = auth.User?.FindFirst("picture")?.Value;
+    <!-- Overlay for Mobile -->
+    <div class="app-overlay @(_drawerOpen ? "is-visible" : "")" @onclick="DrawerToggle"></div>
+
+    <div class="app-main @(_drawerOpen ? "is-open" : "")">
+        <header class="app-header">
+            <div class="flex items-center gap-4">
+                <button class="app-header__toggle btn-icon" @onclick="DrawerToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-header__title hidden-sm-down">
+                    后台管理系统
+                </div>
+            </div>
+
+            <div class="app-header__actions flex items-center gap-4" style="margin-left: auto;">
+                 <div class="dropdown">
+                    <button class="btn-icon">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="https://core.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fas fa-server"></i> 核心站点
+                        </a>
+                        <a href="https://www.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fas fa-globe"></i> 主站点
+                        </a>
+                        <a href="https://auth.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-podcast"></i> 认证中心
+                        </a>
+                        <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                        <a href="https://pan.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-cloud"></i> 网盘
+                        </a>
+                        <a href="https://www.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-book"></i> 笔记
+                        </a>
+                        <a href="https://terminal.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-solid fa-terminal"></i> 服务器终端管理
+                        </a>
+                        <a href="https://git.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fa-brands fa-git"></i> git托管
+                        </a>
+                        <a href="https://www.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fas fa-book"></i> 日志
+                        </a>
+                        <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                        <a href="https://config.dpangzi.com" target="_blank" class="dropdown-item">
+                            <i class="fas fa-cogs"></i> 配置中心
+                        </a>
+                    </div>
+                </div>
+
+                <a href="https://www.dpangzi.com" target="_blank" class="btn-icon" title="主站点">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+
+                <AuthorizeView>
+                    <Authorized Context="auth">
+                        <div class="dropdown">
+                            <div class="user-profile flex items-center gap-2" style="cursor: pointer">
+                                @{
+                                    var avatar = auth.User.FindFirst("picture")?.Value;
+                                }
+                                @if (!string.IsNullOrWhiteSpace(avatar))
+                                {
+                                    <img src="@avatar" style="width: 32px; height: 32px; border-radius: 50%;" alt="Avatar"/>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-user-circle fa-lg"></i>
+                                }
+                                <span class="text-sm">@auth.User.Identity?.Name</span>
+                            </div>
+                            <div class="dropdown-menu">
+                                <button class="dropdown-item" @onclick="BeginLogout">
+                                    <i class="fas fa-sign-out-alt"></i> 注销
+                                </button>
+                            </div>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                         @{
+                            var returnUrl = Uri.EscapeDataString(Navigation.Uri);
                         }
-                        @if (!string.IsNullOrWhiteSpace(avatar))
-                        {
-                            <MudImage Src="@avatar" Style="width: 24px;height: 24px"/>
-                        }
-                        else
-                        {
-                            <MudAvatar Size="Size.Medium">
-                                <MudIcon Icon="@Icons.Material.Outlined.Person"></MudIcon>
-                            </MudAvatar>
-                        }
-                    </ActivatorContent>
-                    <ChildContent>
-                        <PersonCard Class="mt-n2"/>
-                        <MudDivider Class="mb-2"/>
-                        <MudListItem T="string" Text="注销" Icon="@Icons.Material.Outlined.Login"
-                                     OnClick="BeginLogout"/>
-                    </ChildContent>
-                </MudMenu>
-            </Authorized>
-            <NotAuthorized>
-                @{
-                    var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-                }
-                <MudButton Variant="Variant.Text" Href="@($"/authentication/login?returnUrl={returnUrl}")">登录
-                </MudButton>
-            </NotAuthorized>
-        </AuthorizeView>
-    </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="25" ClipMode="DrawerClipMode.Always">
-        <NavMenu/>
-    </MudDrawer>
-    <MudMainContent>
-        <MudHidden Breakpoint="Breakpoint.SmAndDown">
-            <MudToolBar Gutters="false">
-                <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit"
-                               OnClick="@((e) => DrawerToggle())" Class="ml-3"/>
-                @*<MudBreadcrumbs Items="_items"></MudBreadcrumbs>*@
-                <MudSpacer/>
-            </MudToolBar>
-        </MudHidden>
-        <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+                        <a href="@($"/authentication/login?returnUrl={returnUrl}")" class="btn btn-primary">登录</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </header>
+
+        <main class="app-content">
             @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+        </main>
+    </div>
 
-
-@code {
-    //private MudBlazorAdminDashboard _theme = new();
-
-    private bool _isDarkMode;
-
-    private MudThemeProvider _mudThemeProvider;
-
-    private bool _drawerOpen = true;
-
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        StateHasChanged();
-
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (!Enum.TryParse(authState.User.FindFirst("Permissions")?.Value ?? "", out Permissions permissions)
-            || (permissions & Permissions.System) != Permissions.System)
-        {
-            Navigation.NavigateTo("/no-permission");
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _isDarkMode = await _mudThemeProvider.GetSystemPreference();
-            // if (_isDarkMode)
-            //     _mudThemeProvider.Theme = new MudBlazorAdminDashboard();
-            StateHasChanged();
-        }
-
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-    //private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
-    //{
-    //    new BreadcrumbItem("Personal", href: "#"),
-    //    new BreadcrumbItem("Dashboard", href: "#"),
-    //};
-
-    private Task BeginLogout()
-    {
-        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-        Navigation.NavigateToLogout($"authentication/logout?returnUrl={returnUrl}");
-        return Task.CompletedTask;
-    }
-
-}
+    <!-- Dialog Container for global dialogs/toasts/notifications -->
+    <DialogContainer />
+</div>

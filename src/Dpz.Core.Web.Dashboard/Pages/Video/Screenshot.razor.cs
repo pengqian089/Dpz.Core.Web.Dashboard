@@ -3,74 +3,83 @@ using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
-
-#nullable enable
 
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Screenshot
+public partial class Screenshot(
+    IVideoService videoService,
+    IAppDialogService dialogService) : ComponentBase
 {
     [Parameter]
     public required string Id { get; set; }
-    
+
     [CascadingParameter]
-    private MudDialogInstance? MudDialog { get; set; }
-    
-    [Inject]
-    private IVideoService? VideoService { get; set; }
-    
-    [Inject]
-    private ISnackbar? Snackbar { get; set; }
+    public Action<object?>? Close { get; set; }
 
     private double _seconds = 1;
-
     private bool _isLoading = true;
-
+    private bool _isSaving;
     private VideoMetaDataModel? _model;
+    private string _validationError = "";
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        if (!string.IsNullOrEmpty(Id))
+        try
         {
-            try
-            {
-                _model = await VideoService?.GetVideoMetadataAsync(Id)!;
-            }
-            catch (Exception e)
-            {
-                ShowError(e.ToString());
-            }
+            _model = await videoService.GetVideoMetadataAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"加载失败：{ex.Message}", Models.Dialog.ToastType.Error);
+            Cancel();
+        }
+        finally
+        {
             _isLoading = false;
         }
-        await base.OnParametersSetAsync();
-    }
 
-    private void ShowError(string message)
-    {
-        Snackbar?.Add(message, Severity.Error, option =>
-        {
-            option.MaximumOpacity = (int)TimeSpan.FromMinutes(5).TotalSeconds;
-        });
+        await base.OnInitializedAsync();
     }
 
     private void Cancel()
     {
-        MudDialog?.Cancel();
+        Close?.Invoke(false);
     }
 
     private async Task SaveAsync()
     {
-        _isLoading = true;
+        if (_model == null)
+        {
+            return;
+        }
+
+        // 验证时间范围
+        _validationError = "";
+        if (_seconds < 0.01)
+        {
+            _validationError = "时间不能小于0.01秒";
+            return;
+        }
+        if (_seconds > _model.Duration)
+        {
+            _validationError = $"时间不能超过视频时长（{_model.Duration:F2}秒）";
+            return;
+        }
+
+        _isSaving = true;
         try
         {
-            await VideoService?.SetVideoScreenshotAsync(Id, _seconds)!;
+            await videoService.SetVideoScreenshotAsync(Id, _seconds);
+            dialogService.Toast("设置成功", Models.Dialog.ToastType.Success);
+            Close?.Invoke(true);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            ShowError(e.ToString());
+            dialogService.Toast($"设置失败：{ex.Message}", Models.Dialog.ToastType.Error);
         }
-        _isLoading = false;
-        MudDialog?.Close(DialogResult.Ok(true));
+        finally
+        {
+            _isSaving = false;
+        }
     }
 }

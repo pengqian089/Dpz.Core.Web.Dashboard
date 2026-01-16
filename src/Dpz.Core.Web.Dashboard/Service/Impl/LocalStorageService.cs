@@ -6,12 +6,14 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
 public class LocalStorageService(IJSRuntime jsRuntime) : ILocalStorageService
 {
-    public async Task<T> GetItemAsync<T>(string key)
+    public async Task<T?> GetItemAsync<T>(string key)
     {
-        var json = await jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
+        var json = await jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
 
         if (json == null)
+        {
             return default;
+        }
 
         if (typeof(T) == typeof(string))
         {
@@ -23,8 +25,24 @@ public class LocalStorageService(IJSRuntime jsRuntime) : ILocalStorageService
 
     public async Task SetItemAsync<T>(string key, T value)
     {
-        var itemValue =
-            typeof(T) == typeof(string) ? value.ToString() : JsonSerializer.Serialize(value);
+        string itemValue;
+        if (value is null)
+        {
+            return;
+        }
+        if (value is string strValue)
+        {
+            itemValue = strValue;
+        }
+        else if (value is int intValue)
+        {
+            itemValue = intValue.ToString();
+        }
+        else
+        {
+            itemValue = JsonSerializer.Serialize(value);
+        }
+
         await jsRuntime.InvokeVoidAsync("localStorage.setItem", key, itemValue);
     }
 

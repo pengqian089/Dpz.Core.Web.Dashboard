@@ -1,135 +1,177 @@
 ﻿@page "/account"
 @page "/account/list"
 @using Dpz.Core.EnumLibrary
+@using Dpz.Core.Web.Dashboard.Shared.Components
 @attribute [Authorize]
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">图像列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="CreateAccount"
-                       Class="ma-2"/>
-        <MudSpacer/>
+<div class="account-list">
+    <div class="account-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-users"></i>
+            用户管理
+        </h1>
+        <p class="page-description">统一管理账号信息、权限与登录记录</p>
+    </div>
 
-        <MudTextField T="string"
-                      Placeholder="搜索账号"
-                      @bind-value="_account"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            账号
-        </MudTh>
-        <MudTh>
-            昵称
-        </MudTh>
-        <MudTh>
-            头像
-        </MudTh>
-        <MudTh>
-            性别
-        </MudTh>
-        <MudTh>
-            登录记录
-        </MudTh>
-        <MudTh>
-            签名
-        </MudTh>
-        <MudTh>
-            权限
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="账号">
-            <MudHighlighter Text="@context.Id" HighlightedText="@_account"/>
-        </MudTd>
-        <MudTd DataLabel="昵称">@context.Name</MudTd>
-        <MudTd DataLabel="头像">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => ViewAvatar(context.Avatar)">查看</MudButton>
-        </MudTd>
-        <MudTd DataLabel="性别">
-            @(context.Sex == Sex.Wuman ? "女" : "男")
-        </MudTd>
-        <MudTd DataLabel="登录记录">
-            <MudButton
-                Variant="Variant.Filled"
-                Color="Color.Secondary"
-                OnClick="() => ViewTokenHistoryAsync(context.Id)">
-                查看
-            </MudButton>
-        </MudTd>
-        <MudTd DataLabel="签名">
-            @context.Sign
-        </MudTd>
-        <MudTd DataLabel="图片大小">
-            @context.Permissions?.ToString()
-        </MudTd>
-        <MudTd DataLabel="操作">
-            @if (context.Permissions == Permissions.System)
-            {
-                <MudTooltip Text="含有System权限的账号不能操作">
-                    <MudButton
-                        Variant="Variant.Filled"
-                        Color="Color.Primary"
-                        OnClick="() => Enable(context.Id)"
-                        Disabled="true">
-                        @(context.Enable == false ? "启用" : "停用")
-                    </MudButton>
-                </MudTooltip>
-                <MudTooltip Text="含有System权限的账号不能操作">
-                    <MudButton
-                        Variant="Variant.Filled"
-                        Color="Color.Error"
-                        OnClick="() => ChangePassword(context.Id, context.Name)"
-                        Disabled="true">
-                        修改密码
-                    </MudButton>
-                </MudTooltip>
-            }
-            else
-            {
-                <MudStack Spacing="1" Row="true">
-                    <MudButton
-                        Variant="Variant.Filled"
-                        Color="Color.Primary"
-                        OnClick="() => Enable(context.Id)">
-                        @(context.Enable == false ? "启用" : "停用")
-                    </MudButton>
+    <div class="account-list__toolbar">
+        <div class="account-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="CreateAccount">
+                <i class="fas fa-user-plus"></i>
+                新建账号
+            </button>
+            <button class="btn-icon"
+                    title="刷新"
+                    @onclick="Reload"
+                    disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
 
-                    <MudButton
-                        Variant="Variant.Filled"
-                        Color="Color.Error"
-                        OnClick="() => ChangePassword(context.Id, context.Name)">
-                        修改密码
-                    </MudButton>
-                </MudStack>
-            }
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] { 15, 20, 30 }"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+        <div class="account-list__toolbar-right">
+            <div class="account-list__search">
+                <input type="text"
+                       class="form-control"
+                       placeholder="搜索账号"
+                       @bind="_account"
+                       @bind:event="oninput"
+                       @onkeydown="HandleSearchKeyDown"/>
+                <button class="btn btn-primary" @onclick="Search">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="account-list-skeleton">
+            <div class="account-list-skeleton__table">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="account-list-skeleton__row">
+                        <div class="skeleton skeleton--avatar"></div>
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_accounts.Count == 0)
+    {
+        <div class="account-list__empty">
+            <i class="fas fa-user-slash fa-3x"
+               style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无用户数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="account-table">
+            <div class="account-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>账号</th>
+                            <th>头像</th>
+                            <th>性别</th>
+                            <th>最近登录</th>
+                            <th>签名</th>
+                            <th>权限</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var account in _accounts)
+                        {
+                            var canOperate = account.Permissions != Permissions.System;
+                            <tr>
+                                <td data-label="账号">
+                                    <div class="account-table__account">
+                                        <div class="account-table__account-id">@account.Id</div>
+                                        <div class="account-table__account-name">@account.Name</div>
+                                    </div>
+                                </td>
+                                <td data-label="头像">
+                                    <div class="account-table__avatar">
+                                        @if (!string.IsNullOrWhiteSpace(account.Avatar))
+                                        {
+                                            <img src="@account.Avatar"
+                                                 alt="@account.Name"
+                                                 loading="lazy"/>
+                                        }
+                                        else
+                                        {
+                                            <span class="account-table__avatar-fallback">
+                                                @GetAvatarInitial(account)
+                                            </span>
+                                        }
+                                        <button class="btn btn-secondary btn-sm"
+                                                @onclick="() => ViewAvatar(account.Avatar)"
+                                                disabled="@string.IsNullOrWhiteSpace(account.Avatar)">
+                                            查看
+                                        </button>
+                                    </div>
+                                </td>
+                                <td data-label="性别">@GetSexText(account.Sex)</td>
+                                <td data-label="最近登录">@GetLastAccessText(account.LastAccessTime)</td>
+                                <td data-label="签名">
+                                    <div class="account-table__sign"
+                                         title="@account.Sign">
+                                        @account.Sign
+                                    </div>
+                                </td>
+                                <td data-label="权限">
+                                    <span class="account-table__badge account-table__badge--permission">
+                                        @GetPermissionText(account.Permissions)
+                                    </span>
+                                </td>
+                                <td data-label="状态">
+                                    <span class="account-table__badge @GetEnableBadgeClass(account.Enable)">
+                                        @GetEnableText(account.Enable)
+                                    </span>
+                                </td>
+                                <td data-label="操作">
+                                    <div class="account-table__actions">
+                                        <button class="btn btn-secondary btn-sm"
+                                                @onclick="() => ViewTokenHistoryAsync(account.Id)">
+                                            <i class="fas fa-clock"></i>
+                                            登录记录
+                                        </button>
+                                        <button class="btn btn-sm @(IsEnabled(account) ? "btn-danger" : "btn-success")"
+                                                @onclick="() => ToggleEnableAsync(account)"
+                                                disabled="@(!canOperate)"
+                                                title="@(canOperate ? "" : "System 账号不可操作")">
+                                            <i class="fas fa-toggle-on"></i>
+                                            @(IsEnabled(account) ? "停用" : "启用")
+                                        </button>
+                                        <button class="btn btn-danger btn-sm"
+                                                @onclick="() => ChangePassword(account.Id, account.Name)"
+                                                disabled="@(!canOperate)"
+                                                title="@(canOperate ? "" : "System 账号不可操作")">
+                                            <i class="fas fa-key"></i>
+                                            修改密码
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged"/>
+        </div>
+    }
+</div>

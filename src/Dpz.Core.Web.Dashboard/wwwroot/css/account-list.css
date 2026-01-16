@@ -343,6 +343,17 @@
     background-color: var(--bg-surface-hover);
 }
 
+.account-token__ip {
+    display: inline-block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+}
+
 .account-token__agent {
     display: inline-block;
     max-width: 240px;
@@ -546,5 +557,13 @@
         color: var(--text-secondary);
         min-width: 72px;
         flex-shrink: 0;
+    }
+
+    .account-token__ip,
+    .account-token__agent,
+    .account-token__session {
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-all;
     }
 }

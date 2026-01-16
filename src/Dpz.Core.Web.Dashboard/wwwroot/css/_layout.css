@@ -433,5 +433,13 @@
     .app-overlay {
         display: block; /* Visible on Mobile */
     }
+
+    .dropdown-menu {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 1rem);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
 }
 

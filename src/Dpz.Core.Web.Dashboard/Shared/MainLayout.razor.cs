@@ -5,18 +5,18 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared;
 
 public partial class MainLayout(
     AuthenticationStateProvider authenticationStateProvider,
-    NavigationManager navigation
-) : LayoutComponentBase, IDisposable
+    NavigationManager navigation,
+    IJSRuntime jsRuntime
+) : LayoutComponentBase, IAsyncDisposable
 {
-    // Default closed for mobile first approach
     private bool _drawerOpen;
-
-    // Expose Navigation for Razor usage
+    private IJSObjectReference? _jsModule;
     private NavigationManager Navigation => navigation;
 
     private void DrawerToggle()
@@ -37,14 +37,23 @@ public partial class MainLayout(
         {
             navigation.NavigateTo("/no-permission");
         }
-
-        // Listen to navigation events to close drawer on mobile
         navigation.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+                "import",
+                "./Shared/MainLayout.razor.js"
+            );
+            await _jsModule.InvokeVoidAsync("initDropdowns");
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // Close drawer on navigation (UX improvement for mobile)
         if (_drawerOpen)
         {
             _drawerOpen = false;
@@ -52,9 +61,22 @@ public partial class MainLayout(
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         navigation.LocationChanged -= OnLocationChanged;
+
+        if (_jsModule is not null)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("dispose");
+                await _jsModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // ignore
+            }
+        }
     }
 
     private Task BeginLogout()

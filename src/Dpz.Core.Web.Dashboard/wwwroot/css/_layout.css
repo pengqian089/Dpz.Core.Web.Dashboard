@@ -64,6 +64,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 var(--spacing-lg);
+    overflow: visible;
 }
 
 .app-content {
@@ -254,19 +255,43 @@
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
     min-width: 200px;
+    max-width: 280px;
     z-index: 100;
     padding: var(--spacing-xs) 0;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
 }
 
-.dropdown:hover .dropdown-menu,
+/* 添加一个伪元素来填补触发器和菜单之间的空隙 */
+.dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: calc(-1 * var(--spacing-sm));
+    left: 0;
+    right: 0;
+    height: var(--spacing-sm);
+}
+
+/* 桌面端使用hover，鼠标悬停在dropdown或menu上都保持显示 */
+@media (min-width: 769px) {
+    .dropdown:hover .dropdown-menu,
+    .dropdown-menu:hover {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+}
+
+/* 移动端和桌面端都支持active类 */
 .dropdown.active .dropdown-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    pointer-events: auto;
 }
 
 .dropdown-item {
@@ -434,12 +459,62 @@
         display: block; /* Visible on Mobile */
     }
 
-    .dropdown-menu {
-        right: 0;
-        left: auto;
-        max-width: calc(100vw - 1rem);
-        max-height: 80vh;
+    /* 在移动端，让dropdown菜单能够完整显示 */
+    .app-header__actions .dropdown {
+        position: static;
+    }
+    
+    .app-header__actions .dropdown-menu {
+        position: fixed;
+        right: 8px;
+        left: 8px;
+        top: var(--header-height);
+        width: auto;
+        max-width: none;
+        min-width: unset;
+        max-height: calc(100vh - var(--header-height) - 16px);
         overflow-y: auto;
+        overflow-x: hidden;
+        white-space: normal;
+        margin-top: 8px;
+        pointer-events: auto;
+    }
+    
+    .dropdown.active .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    
+    .dropdown-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        padding: 10px 14px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .dropdown-item i {
+        flex-shrink: 0;
+        width: 20px;
+        min-width: 20px;
+        margin-top: 2px;
+    }
+    
+    /* 确保header不会裁剪下拉菜单 */
+    .app-header {
+        overflow: visible;
+    }
+    
+    .app-header__actions {
+        overflow: visible;
     }
 }
 

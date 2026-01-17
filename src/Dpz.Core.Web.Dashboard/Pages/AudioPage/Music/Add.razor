@@ -13,6 +13,10 @@
             <div style="text-align: center;">
                 <div class="publishing-overlay__spinner"></div>
                 <div class="publishing-overlay__text">正在上传音乐...</div>
+                <div class="music-form__progress">
+                    <div class="music-form__progress-bar" style="width: @(_uploadProgress)%"></div>
+                </div>
+                <div class="music-form__progress-text">@_uploadProgress%</div>
             </div>
         </div>
     }

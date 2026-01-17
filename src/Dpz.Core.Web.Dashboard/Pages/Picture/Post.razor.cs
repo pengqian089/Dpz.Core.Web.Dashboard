@@ -77,7 +77,7 @@ public partial class Post(
             }
             fields.Add(new UploadFormField("description", _picture.Description ?? ""));
 
-            using var stream = _picture.Image.OpenReadStream(AppTools.MaxFileSize);
+            await using var stream = _picture.Image.OpenReadStream(AppTools.MaxFileSize);
             var files = new List<UploadFilePart>
             {
                 new("image", _picture.Image.Name, _picture.Image.ContentType, stream),

@@ -57,7 +57,7 @@ public class PictureService(IHttpService httpService) : IPictureService
     )
     {
         await httpService.PostFileWithProgressAsync(
-            $"{Program.BaseAddress}/api/Picture",
+            "/api/Picture",
             files,
             fields,
             progress,

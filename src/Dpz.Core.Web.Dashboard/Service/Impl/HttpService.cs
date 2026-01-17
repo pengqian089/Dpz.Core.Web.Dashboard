@@ -11,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Dpz.Core.Web.Dashboard.Helper;
-using Dpz.Core.Web.Dashboard.Interop;
 using Dpz.Core.Web.Dashboard.Models.Upload;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -426,6 +425,11 @@ public class HttpService(
         if (files == null || files.Count == 0)
         {
             throw new ArgumentException("files is empty.");
+        }
+
+        if (!uri.StartsWith(Program.BaseAddress))
+        {
+            uri = Program.BaseAddress + uri;
         }
 
         var tokenResult = await tokenProvider.RequestAccessToken();

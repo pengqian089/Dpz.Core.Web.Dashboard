@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -34,6 +33,7 @@ public partial class Add(
     private Dictionary<string, long> _selectCover = new();
     private string _lrcContent = "";
     private string? _coverPreviewUrl;
+    private int _uploadProgress;
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,59 +51,103 @@ public partial class Add(
 
         if (!_musicExtensions.Contains(_musicFile.Name.Split(".").Last()))
         {
-            dialogService.Toast($"只允许【{string.Join(" ", _musicExtensions)}】格式音乐，请重新选择", Models.Dialog.ToastType.Warning);
+            dialogService.Toast(
+                $"只允许【{string.Join(" ", _musicExtensions)}】格式音乐，请重新选择",
+                Models.Dialog.ToastType.Warning
+            );
             return;
         }
 
         StateHasChanged();
         _isPosting = true;
-        using var content = new MultipartFormDataContent();
+        _uploadProgress = 0;
+        var files = new List<UploadFilePart>();
+        var fields = new List<UploadFormField>();
+        var streams = new List<Stream>();
 
-        var musicContent = new StreamContent(_musicFile.OpenReadStream(AppTools.MaxFileSize));
-        musicContent.Headers.ContentType = new MediaTypeHeaderValue(_musicFile.ContentType);
-        content.Add(content: musicContent, name: "\"Music\"", fileName: _musicFile.Name);
-
-        if (_lrcFile != null)
+        try
         {
-            if (!_lrcExtensions.Contains(_lrcFile.Name.Split(".").Last()))
+            var musicStream = _musicFile.OpenReadStream(AppTools.MaxFileSize);
+            streams.Add(musicStream);
+            files.Add(
+                new UploadFilePart("Music", _musicFile.Name, _musicFile.ContentType, musicStream)
+            );
+
+            if (_lrcFile != null)
             {
-                dialogService.Toast($"只允许【{string.Join(" ", _lrcExtensions)}】格式歌词，请重新选择", Models.Dialog.ToastType.Warning);
-                _isPosting = false;
-                return;
+                if (!_lrcExtensions.Contains(_lrcFile.Name.Split(".").Last()))
+                {
+                    dialogService.Toast(
+                        $"只允许【{string.Join(" ", _lrcExtensions)}】格式歌词，请重新选择",
+                        Models.Dialog.ToastType.Warning
+                    );
+                    _isPosting = false;
+                    return;
+                }
+
+                var lrcStream = _lrcFile.OpenReadStream(AppTools.MaxFileSize);
+                streams.Add(lrcStream);
+                files.Add(
+                    new UploadFilePart(
+                        "Lyrics",
+                        _lrcFile.Name,
+                        "application/octet-stream",
+                        lrcStream
+                    )
+                );
             }
 
-            var lrcContent = new StreamContent(_lrcFile.OpenReadStream(AppTools.MaxFileSize));
-            lrcContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            content.Add(content: lrcContent, name: "\"Lyrics\"", fileName: _lrcFile.Name);
-        }
-
-        if (_coverFile != null)
-        {
-            if (!AppTools.ImageExtensions.Contains(_coverFile.Name.Split(".").Last()))
+            if (_coverFile != null)
             {
-                dialogService.Toast($"只允许【{string.Join(" ", AppTools.ImageExtensions)}】格式，请重新选择", Models.Dialog.ToastType.Warning);
-                _isPosting = false;
-                return;
+                if (!AppTools.ImageExtensions.Contains(_coverFile.Name.Split(".").Last()))
+                {
+                    dialogService.Toast(
+                        $"只允许【{string.Join(" ", AppTools.ImageExtensions)}】格式，请重新选择",
+                        Models.Dialog.ToastType.Warning
+                    );
+                    _isPosting = false;
+                    return;
+                }
+
+                var coverStream = _coverFile.OpenReadStream(AppTools.MaxFileSize);
+                streams.Add(coverStream);
+                files.Add(
+                    new UploadFilePart(
+                        "Cover",
+                        _coverFile.Name,
+                        _coverFile.ContentType,
+                        coverStream
+                    )
+                );
             }
 
-            var coverContent = new StreamContent(_coverFile.OpenReadStream(AppTools.MaxFileSize));
-            coverContent.Headers.ContentType = new MediaTypeHeaderValue(_coverFile.ContentType);
-            content.Add(content: coverContent, name: "\"Cover\"", fileName: _coverFile.Name);
-        }
+            foreach (var item in _selectedGroups)
+            {
+                fields.Add(new UploadFormField("Group", item));
+            }
 
-        foreach (var item in _selectedGroups)
+            if (!string.IsNullOrEmpty(_addGroup))
+            {
+                fields.Add(new UploadFormField("Group", _addGroup));
+            }
+
+            var progress = new Progress<int>(value =>
+            {
+                _uploadProgress = value;
+                StateHasChanged();
+            });
+
+            await musicService.AddMusicWithProgressAsync(files, fields, progress);
+            dialogService.Toast("音乐上传成功！", Models.Dialog.ToastType.Success);
+            navigation.NavigateTo("/music");
+        }
+        finally
         {
-            content.Add(content: new StringContent(item), name: "\"Group\"");
+            foreach (var stream in streams)
+            {
+                stream.Dispose();
+            }
         }
-
-        if (!string.IsNullOrEmpty(_addGroup))
-        {
-            content.Add(content: new StringContent(_addGroup), name: "\"Group\"");
-        }
-
-        await musicService.AddMusicAsync(content);
-        dialogService.Toast("音乐上传成功！", Models.Dialog.ToastType.Success);
-        navigation.NavigateTo("/music");
     }
 
     private void OnMusicChanged(InputFileChangeEventArgs e)
@@ -138,7 +182,11 @@ public partial class Add(
 
         if (_coverFile != null)
         {
-            var imageFile = await _coverFile.RequestImageFileAsync(_coverFile.ContentType, 800, 800);
+            var imageFile = await _coverFile.RequestImageFileAsync(
+                _coverFile.ContentType,
+                800,
+                800
+            );
             await using var stream = imageFile.OpenReadStream(AppTools.MaxFileSize);
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
@@ -188,6 +236,7 @@ public partial class Add(
     }
 
     private bool _preventDefault;
+
     private void HandleAddGroupKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
@@ -195,7 +244,7 @@ public partial class Add(
             _preventDefault = true;
             AddNewGroup();
         }
-        else 
+        else
         {
             _preventDefault = false;
         }

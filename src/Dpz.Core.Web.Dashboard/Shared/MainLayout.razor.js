@@ -1,7 +1,10 @@
 /**
- * MainLayout Dropdown Manager
- * 管理移动端下拉菜单的点击交互
+ * MainLayout
  */
+
+let resizeTimer = null;
+let outsideClickHandler = null;
+let bound = false;
 
 /**
  * 检测是否为移动设备
@@ -11,187 +14,111 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
-/**
- * 下拉菜单管理器类
- */
-class DropdownManager {
-    constructor() {
-        this.dropdowns = [];
-        this.clickHandler = null;
-        this.resizeTimer = null;
+function getDropdowns() {
+    return Array.from(document.querySelectorAll('.dropdown'));
+}
+
+function closeAll() {
+    getDropdowns().forEach((dropdown) => {
+        dropdown.classList.remove('active');
+    });
+}
+
+function bindMobileEvents() {
+    const dropdowns = getDropdowns();
+    if (dropdowns.length === 0) {
+        return;
     }
 
-    /**
-     * 初始化所有下拉菜单
-     */
-    init() {
-        this.dropdowns = Array.from(document.querySelectorAll('.dropdown'));
-        
-        if (this.dropdowns.length === 0) {
+    dropdowns.forEach((dropdown) => {
+        const trigger = dropdown.querySelector('.btn-icon, .user-profile');
+        if (!trigger) {
             return;
         }
 
-        this.dropdowns.forEach(dropdown => {
-            const trigger = dropdown.querySelector('.btn-icon, .user-profile');
-            const menu = dropdown.querySelector('.dropdown-menu');
-            
-            if (!trigger || !menu) {
+        trigger.onclick = (e) => {
+            if (!isMobile()) {
                 return;
             }
-            
-            // 移动端：点击切换
-            if (isMobile()) {
-                this.attachMobileEvents(dropdown, trigger);
-            }
-        });
-        
-        // 点击外部关闭下拉菜单
-        this.attachOutsideClickHandler();
-        
-        // 点击菜单项后关闭
-        this.attachMenuItemClickHandler();
-        
-        // 响应式处理
-        this.attachResizeHandler();
-    }
 
-    /**
-     * 为触发器附加移动端事件
-     * @param {HTMLElement} dropdown 下拉菜单容器
-     * @param {HTMLElement} trigger 触发器元素
-     */
-    attachMobileEvents(dropdown, trigger) {
-        trigger.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
-            // 关闭其他下拉菜单
-            this.dropdowns.forEach(d => {
+
+            dropdowns.forEach((d) => {
                 if (d !== dropdown) {
                     d.classList.remove('active');
                 }
             });
-            
-            // 切换当前下拉菜单
+
             dropdown.classList.toggle('active');
-        });
-    }
-
-    /**
-     * 附加点击外部关闭处理器
-     */
-    attachOutsideClickHandler() {
-        if (this.clickHandler) {
-            document.removeEventListener('click', this.clickHandler);
-        }
-
-        this.clickHandler = (e) => {
-            if (isMobile()) {
-                const clickedInsideDropdown = e.target.closest('.dropdown');
-                if (!clickedInsideDropdown) {
-                    this.closeAll();
-                }
-            }
         };
 
-        document.addEventListener('click', this.clickHandler);
-    }
-
-    /**
-     * 附加菜单项点击处理器
-     */
-    attachMenuItemClickHandler() {
-        this.dropdowns.forEach(dropdown => {
-            const items = dropdown.querySelectorAll('.dropdown-item');
-            items.forEach(item => {
-                item.addEventListener('click', () => {
-                    if (isMobile()) {
-                        dropdown.classList.remove('active');
-                    }
-                });
-            });
+        dropdown.querySelectorAll('.dropdown-item').forEach((item) => {
+            item.onclick = () => {
+                if (isMobile()) {
+                    dropdown.classList.remove('active');
+                }
+            };
         });
-    }
+    });
 
-    /**
-     * 附加窗口大小变化处理器
-     */
-    attachResizeHandler() {
-        window.addEventListener('resize', () => {
-            if (this.resizeTimer) {
-                clearTimeout(this.resizeTimer);
-            }
-            this.resizeTimer = setTimeout(() => {
-                this.refresh();
-            }, 250);
-        });
-    }
-
-    /**
-     * 关闭所有下拉菜单
-     */
-    closeAll() {
-        this.dropdowns.forEach(dropdown => {
-            dropdown.classList.remove('active');
-        });
-    }
-
-    /**
-     * 刷新下拉菜单
-     */
-    refresh() {
-        this.dispose();
-        this.init();
-    }
-
-    /**
-     * 清理资源
-     */
-    dispose() {
-        if (this.clickHandler) {
-            document.removeEventListener('click', this.clickHandler);
-            this.clickHandler = null;
+    outsideClickHandler = (e) => {
+        if (!isMobile()) {
+            return;
         }
 
-        if (this.resizeTimer) {
-            clearTimeout(this.resizeTimer);
-            this.resizeTimer = null;
+        if (!e.target.closest('.dropdown')) {
+            closeAll();
         }
+    };
 
-        this.dropdowns = [];
-    }
+    document.addEventListener('click', outsideClickHandler);
 }
 
-let manager = null;
+function handleResize() {
+    if (resizeTimer) {
+        clearTimeout(resizeTimer);
+    }
 
-/**
- * 初始化下拉菜单管理器
- * @export
- */
+    resizeTimer = setTimeout(() => {
+        closeAll();
+        if (isMobile()) {
+            bindMobileEvents();
+        }
+    }, 250);
+}
+
 export function initDropdowns() {
-    if (!manager) {
-        manager = new DropdownManager();
+    if (bound) {
+        return;
     }
-    manager.init();
+
+    bound = true;
+
+    if (isMobile()) {
+        bindMobileEvents();
+    }
+
+    window.addEventListener('resize', handleResize);
 }
 
-/**
- * 刷新下拉菜单
- * @export
- */
-export function refreshDropdowns() {
-    if (manager) {
-        manager.refresh();
-    }
-}
-
-/**
- * 清理资源
- * @export
- */
 export function dispose() {
-    if (manager) {
-        manager.dispose();
-        manager = null;
+    if (!bound) {
+        return;
     }
+
+    bound = false;
+
+    if (outsideClickHandler) {
+        document.removeEventListener('click', outsideClickHandler);
+        outsideClickHandler = null;
+    }
+
+    if (resizeTimer) {
+        clearTimeout(resizeTimer);
+        resizeTimer = null;
+    }
+
+    window.removeEventListener('resize', handleResize);
+    closeAll();
 }

@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.EnumLibrary;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Request;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Pages.Article;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
@@ -44,6 +47,22 @@ public class PictureService(IHttpService httpService) : IPictureService
     public async Task UploadAsync(MultipartFormDataContent content)
     {
         await httpService.PostFileAsync("/api/Picture", content);
+    }
+
+    public async Task UploadWithProgressAsync(
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await httpService.PostFileWithProgressAsync(
+            $"{Program.BaseAddress}/api/Picture",
+            files,
+            fields,
+            progress,
+            cancellationToken
+        );
     }
 
     public async Task EditAsync(EditPictureRequest content)

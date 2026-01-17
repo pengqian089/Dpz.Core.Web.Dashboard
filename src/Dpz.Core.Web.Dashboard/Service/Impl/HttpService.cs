@@ -11,19 +11,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Interop;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
 public class HttpService(
     ILogger<HttpService> logger,
     IHttpClientFactory httpClientFactory,
-    NavigationManager navigation
+    NavigationManager navigation,
+    IJSRuntime jsRuntime,
+    IAccessTokenProvider tokenProvider
 ) : IHttpService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("ServerAPI");
+    private IJSObjectReference? _uploadModule;
 
     private static readonly JsonSerializerOptions PagedSerializerOptions = new()
     {
@@ -382,5 +388,104 @@ public class HttpService(
         var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
         request.Content = content;
         await SendRequestAsync(request);
+    }
+
+    private async Task<IJSObjectReference> GetUploadModuleAsync()
+    {
+        if (_uploadModule != null)
+        {
+            return _uploadModule;
+        }
+
+        _uploadModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./js/modules/upload-interop.js"
+        );
+        return _uploadModule;
+    }
+
+    public async Task PostFileWithProgressAsync(
+        string uri,
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await PostFileWithProgressAsync<string>(uri, files, fields, progress, cancellationToken);
+    }
+
+    public async Task<T?> PostFileWithProgressAsync<T>(
+        string uri,
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (files == null || files.Count == 0)
+        {
+            throw new ArgumentException("files is empty.");
+        }
+
+        var tokenResult = await tokenProvider.RequestAccessToken();
+        if (!tokenResult.TryGetToken(out var accessToken))
+        {
+            NavigateToSessionExpired();
+            return default;
+        }
+
+        var module = await GetUploadModuleAsync();
+        var progressReporter = new UploadProgressReporter(progress);
+        using var progressRef = DotNetObjectReference.Create(progressReporter);
+
+        var jsFiles = new List<object>(files.Count);
+        var streamRefs = new List<DotNetStreamReference>(files.Count);
+        foreach (var file in files)
+        {
+            var streamRef = new DotNetStreamReference(file.Content);
+            streamRefs.Add(streamRef);
+            jsFiles.Add(
+                new
+                {
+                    name = file.Name,
+                    fileName = file.FileName,
+                    contentType = file.ContentType,
+                    stream = streamRef,
+                }
+            );
+        }
+
+        try
+        {
+            var response = await module.InvokeAsync<string?>(
+                "uploadFormWithProgress",
+                cancellationToken,
+                jsFiles,
+                fields ?? [],
+                uri,
+                accessToken.Value,
+                progressRef
+            );
+
+            if (typeof(T) == typeof(string))
+            {
+                return (T?)(object?)response;
+            }
+
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return default;
+            }
+
+            return JsonSerializer.Deserialize<T>(response, JsonSerializerOptions);
+        }
+        finally
+        {
+            foreach (var streamRef in streamRefs)
+            {
+                streamRef.Dispose();
+            }
+        }
     }
 }

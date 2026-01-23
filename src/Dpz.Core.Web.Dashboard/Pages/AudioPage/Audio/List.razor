@@ -1,4 +1,4 @@
-﻿@page "/audio"
+@page "/audio"
 @page "/audio/list"
 @attribute [Authorize]
 @using Dpz.Core.Web.Dashboard.Shared.Components
@@ -53,18 +53,18 @@
                         @foreach (var item in _audios)
                         {
                             <tr>
-                                <td>
+                                <td data-label="录音预览">
                                     <AudioPlayer Src="@item.AccessUrl" />
                                 </td>
-                                <td>@item.Size.FileSize()</td>
-                                <td>
+                                <td data-label="文件大小">@item.Size.FileSize()</td>
+                                <td data-label="上传人">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <i class="fas fa-user-circle" style="color: var(--text-secondary);"></i>
                                         @item.Uploader?.Name
                                     </div>
                                 </td>
-                                <td>@item.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                <td>
+                                <td data-label="上传时间">@item.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td data-label="操作">
                                     <button class="btn btn-icon btn-danger" @onclick="() => DeleteAsync(item.Id)" title="删除">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>

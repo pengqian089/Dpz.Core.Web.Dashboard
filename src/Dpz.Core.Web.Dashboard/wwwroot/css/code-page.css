@@ -194,10 +194,13 @@
     align-items: center;
     gap: var(--spacing-sm);
     font-weight: 600;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .code-table__name i {
     color: var(--primary);
+    flex-shrink: 0;
 }
 
 .code-table__link {
@@ -207,6 +210,10 @@
     color: var(--text-primary);
     cursor: pointer;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .code-table__link:hover {
@@ -479,6 +486,17 @@
         width: 100%;
     }
 
+    /* README 移动端优化 */
+    .code-readme {
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .code-readme__header {
+        margin-bottom: var(--spacing-sm);
+        font-size: 0.95rem;
+    }
+
     .code-table {
         border: none;
         background: transparent;
@@ -512,6 +530,7 @@
         border: none;
         padding: var(--spacing-xs) 0;
         gap: var(--spacing-sm);
+        min-width: 0;
     }
 
     .code-table td::before {
@@ -520,6 +539,29 @@
         color: var(--text-secondary);
         min-width: 80px;
         flex-shrink: 0;
+    }
+    
+    /* 移动端文本换行 */
+    .code-table__link {
+        white-space: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .code-table__name {
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+    
+    .code-table__tag {
+        flex-shrink: 0;
+    }
+    
+    .code-table__note {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .code-table__actions {

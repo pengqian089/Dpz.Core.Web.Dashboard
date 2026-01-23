@@ -1,23 +1,32 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Dpz.Core.EnumLibrary;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Code;
 
-public partial class Code(ICodeService codeService, IAppDialogService dialogService)
+public partial class Code(
+    ICodeService codeService,
+    IAppDialogService dialogService,
+    NavigationManager navigationManager
+) : IDisposable
 {
+    [Inject]
+    private NavigationManager Navigation { get; set; } = navigationManager;
     private CodeNoteTree? _treeData;
     private bool _isLoading;
     private List<string> _currentPath = [];
     private string _searchWord = "";
     private string _tempSearch = "";
+    private bool _isNavigating = false;
 
     private bool IsUnavailable =>
         _treeData is null
@@ -37,10 +46,50 @@ public partial class Code(ICodeService codeService, IAppDialogService dialogServ
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTreeDataAsync(null);
+        // 注册导航事件监听
+        Navigation.LocationChanged += OnLocationChanged;
+
+        // 从URL参数读取路径
+        await LoadFromUrlAsync();
     }
 
-    private async Task LoadTreeDataAsync(IEnumerable<string>? path)
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // 避免在UpdateUrl时触发循环
+        if (_isNavigating)
+        {
+            return;
+        }
+
+        // 异步加载新路径
+        _ = InvokeAsync(async () =>
+        {
+            await LoadFromUrlAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadFromUrlAsync()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query);
+        var pathParam = query["path"];
+
+        string[]? initialPath = null;
+        if (!string.IsNullOrWhiteSpace(pathParam))
+        {
+            initialPath = pathParam.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        await LoadTreeDataAsync(initialPath, updateUrl: false);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    private async Task LoadTreeDataAsync(IEnumerable<string>? path, bool updateUrl = true)
     {
         _isLoading = true;
         StateHasChanged();
@@ -51,6 +100,12 @@ public partial class Code(ICodeService codeService, IAppDialogService dialogServ
             _currentPath = currentPath.ToList();
             _searchWord = "";
             _tempSearch = "";
+
+            // 同步URL参数
+            if (updateUrl)
+            {
+                UpdateUrl(currentPath);
+            }
         }
         catch (Exception ex)
         {
@@ -60,6 +115,32 @@ public partial class Code(ICodeService codeService, IAppDialogService dialogServ
         {
             _isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private void UpdateUrl(string[] path)
+    {
+        try
+        {
+            _isNavigating = true;
+
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var basePath = uri.GetLeftPart(UriPartial.Path);
+
+            if (path.Length > 0)
+            {
+                var pathParam = string.Join("/", path);
+                var newUrl = $"{basePath}?path={HttpUtility.UrlEncode(pathParam)}";
+                Navigation.NavigateTo(newUrl, replace: false);
+            }
+            else
+            {
+                Navigation.NavigateTo(basePath, replace: false);
+            }
+        }
+        finally
+        {
+            _isNavigating = false;
         }
     }
 

@@ -284,21 +284,45 @@ select.form-input {
 
 /* Icon button variant */
 .btn-icon {
-    padding: 0.375rem;
+    padding: 0;
     width: 2.25rem;
     height: 2.25rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
     border-radius: 8px;
+    border: 1px solid transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: transparent;
     color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    line-height: 1;
 }
 
 .btn-icon:hover:not(:disabled) {
     background-color: rgba(59,130,246,0.06);
     color: var(--primary);
+    border-color: rgba(59,130,246,0.1);
     transform: translateY(-1px);
+}
+
+.btn-icon:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-icon i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Loading state inside buttons */

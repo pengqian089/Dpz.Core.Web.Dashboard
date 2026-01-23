@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -25,7 +24,7 @@ public partial class Post(
     private List<string> _tags = [];
     private Dictionary<string, long> _selectedFiles = [];
 
-    //private int _uploadProgress;
+    private int _uploadProgress;
     private IJSObjectReference? _jsModule;
 
     protected override async Task OnInitializedAsync()
@@ -54,18 +53,11 @@ public partial class Post(
         }
 
         _isPosting = true;
+        _uploadProgress = 0;
         StateHasChanged();
 
         try
         {
-            using var content = new MultipartFormDataContent();
-
-            var fileContent = new StreamContent(
-                _picture.Image.OpenReadStream(AppTools.MaxFileSize)
-            );
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(_picture.Image.ContentType);
-            content.Add(fileContent, "\"image\"", _picture.Image.Name);
-
             var tags =
                 _picture
                     .AdditionsTags?.Split(",")
@@ -78,22 +70,26 @@ public partial class Post(
                 tags.AddRange(_picture.Tags);
             }
 
+            var fields = new List<UploadFormField>();
             foreach (var tag in tags.Distinct())
             {
-                var tagContent = new StringContent(tag);
-                tagContent.Headers.ContentDisposition = new ContentDispositionHeaderValue(
-                    "form-data"
-                )
-                {
-                    Name = "\"tags\"",
-                };
-                content.Add(tagContent);
+                fields.Add(new UploadFormField("tags", tag));
             }
+            fields.Add(new UploadFormField("description", _picture.Description ?? ""));
 
-            var descContent = new StringContent(_picture.Description ?? "");
-            content.Add(descContent, "\"description\"");
+            await using var stream = _picture.Image.OpenReadStream(AppTools.MaxFileSize);
+            var files = new List<UploadFilePart>
+            {
+                new("image", _picture.Image.Name, _picture.Image.ContentType, stream),
+            };
+            var progress = new Progress<int>(value =>
+            {
+                _uploadProgress = value;
+                StateHasChanged();
+            });
 
-            await pictureService.UploadAsync(content);
+            await pictureService.UploadWithProgressAsync(files, fields, progress);
+
             dialogService.Toast("上传成功", ToastType.Success);
             navigation.NavigateTo("/picture");
         }

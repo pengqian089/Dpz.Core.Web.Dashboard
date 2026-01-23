@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -45,6 +45,8 @@ public partial class MarkdownEditor(
     private DotNetObjectReference<MarkdownEditor>? _objRef;
 
     private bool _isUploading;
+
+    private int _uploadProgress;
 
     private bool _editorInitialized;
 
@@ -128,6 +130,7 @@ public partial class MarkdownEditor(
     )
     {
         _isUploading = true;
+        _uploadProgress = 0;
         StateHasChanged();
         try
         {
@@ -137,12 +140,19 @@ public partial class MarkdownEditor(
             }
 
             using var stream = await streamRef.OpenReadStreamAsync(AppTools.MaxFileSize);
-            using var content = new MultipartFormDataContent();
-            var fileContent = new StreamContent(stream);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-            content.Add(fileContent, "\"image\"", fileName);
+            var files = new List<UploadFilePart> { new("image", fileName, contentType, stream) };
+            var progress = new Progress<int>(value =>
+            {
+                _uploadProgress = value;
+                StateHasChanged();
+            });
 
-            var result = await httpService.PostFileAsync<UploadImageResult>(UploadAction, content);
+            var result = await httpService.PostFileWithProgressAsync<UploadImageResult>(
+                UploadAction,
+                files,
+                null,
+                progress
+            );
 
             if (result != null && !string.IsNullOrWhiteSpace(result.Url))
             {

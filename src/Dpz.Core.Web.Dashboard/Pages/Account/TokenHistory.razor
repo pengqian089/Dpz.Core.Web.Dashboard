@@ -56,7 +56,11 @@
                         {
                             <tr>
                                 <td data-label="账号">@record.Account</td>
-                                <td data-label="IP地址">@record.IpAddress</td>
+                                <td data-label="IP地址">
+                                    <span class="account-token__ip" title="@record.IpAddress">
+                                        @record.IpAddress
+                                    </span>
+                                </td>
                                 <td data-label="User-Agent">
                                     <span class="account-token__agent" title="@record.UserAgent">
                                         @record.UserAgent

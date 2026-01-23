@@ -245,6 +245,28 @@
     z-index: 9999;
 }
 
+.music-form__progress {
+    width: 240px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: var(--spacing-sm) auto 0;
+}
+
+.music-form__progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #06b6d4);
+    transition: width 0.2s ease;
+}
+
+.music-form__progress-text {
+    margin-top: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
 .publishing-overlay__spinner {
     width: 48px;
     height: 48px;

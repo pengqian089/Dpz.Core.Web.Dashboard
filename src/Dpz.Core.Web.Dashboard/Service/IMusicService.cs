@@ -1,9 +1,12 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 
 namespace Dpz.Core.Web.Dashboard.Service;
 
@@ -18,6 +21,13 @@ public interface IMusicService
     Task EditInformationAsync(MultipartFormDataContent content);
 
     Task AddMusicAsync(MultipartFormDataContent content);
+
+    Task AddMusicWithProgressAsync(
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    );
 
     Task<MusicModel?> GetMusicAsync(string id);
 

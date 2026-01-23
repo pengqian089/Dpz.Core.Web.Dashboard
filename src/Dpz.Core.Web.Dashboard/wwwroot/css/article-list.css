@@ -236,6 +236,7 @@
         border: none;
         padding: var(--spacing-xs) 0;
         gap: var(--spacing-sm);
+        min-width: 0; /* 允许内容收缩 */
     }
 
     .article-table td::before {
@@ -244,6 +245,14 @@
         color: var(--text-secondary);
         min-width: 80px;
         flex-shrink: 0;
+    }
+
+    /* 确保 td 内容区域可以换行和截断 */
+    .article-table td > * {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: break-word;
+        word-break: break-all;
     }
 
     .article-table__title {

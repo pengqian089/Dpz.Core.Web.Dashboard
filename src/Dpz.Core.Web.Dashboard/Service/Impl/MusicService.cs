@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
@@ -35,6 +38,22 @@ public class MusicService(IHttpService httpService) : IMusicService
     public async Task AddMusicAsync(MultipartFormDataContent content)
     {
         await httpService.PostFileAsync("/api/Music", content);
+    }
+
+    public async Task AddMusicWithProgressAsync(
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await httpService.PostFileWithProgressAsync(
+            $"{Program.BaseAddress}/api/Music",
+            files,
+            fields,
+            progress,
+            cancellationToken
+        );
     }
 
     public async Task<MusicModel?> GetMusicAsync(string id)

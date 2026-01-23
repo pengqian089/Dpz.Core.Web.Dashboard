@@ -1,4 +1,4 @@
-﻿@page "/video"
+@page "/video"
 @attribute [Authorize]
 
 <link href="css/video-list.css" rel="stylesheet"/>
@@ -78,15 +78,22 @@
                             <p class="video-card__description">@video.Description</p>
                         }
 
-                        @if (video.Tags != null && video.Tags.Length > 0)
-                        {
-                            <div class="video-card__tags">
+                        <div class="video-card__tags">
+                            @if (video.Tags != null && video.Tags.Length > 0)
+                            {
                                 @foreach (var tag in video.Tags)
                                 {
                                     <span class="video-card__tag">@tag</span>
                                 }
-                            </div>
-                        }
+                            }
+                            else
+                            {
+                                <span class="video-card__tag video-card__tag--empty">
+                                    <i class="fas fa-tag"></i>
+                                    未设置标签
+                                </span>
+                            }
+                        </div>
 
                         <div class="video-card__actions">
                             <button class="video-card__action-btn" @onclick="() => EditVideo(video.Id)" title="编辑">

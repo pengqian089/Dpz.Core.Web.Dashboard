@@ -434,15 +434,6 @@
     .upload-area__icon {
         font-size: 2rem;
     }
-
-    .tag-selector {
-        min-height: 80px;
-    }
-
-    .tag-selector__item {
-        padding: 6px 12px;
-        font-size: 0.8125rem;
-    }
 }
 
 @media (max-width: 600px) {

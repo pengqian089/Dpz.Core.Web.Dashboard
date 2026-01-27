@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,8 +24,7 @@ public partial class Add(
     private IBrowserFile? _musicFile;
     private IBrowserFile? _lrcFile;
     private IBrowserFile? _coverFile;
-    private IEnumerable<string> _selectedGroups = [];
-    private string _addGroup = "";
+    private List<string> _selectedGroupsList = [];
     private readonly object _t = new();
     private List<string> _groups = [];
     private Dictionary<string, long> _selectMusic = new();
@@ -121,14 +120,9 @@ public partial class Add(
                 );
             }
 
-            foreach (var item in _selectedGroups)
+            foreach (var item in _selectedGroupsList)
             {
                 fields.Add(new UploadFormField("Group", item));
-            }
-
-            if (!string.IsNullOrEmpty(_addGroup))
-            {
-                fields.Add(new UploadFormField("Group", _addGroup));
             }
 
             var progress = new Progress<int>(value =>
@@ -200,53 +194,8 @@ public partial class Add(
         }
     }
 
-    private void ToggleGroup(string group)
+    private void HandleNewGroupAdded(string group)
     {
-        var list = _selectedGroups.ToList();
-        if (list.Contains(group))
-        {
-            list.Remove(group);
-        }
-        else
-        {
-            list.Add(group);
-        }
-        _selectedGroups = list;
-    }
-
-    private void AddNewGroup()
-    {
-        if (string.IsNullOrWhiteSpace(_addGroup))
-        {
-            return;
-        }
-
-        if (!_groups.Contains(_addGroup))
-        {
-            _groups.Add(_addGroup);
-        }
-
-        var list = _selectedGroups.ToList();
-        if (!list.Contains(_addGroup))
-        {
-            list.Add(_addGroup);
-        }
-        _selectedGroups = list;
-        _addGroup = "";
-    }
-
-    private bool _preventDefault;
-
-    private void HandleAddGroupKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            _preventDefault = true;
-            AddNewGroup();
-        }
-        else
-        {
-            _preventDefault = false;
-        }
+        dialogService.Toast($"分组 '{group}' 已添加", Models.Dialog.ToastType.Success);
     }
 }

@@ -42,7 +42,7 @@ public partial class TagInput : ComponentBase
         }
     }
 
-    private async Task AddTagAsync()
+    public async Task AddTagAsync()
     {
         var tag = _inputValue.Trim().TrimEnd(',');
 

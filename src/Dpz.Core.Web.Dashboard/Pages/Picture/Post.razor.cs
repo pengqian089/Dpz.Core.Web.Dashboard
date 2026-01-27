@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +22,7 @@ public partial class Post(
     private bool _isPosting;
     private readonly PostPictureModel _picture = new();
     private List<string> _tags = [];
+    private List<string> _selectedTags = [];
     private Dictionary<string, long> _selectedFiles = [];
 
     private int _uploadProgress;
@@ -58,20 +59,8 @@ public partial class Post(
 
         try
         {
-            var tags =
-                _picture
-                    .AdditionsTags?.Split(",")
-                    .Select(x => x.Trim())
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .ToList() ?? [];
-
-            if (_picture.Tags?.Count > 0)
-            {
-                tags.AddRange(_picture.Tags);
-            }
-
             var fields = new List<UploadFormField>();
-            foreach (var tag in tags.Distinct())
+            foreach (var tag in _selectedTags.Distinct())
             {
                 fields.Add(new UploadFormField("tags", tag));
             }
@@ -127,20 +116,9 @@ public partial class Post(
         }
     }
 
-    private void ToggleTag(string tag)
+    private void HandleNewTagAdded(string tag)
     {
-        _picture.Tags ??= [];
-
-        if (_picture.Tags.Contains(tag))
-        {
-            _picture.Tags.Remove(tag);
-        }
-        else
-        {
-            _picture.Tags.Add(tag);
-        }
-
-        StateHasChanged();
+        dialogService.Toast($"标签 '{tag}' 已添加", ToastType.Success);
     }
 
     public async ValueTask DisposeAsync()
@@ -154,8 +132,6 @@ public partial class Post(
     private class PostPictureModel
     {
         public string? Description { get; set; }
-        public List<string>? Tags { get; set; }
-        public string? AdditionsTags { get; set; }
         public IBrowserFile? Image { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -86,18 +86,9 @@ public partial class Edit(
         }
     }
 
-    private void ToggleTag(string tag)
+    private void HandleNewTagAdded(string tag)
     {
-        if (_picture.Tags.Contains(tag))
-        {
-            _picture.Tags.Remove(tag);
-        }
-        else
-        {
-            _picture.Tags.Add(tag);
-        }
-
-        StateHasChanged();
+        appDialogService.Toast($"标签 '{tag}' 已添加", ToastType.Success);
     }
 
     public async ValueTask DisposeAsync()

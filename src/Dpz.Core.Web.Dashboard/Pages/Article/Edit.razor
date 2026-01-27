@@ -1,4 +1,4 @@
-﻿@page "/article/edit/{Id}"
+@page "/article/edit/{Id}"
 @attribute [Authorize]
 
 <div class="article-form">
@@ -80,40 +80,13 @@
 
                             <div class="form-group">
                                 <label class="form-label form-label--required">文章标签</label>
-                                <div class="tag-selector">
-                                    @foreach (var tag in _tags)
-                                    {
-                                        <button type="button"
-                                                class="tag-selector__item @(_article.Tags.Contains(tag) ? "tag-selector__item--active" : "")"
-                                                @onclick="() => ToggleTag(tag)">
-                                            <i class="fas @(_article.Tags.Contains(tag) ? "fa-check-circle" : "fa-circle")"></i>
-                                            @tag
-                                        </button>
-                                    }
-                                </div>
+                                <TagSelector AvailableTags="_tags"
+                                             @bind-SelectedTags="_article.Tags"
+                                             ShowLabel="false"
+                                             AddNewPlaceholder="输入新标签"
+                                             HelperText="选择或添加适合的标签，有助于文章分类和检索"
+                                             OnNewTagAdded="HandleNewTagAdded" />
                                 <ValidationMessage For="@(() => _article.Tags)" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="addTag">
-                                    <i class="fas fa-plus-circle"></i>
-                                    添加新标签
-                                </label>
-                                <div class="input-with-icon">
-                                    <input type="text"
-                                           id="addTag"
-                                           class="form-input"
-                                           placeholder="输入新标签并回车添加"
-                                           @bind="_addTag"
-                                           @bind:event="oninput"
-                                           @onkeydown="HandleAddTagKeyDown"/>
-                                    @if (!string.IsNullOrEmpty(_addTag))
-                                    {
-                                        <button type="button" class="input-icon-btn" @onclick="AddNewTag">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    }
-                                </div>
                             </div>
                         </div>
                     </div>

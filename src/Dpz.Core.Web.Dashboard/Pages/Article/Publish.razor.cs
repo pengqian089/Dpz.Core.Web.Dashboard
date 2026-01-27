@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
@@ -8,7 +7,6 @@ using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Article;
 
@@ -19,7 +17,6 @@ public partial class Publish(
 )
 {
     private List<string> _tags = [];
-    private string _addTag = "";
     private readonly ArticlePublishRequest _article = new();
     private bool _isPublishing;
     private MarkdownEditor? _editor;
@@ -30,47 +27,9 @@ public partial class Publish(
         await base.OnInitializedAsync();
     }
 
-    private void ToggleTag(string tag)
+    private void HandleNewTagAdded(string tag)
     {
-        var tags = _article.Tags.ToList();
-        if (tags.Contains(tag))
-        {
-            tags.Remove(tag);
-        }
-        else
-        {
-            tags.Add(tag);
-        }
-        _article.Tags = tags;
-    }
-
-    private void AddNewTag()
-    {
-        if (string.IsNullOrWhiteSpace(_addTag))
-        {
-            return;
-        }
-
-        var trimmedTag = _addTag.Trim();
-        if (_tags.Contains(trimmedTag))
-        {
-            dialogService.Toast("该标签已存在");
-            _addTag = "";
-            return;
-        }
-
-        _tags.Add(trimmedTag);
-        ToggleTag(trimmedTag);
-        _addTag = "";
-        dialogService.Toast($"标签 '{trimmedTag}' 已添加", ToastType.Success);
-    }
-
-    private void HandleAddTagKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            AddNewTag();
-        }
+        dialogService.Toast($"标签 '{tag}' 已添加", ToastType.Success);
     }
 
     private async Task PublishArticleAsync(EditContext context)
@@ -115,15 +74,5 @@ public partial class Publish(
             Console.WriteLine($"发布文章失败: {ex.Message}");
             dialogService.Toast("发布失败,请重试", ToastType.Error);
         }
-    }
-
-    private void HandleTagsChange(ChangeEventArgs e)
-    {
-        if (e.Value is not string[] selectedTags)
-        {
-            return;
-        }
-
-        _article.Tags = selectedTags.ToList();
     }
 }

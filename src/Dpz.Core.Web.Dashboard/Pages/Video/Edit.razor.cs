@@ -1,17 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 
-#nullable enable
-
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Edit(
-    IVideoService videoService,
-    IAppDialogService dialogService) : ComponentBase
+public partial class Edit(IVideoService videoService, IAppDialogService dialogService)
+    : ComponentBase
 {
     [Parameter]
     public required string Id { get; set; }
@@ -22,6 +20,7 @@ public partial class Edit(
     private VideoModel? _model;
     private bool _isLoading = true;
     private bool _isSaving;
+    private List<string> _tagList = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -34,6 +33,12 @@ public partial class Edit(
                 dialogService.Toast("视频不存在", Models.Dialog.ToastType.Error);
                 Cancel();
                 return;
+            }
+
+            // 初始化标签列表
+            if (_model.Tags is { Length: > 0 })
+            {
+                _tagList = _model.Tags.ToList();
             }
         }
         catch (Exception ex)
@@ -64,9 +69,9 @@ public partial class Edit(
         _isSaving = true;
         try
         {
-            _model.Tags = string.IsNullOrWhiteSpace(_model.TagsValue)
-                ? []
-                : _model.TagsValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            // 从标签列表转换为数组
+            _model.Tags = _tagList.ToArray();
+            _model.TagsValue = string.Join(",", _tagList);
 
             await videoService.SaveVideoInformationAsync(_model);
             dialogService.Toast("保存成功", Models.Dialog.ToastType.Success);

@@ -107,7 +107,7 @@ public partial class List(
             _ => [],
         };
 
-        if (!_relationItems.Any(x => x.Id == _relation))
+        if (_relationItems.All(x => x.Id != _relation))
         {
             _relation = "";
         }

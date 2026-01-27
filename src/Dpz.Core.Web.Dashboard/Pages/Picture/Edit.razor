@@ -1,4 +1,4 @@
-﻿@page "/picture/edit/{id}"
+@page "/picture/edit/{id}"
 @attribute [Authorize]
 
 <div class="picture-form">
@@ -35,38 +35,12 @@
                         <span>标签选择</span>
                     </div>
                     <div class="form-section__body">
-                        <div class="tag-selector-wrapper">
-                            <div class="tag-selector__label">
-                                <i class="fas fa-tag"></i>
-                                <span>选择标签（可多选）</span>
-                            </div>
-                            <div class="tag-selector">
-                                @foreach (var tag in _tags)
-                                {
-                                    <button type="button" 
-                                            class="tag-selector__item @(_picture.Tags.Contains(tag) ? "tag-selector__item--active" : "")"
-                                            @onclick="() => ToggleTag(tag)">
-                                        <i class="fas @(_picture.Tags.Contains(tag) ? "fa-check-circle" : "fa-circle")"></i>
-                                        <span>@tag</span>
-                                    </button>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>补充标签</span>
-                            </label>
-                            <input type="text"
-                                   class="form-input"
-                                   placeholder="多个标签以英文逗号(,)隔开"
-                                   @bind="_picture.AdditionsTags" />
-                            <div class="form-helper">
-                                <i class="fas fa-info-circle"></i>
-                                <span>上面标签不满足时，在此输入补充标签</span>
-                            </div>
-                        </div>
+                        <TagSelector AvailableTags="_tags"
+                                     @bind-SelectedTags="_picture.Tags"
+                                     ShowLabel="true"
+                                     AddNewPlaceholder="输入新标签"
+                                     HelperText="选择或添加适合的标签，便于后续查找和管理图片"
+                                     OnNewTagAdded="HandleNewTagAdded" />
                     </div>
                 </div>
 

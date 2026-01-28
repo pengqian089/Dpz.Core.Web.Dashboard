@@ -225,6 +225,11 @@ public partial class List(
         return item?.Title ?? relation;
     }
 
+    private static string ArticleReadLink(CommentModel comment)
+    {
+        return $"{Program.WebHost}/article/read/{comment.Relation}.html";
+    }
+
     private static bool IsLongComment(string? content)
     {
         if (string.IsNullOrWhiteSpace(content))

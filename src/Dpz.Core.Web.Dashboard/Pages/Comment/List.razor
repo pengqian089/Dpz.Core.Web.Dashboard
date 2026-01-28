@@ -78,82 +78,91 @@
             <div class="comment-table__wrapper">
                 <table>
                     <thead>
-                        <tr>
-                            <th>用户</th>
-                            <th>关联</th>
-                            <th>内容</th>
-                            <th>时间</th>
-                            <th>操作</th>
-                        </tr>
+                    <tr>
+                        <th>用户</th>
+                        <th>关联</th>
+                        <th>内容</th>
+                        <th>时间</th>
+                        <th>操作</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in _comments)
-                        {
-                            <tr>
-                                <td data-label="用户">
-                                    <div class="comment-table__user">
-                                        <img src="@GetAvatarUrl(item)" alt="@item.NickName" class="comment-table__avatar" loading="lazy" />
-                                        <div class="comment-table__user-info">
-                                            <div class="comment-table__user-name">@item.NickName</div>
-                                            <div class="comment-table__user-meta">
-                                                <span class="comment-table__badge @(item.IsGuest ? "comment-table__badge--guest" : "comment-table__badge--member")">
-                                                    @(item.IsGuest ? "匿名" : "成员")
-                                                </span>
-                                                @if (!string.IsNullOrWhiteSpace(item.Identity))
-                                                {
-                                                    <span class="comment-table__identity">@item.Identity</span>
-                                                }
-                                            </div>
-                                            @if (!string.IsNullOrWhiteSpace(item.Site))
+                    @foreach (var item in _comments)
+                    {
+                        <tr>
+                            <td data-label="用户">
+                                <div class="comment-table__user">
+                                    <img src="@GetAvatarUrl(item)" alt="@item.NickName" class="comment-table__avatar" loading="lazy" />
+                                    <div class="comment-table__user-info">
+                                        <div class="comment-table__user-name">@item.NickName</div>
+                                        <div class="comment-table__user-meta">
+                                            <span class="comment-table__badge @(item.IsGuest ? "comment-table__badge--guest" : "comment-table__badge--member")">
+                                                @(item.IsGuest ? "匿名" : "成员")
+                                            </span>
+                                            @if (!string.IsNullOrWhiteSpace(item.Identity))
                                             {
-                                                <div class="comment-table__user-links">
-                                                    <a href="@item.Site" target="_blank" rel="noreferrer">个人网站</a>
-                                                </div>
+                                                <span class="comment-table__identity">@item.Identity</span>
                                             }
                                         </div>
-                                    </div>
-                                </td>
-                                <td data-label="关联">
-                                    <div class="comment-table__relation">
-                                        <span class="comment-table__node">@GetNodeText(item.Node)</span>
-                                        <span class="comment-table__relation-title">@GetRelationTitle(item.Relation)</span>
-                                    </div>
-                                </td>
-                                <td data-label="内容">
-                                    <div class="comment-table__content @(IsLongComment(item.CommentText) ? "comment-table__content--preview" : "")"
-                                         title="@item.CommentText">
-                                        @GetCommentPreview(item.CommentText)
-                                    </div>
-                                </td>
-                                <td data-label="时间">
-                                    <div class="comment-table__time">
-                                        @item.PublishTime.ToString("yyyy-MM-dd HH:mm:ss")
-                                    </div>
-                                </td>
-                                <td data-label="操作">
-                                    <div class="comment-table__actions">
-                                        @if (IsLongComment(item.CommentText))
+                                        @if (!string.IsNullOrWhiteSpace(item.Site))
                                         {
-                                            <button class="btn btn-secondary btn-sm" @onclick="() => ViewContent(item)">
-                                                <i class="fas fa-eye"></i>
-                                                查看
-                                            </button>
+                                            <div class="comment-table__user-links">
+                                                <a href="@item.Site" target="_blank" rel="noreferrer">个人网站</a>
+                                            </div>
                                         }
-                                        @if (item.IsDelete)
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="关联">
+                                <div class="comment-table__relation">
+                                    <span class="comment-table__node">@GetNodeText(item.Node)</span>
+                                    <span class="comment-table__relation-title">
+                                        @if (item.Node == CommentNode.Article)
                                         {
-                                            <span class="comment-table__deleted">已删除</span>
+                                            <a target="_blank" href="@ArticleReadLink(item)">@GetRelationTitle(item.Relation)</a>
                                         }
                                         else
                                         {
-                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item.Id)">
-                                                <i class="fas fa-trash"></i>
-                                                删除
-                                            </button>
+                                            @GetRelationTitle(item.Relation)
                                         }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="内容">
+                                <div class="comment-table__content @(IsLongComment(item.CommentText) ? "comment-table__content--preview" : "")"
+                                     title="@item.CommentText">
+                                    @GetCommentPreview(item.CommentText)
+                                </div>
+                            </td>
+                            <td data-label="时间">
+                                <div class="comment-table__time">
+                                    @item.PublishTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </div>
+                            </td>
+                            <td data-label="操作">
+                                <div class="comment-table__actions">
+                                    @if (IsLongComment(item.CommentText))
+                                    {
+                                        <button class="btn btn-secondary btn-sm" @onclick="() => ViewContent(item)">
+                                            <i class="fas fa-eye"></i>
+                                            查看
+                                        </button>
+                                    }
+                                    @if (item.IsDelete)
+                                    {
+                                        <span class="comment-table__deleted">已删除</span>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
                     </tbody>
                 </table>
             </div>

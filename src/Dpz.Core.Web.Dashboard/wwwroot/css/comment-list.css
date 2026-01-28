@@ -165,6 +165,8 @@
     font-size: 0.75rem;
 }
 
+
+.comment-table__relation-title a,
 .comment-table__user-links a {
     color: var(--primary);
 }

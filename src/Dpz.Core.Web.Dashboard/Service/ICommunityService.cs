@@ -19,4 +19,17 @@ public interface ICommunityService
     /// <param name="content"></param>
     /// <returns></returns>
     Task SaveFooterAsync(string content);
+
+    /// <summary>
+    /// 获取robots.txt内容
+    /// </summary>
+    /// <returns></returns>
+    Task<string> GetRobotsAsync();
+
+    /// <summary>
+    /// 保存robots.txt
+    /// </summary>
+    /// <param name="content"></param>
+    /// <returns></returns>
+    Task SaveRobotsAsync(string content);
 }

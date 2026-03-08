@@ -2,189 +2,267 @@
 @page "/code"
 @attribute [Authorize]
 
-<div class="code-box">
-    <div class="box-header">
-        <div class="details-container">
-            <div class="icon">
-                <img style="width:24px;height: 24px" alt="website"
-                     src="https://dpangzi.com/core/images/logo-removebg.png"/>
+<div class="code-page">
+    <div class="code-page__header">
+        <h1 class="page-title">
+            <i class="fas fa-code"></i>
+            代码管理
+        </h1>
+        <p class="page-description">浏览站点源码并维护说明信息</p>
+    </div>
+
+    <div class="code-page__toolbar">
+        <div class="code-page__toolbar-left">
+            <button class="btn btn-secondary" @onclick="BackToRoot" disabled="@_isLoading">
+                <i class="fas fa-home"></i>
+                根目录
+            </button>
+            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+        <div class="code-page__toolbar-right">
+            <div class="code-page__search">
+                <input type="text" class="form-control" placeholder="搜索文件或目录" @bind="_searchWord" @bind:event="oninput"
+                    @onkeydown="HandleSearchKeyDown" />
+                <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
             </div>
-            <div class="desc">
-                站点相关全部源代码，隐藏了一些关于服务器的信息
+            <div class="code-page__summary">
+                <span class="code-page__summary-label">共</span>
+                <span class="code-page__summary-value">@TotalItems</span>
+                <span class="code-page__summary-label">项</span>
             </div>
         </div>
     </div>
-    <div class="box-rows">
-        <div class="row">
-            <MudTextField 
-                @bind-Value="_searchWord" 
-                Label="Search" 
-                Variant="Variant.Outlined" 
-                Adornment="Adornment.End"
-                AdornmentIcon="@Icons.Material.Filled.Search"
-                OnAdornmentClick="SearchAsync"
-                OnKeyUp="SearchKeyUpAsync"
-                AdornmentColor="Color.Secondary"/>
+
+    @if (_isLoading)
+    {
+        <div class="code-skeleton">
+            <div class="code-skeleton__table">
+                @for (var i = 0; i < 8; i++)
+                {
+                    <div class="code-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
         </div>
-        @if (_treeData == null || _isLoading)
+    }
+    else if (_treeData == null || IsUnavailable)
+    {
+        <div class="code-page__empty">
+            <i class="fas fa-ban"></i>
+            <p>@UnavailableMessage</p>
+        </div>
+    }
+    else
+    {
+        @if (!_treeData.IsRoot)
         {
-            for (var i = 0; i < 10; i++)
+            <div class="code-breadcrumb">
+                <button class="code-link" type="button" @onclick="BackToRoot">
+                    根目录
+                </button>
+                @for (var i = 0; i < _treeData.CurrentPaths.Count; i++)
+                {
+                    <span class="code-breadcrumb__sep">/</span>
+                    @if (i == _treeData.CurrentPaths.Count - 1)
+                    {
+                        <span class="code-breadcrumb__current">@_treeData.CurrentPaths[i]</span>
+                    }
+                    else
+                    {
+                        var path = _treeData.CurrentPaths.Take(i + 1).ToArray();
+                        <button class="code-link" type="button" @onclick="() => LoadTreeDataAsync(path)">
+                            @_treeData.CurrentPaths[i]
+                        </button>
+                    }
+                }
+            </div>
+        }
+
+        if (_treeData.IsDirectory)
+        {
+            <div class="code-table">
+                <div class="code-table__wrapper">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>说明</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @if (!_treeData.Directories.Any() && !_treeData.Files.Any())
+                        {
+                            <tr>
+                                <td colspan="4">
+                                    <div class="code-table__empty">
+                                        当前目录为空
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in _treeData.Directories)
+                            {
+                                <tr>
+                                    <td data-label="名称">
+                                        <div class="code-table__name">
+                                            <i class="fas fa-folder"></i>
+                                            <button class="code-table__link" type="button"
+                                                    title="@string.Join('/', item.CurrentPath)"
+                                                    @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
+                                                <HighLight SearchWord="@_searchWord" ItemName="@item.Name" />
+                                            </button>
+                                            <span class="code-table__tag">目录</span>
+                                        </div>
+                                    </td>
+                                    <td data-label="说明">
+                                        <span class="code-table__note">@GetNoteText(item.Note)</span>
+                                    </td>
+                                    <td data-label="更新时间">
+                                        <span class="code-table__time">
+                                            @item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                        </span>
+                                    </td>
+                                    <td data-label="操作">
+                                        <div class="code-table__actions">
+                                            <button class="btn btn-secondary btn-sm"
+                                                    @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
+                                                进入
+                                            </button>
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => SaveNoteAsync(_treeData.CurrentPaths, item.Name, item.Note)">
+                                                @(string.IsNullOrWhiteSpace(item.Note) ? "添加说明" : "修改说明")
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+
+                            @foreach (var item in _treeData.Files)
+                            {
+                                <tr>
+                                    <td data-label="名称">
+                                        <div class="code-table__name">
+                                            <i class="fas fa-file-code"></i>
+                                            <button class="code-table__link" type="button"
+                                                    title="@string.Join('/', item.CurrentPath)"
+                                                    @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
+                                                <HighLight SearchWord="@_searchWord" ItemName="@item.Name" />
+                                            </button>
+                                            <span class="code-table__tag code-table__tag--file">文件</span>
+                                        </div>
+                                    </td>
+                                    <td data-label="说明">
+                                        <span class="code-table__note">@GetNoteText(item.Note)</span>
+                                    </td>
+                                    <td data-label="更新时间">
+                                        <span class="code-table__time">
+                                            @item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                        </span>
+                                    </td>
+                                    <td data-label="操作">
+                                        <div class="code-table__actions">
+                                            <button class="btn btn-secondary btn-sm"
+                                                    @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
+                                                查看
+                                            </button>
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => SaveNoteAsync(_treeData.CurrentPaths, item.Name, item.Note)">
+                                                @(string.IsNullOrWhiteSpace(item.Note) ? "添加说明" : "修改说明")
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            if (!string.IsNullOrWhiteSpace(_treeData.ReadmeContent))
             {
-                <div class="row">
-                    <div class="icon">
-                        <MudSkeleton Width="100%"/>
+                <div class="code-readme">
+                    <div class="code-readme__header">
+                        <i class="fas fa-book-open"></i>
+                        README
                     </div>
-                    <div class="header">
-                        <MudSkeleton Width="100%"/>
-                    </div>
-                    <div class="desc">
-                        <MudSkeleton Width="100%"/>
-                    </div>
-                    <div class="time">
-                        <MudSkeleton Width="100%"/>
-                    </div>
+                    <MarkdownPreview Markdown="@_treeData.ReadmeContent" />
                 </div>
             }
         }
         else
         {
-            if (!_treeData.IsRoot)
-            {
-                <div class="row prev">
-                    <div class="header">
-                        <a href="javascript:void(0)" @onclick="() => LoadTreeData(null)">
-                            <span style="min-width: 16px">[Root]</span>
-                        </a>
-                        <span>/</span>
-                        @{
-                            var steps = new List<string>();
-                        }
-                        @for (var i = 0; i < _treeData.CurrentPaths.Count; i++)
-                        {
-                            if (i == _treeData.CurrentPaths.Count - 1)
+            <div class="code-view">
+                <div class="code-view__header">
+                    <div>
+                        <div class="code-view__title">@GetFileDisplayName()</div>
+                        <div class="code-view__meta">
+                            <span class="code-view__meta-item">
+                                <i class="fas fa-folder-open"></i>
+                                @string.Join("/", _treeData.CurrentPaths)
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(_treeData.CodeContainer?.Language))
                             {
-                                <span>@_treeData.CurrentPaths[i]</span>
-                                break;
+                                <span class="code-view__badge">
+                                    @_treeData.CodeContainer.Language
+                                </span>
                             }
-
-                            var item = _treeData.CurrentPaths[i];
-                            steps.Add(item);
-                            var temp = string.Join("/", steps);
-                            <a href="javascript:void(0)" @onclick="() => LoadTreeData(temp.Split('/'))">
-                                <span style="min-width: 16px">@item</span>
-                            </a>
-                            <span>/</span>
-                        }
+                        </div>
+                    </div>
+                    <div class="code-view__actions">
+                        <button class="btn btn-secondary btn-sm" @onclick="BackToParent">
+                            返回上级
+                        </button>
+                        <button class="btn btn-primary btn-sm" @onclick="EditCurrentNote">
+                            编辑说明
+                        </button>
                     </div>
                 </div>
-            }
 
-            if (!_treeData.IsDirectory)
-            {
-                @if (_treeData.CodeContainer == null)
-                {
-                    <pre><code>没有内容</code></pre>
-                }
-                else
-                {
-                    @if (string.IsNullOrEmpty(_treeData.CodeContainer.Language))
+                <div class="code-view__body">
+                    @if (_treeData.CodeContainer == null || string.IsNullOrWhiteSpace(_treeData.CodeContainer.CodeContent))
                     {
-                        <pre><code>@_treeData.CodeContainer.CodeContent</code></pre>
+                        <div class="code-view__empty">暂无代码内容</div>
+                    }
+                    else if (!_treeData.CodeContainer.IsPreview)
+                    {
+                        <div class="code-view__empty">该文件不支持预览</div>
+                    }
+                    else if (string.IsNullOrWhiteSpace(_treeData.CodeContainer.Language))
+                    {
+                        <pre class="code-view__plain"><code>@_treeData.CodeContainer.CodeContent</code></pre>
                     }
                     else
                     {
-                        @* <pre id="codeView" data-start="1" class="line-numbers linkable-line-numbers"><code class="language-@_treeData.CodeContainer.Language">@_treeData.CodeContainer.CodeContent</code></pre> *@
-                        <StandaloneCodeEditor
-                            CssClass="code-view-editor"
-                            Id="@string.Join('-', _currentPath)"
-                            ConstructionOptions="x => x.EditorConstructionOptions(_treeData.CodeContainer.Language, _treeData.CodeContainer.CodeContent, true)"/>
-                        @if (!string.IsNullOrWhiteSpace(_treeData.CodeContainer.AiAnalyzeResult))
-                        {
-                            <div class="markdown-container"> 
-                                <MarkdownPreview Style="background: inherit" Markdown="@_treeData.CodeContainer.AiAnalyzeResult"></MarkdownPreview>
-                            </div>
-                        }
+                        <StandaloneCodeEditor CssClass="code-view-editor" Id="@EditorId"
+                            ConstructionOptions="x => x.EditorConstructionOptions(_treeData.CodeContainer.Language, _treeData.CodeContainer.CodeContent, true)" />
                     }
-                }
-            }
-            else
-            {
-                @foreach (var item in _treeData.Directories)
-                {
-                    <div class="row">
-                        <div class="icon">
-                            <svg height="16" class="git-dir" color="blue-3" aria-label="Directory" viewBox="0 0 16 16"
-                                 width="16" role="img">
-                                <path
-                                    d="M1.75 1A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25v-8.5A1.75 1.75 0 0014.25 3h-6.5a.25.25 0 01-.2-.1l-.9-1.2c-.33-.44-.85-.7-1.4-.7h-3.5z"></path>
-                            </svg>
-                        </div>
-                        <div class="header">
-                            <span>
-                                <a href="javascript:void(0)" 
-                                   title="@string.Join('/',item.CurrentPath)" 
-                                   @onclick="() => LoadTreeData(item.CurrentPath)">
-                                    <span style="min-width: 16px">
-                                        <HighLight SearchWord="@_searchWord" ItemName="@item.Name"></HighLight>
-                                    </span>
-                                </a>
-                            </span>
-                        </div>
-                        <div class="desc">
-                            <span>
-                                <a title="@item.Note">@(item.Note)</a>
-                            </span>
-                        </div>
-                        <div class="time">
-                            <time datetime="@item.LastUpdateTime"
-                                  title="@item.LastUpdateTime">@item.LastUpdateTime.TimeAgo()</time>
-                        </div>
-                        <div class="action">
-                            <a href="javascript:void(0);"
-                               @onclick="() => SaveNoteAsync(_treeData.CurrentPaths, item.Name, item.Note)">
-                                @(string.IsNullOrEmpty(item.Note) ? "添加描述" : "修改描述")
-                            </a>
-                        </div>
-                    </div>
-                }
+                </div>
 
-                @foreach (var item in _treeData.Files)
+                @if (!string.IsNullOrWhiteSpace(_treeData.CodeContainer?.AiAnalyzeResult))
                 {
-                    <div class="row">
-                        <div class="icon">
-                            <svg height="16" class="git-file" color="gray-light" aria-label="File" viewBox="0 0 16 16"
-                                 width="16" role="img">
-                                <path
-                                    d="M3.75 1.5a.25.25 0 00-.25.25v11.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V6H9.75A1.75 1.75 0 018 4.25V1.5H3.75zm5.75.56v2.19c0 .138.112.25.25.25h2.19L9.5 2.06zM2 1.75C2 .784 2.784 0 3.75 0h5.086c.464 0 .909.184 1.237.513l3.414 3.414c.329.328.513.773.513 1.237v8.086A1.75 1.75 0 0112.25 15h-8.5A1.75 1.75 0 012 13.25V1.75z"></path>
-                            </svg>
+                    <div class="code-view__analysis">
+                        <div class="code-view__analysis-title">
+                            <i class="fas fa-robot"></i>
+                            AI 分析
                         </div>
-                        <div class="header">
-                            <span>
-                                <a href="javascript:void(0);" 
-                                   @onclick="() => LoadTreeData(item.CurrentPath)"
-                                   title="@string.Join('/',item.CurrentPath)">
-                                    <HighLight SearchWord="@_searchWord" ItemName="@item.Name"></HighLight>
-                                </a>
-                            </span>
-                        </div>
-                        <div class="desc">
-                            <span>
-                                <a title="@item.Note">@item.Note</a>
-                            </span>
-                        </div>
-                        <div class="time">
-                            <time datetime="@item.LastUpdateTime"
-                                  title="@item.LastUpdateTime">@item.LastUpdateTime.TimeAgo()</time>
-                        </div>
-                        <div class="action">
-                            <a href="javascript:void(0);"
-                               @onclick="() => SaveNoteAsync(_treeData.CurrentPaths, item.Name, item.Note)">
-                                @(string.IsNullOrEmpty(item.Note) ? "添加描述" : "修改描述")
-                            </a>
-                        </div>
+                        <MarkdownPreview Markdown="@_treeData.CodeContainer.AiAnalyzeResult" />
                     </div>
                 }
-            }
+            </div>
         }
-    </div>
+    }
 </div>

@@ -1,55 +1,27 @@
 ﻿using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 
-namespace Dpz.Core.Web.Dashboard.Service.Impl
+namespace Dpz.Core.Web.Dashboard.Service.Impl;
+
+public class CommunityService(IHttpService httpService) : ICommunityService
 {
-    public class CommunityService : ICommunityService
+    public async Task<string> GetLogsAsync()
     {
-        private readonly IHttpService _httpService;
+        return await httpService.GetAsync<string>("/api/Community/logs") ?? "";
+    }
 
-        public CommunityService(IHttpService httpService)
-        {
-            _httpService = httpService;
-        }
+    public async Task<SummaryInformation> GetSummaryAsync()
+    {
+        return await httpService.GetAsync<SummaryInformation>("/api/Community/summary") ?? new SummaryInformation();
+    }
 
-        public async Task<string> GetLogsAsync()
-        {
-            return await _httpService.GetAsync<string>("/api/Community/logs");
-        }
+    public async Task<string> GetFooterAsync()
+    {
+        return await httpService.GetAsync<string>("/api/Community/footer") ?? "";
+    }
 
-        public async Task<SummaryInformation> GetSummaryAsync()
-        {
-            return await _httpService.GetAsync<SummaryInformation>("/api/Community/summary");
-        }
-
-        public async Task<string> GetFooterAsync()
-        {
-            return await _httpService.GetAsync<string>("/api/Community/footer");
-        }
-
-        public async Task SaveFooterAsync(string content)
-        {
-            await _httpService.PostAsync("/api/Community/footer", new {content});
-        }
-
-        public async Task<SetupInfo> GetTwoFactorSetupInfoAsync()
-        {
-            return await _httpService.GetAsync<SetupInfo>("/api/Community/bind-two-factor");
-        }
-
-        public async Task BindTwoFactorAsync(string pinCode)
-        {
-            await _httpService.PostAsync("/api/Community/bind-two-factor", new {pinCode});
-        }
-
-        public async Task UnbindTwoFactorAsync(string pinCode)
-        {
-            await _httpService.PostAsync("/api/Community/unbind-two-factor", new {pinCode});
-        }
-
-        public async Task<bool> CheckBindTwoFactorAsync()
-        {
-            return await _httpService.GetAsync<bool>("/api/Community/check-bind-two-factor");
-        }
+    public async Task SaveFooterAsync(string content)
+    {
+        await httpService.PostAsync("/api/Community/footer", new { content });
     }
 }

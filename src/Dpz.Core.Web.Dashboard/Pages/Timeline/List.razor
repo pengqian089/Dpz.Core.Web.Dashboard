@@ -1,115 +1,157 @@
 ﻿@page "/timeline"
 @page "/timeline/list"
 @attribute [Authorize]
+@using Dpz.Core.Web.Dashboard.Shared.Components
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">时间轴列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       Href="/timeline/post"
-                       Class="ma-2"/>
-        <MudSpacer/>
-        <MudTextField T="string"
-                      Placeholder="标题"
-                      @bind-value="_title"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            标题
-        </MudTh>
-        <MudTh>
-            内容
-        </MudTh>
-        <MudTh>
-            时间节点
-        </MudTh>
-        <MudTh>
-            链接
-        </MudTh>
-        <MudTh>
-            作者
-        </MudTh>
-        <MudTh>
-            创建时间
-        </MudTh>
-        <MudTh>
-            最后修改时间
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="标题">
-            <MudHighlighter Text="@context.Title" HighlightedText="@_title"/>
-        </MudTd>
-        <MudTd DataLabel="内容">
-            <MudButton
-                Variant="Variant.Outlined"
-                Color="Color.Default"
-                Size="Size.Small"
-                OnClick="@(() => context.ShowContent = !context.ShowContent)">
-                @((context.ShowContent) ? "收起内容" : "展开内容")
-            </MudButton>
-        </MudTd>
-        <MudTd DataLabel="时间节点">
-            @context.Date.ToString("yyyy-MM-dd")
-        </MudTd>
-        <MudTd DataLabel="连接">
-            @if (!string.IsNullOrEmpty(context.More))
-            {
-                <MudLink Href="@(context.More.StartsWith("/") ? $"{Program.WebHost}{context.More}" : context.More)"></MudLink>
-            }
-        </MudTd>
-        <MudTd DataLabel="作者">@context.Author.Name</MudTd>
-        <MudTd DataLabel="创建时间">@context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="最后修改时间">@context.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/timeline/edit/{context.Id}")">编辑</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-     <ChildRowContent>
-            @if (context.ShowContent)
-            {
-                <MudTr>
-                    <td colspan="9">
-                        <MudCard>
-                            <MudCardHeader>
-                                <CardHeaderContent>
-                                    <MudText Typo="Typo.body1">时间轴内容</MudText>
-                                </CardHeaderContent>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <pre class="line-numbers language-markdown"><code>@context.Content</code></pre>
-                            </MudCardContent>
-                        </MudCard>
-                    </td>
-                </MudTr>
-            }
-        </ChildRowContent>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] {15, 20, 30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+<div class="timeline-list">
+    <div class="timeline-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-stream"></i>
+            时间轴
+        </h1>
+        <p class="page-description">管理站点时间轴内容，记录关键节点与故事</p>
+    </div>
+
+    <div class="timeline-list__toolbar">
+        <div class="timeline-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="CreateTimeline">
+                <i class="fas fa-plus"></i>
+                发布节点
+            </button>
+            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+
+        <div class="timeline-list__toolbar-right">
+            <div class="timeline-list__search">
+                <input type="text"
+                       class="form-control"
+                       placeholder="搜索标题"
+                       @bind="_title"
+                       @bind:event="oninput"
+                       @onkeydown="HandleSearchKeyDown"/>
+                <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+            <div class="timeline-list__summary">
+                <span class="timeline-list__summary-label">共</span>
+                <span class="timeline-list__summary-value">@_totalCount</span>
+                <span class="timeline-list__summary-label">条</span>
+            </div>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="timeline-list-skeleton">
+            <div class="timeline-list-skeleton__table">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="timeline-list-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_timelines.Count == 0)
+    {
+        <div class="timeline-list__empty">
+            <i class="fas fa-stream fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无时间轴数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="timeline-table">
+            <div class="timeline-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>链接</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _timelines)
+                        {
+                            <tr>
+                                <td data-label="标题">
+                                    <div class="timeline-table__title">@item.Title</div>
+                                    <div class="timeline-table__meta">
+                                        <span class="timeline-table__meta-item">
+                                            <i class="fas fa-calendar-day"></i>
+                                            @item.Date.ToString("yyyy-MM-dd")
+                                        </span>
+                                        <span class="timeline-table__meta-item">
+                                            <i class="fas fa-user"></i>
+                                            @item.Author.Name
+                                        </span>
+                                    </div>
+                                </td>
+                                <td data-label="链接">
+                                    @if (!string.IsNullOrWhiteSpace(item.More))
+                                    {
+                                        <a class="timeline-table__link"
+                                           href="@BuildLink(item.More)"
+                                           target="_blank"
+                                           rel="noreferrer">
+                                            查看
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="timeline-table__empty">-</span>
+                                    }
+                                </td>
+                                <td data-label="创建时间">
+                                    <span class="timeline-table__time">
+                                        @item.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </span>
+                                </td>
+                                <td data-label="更新时间">
+                                    <span class="timeline-table__time">
+                                        @item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </span>
+                                </td>
+                                <td data-label="操作">
+                                    <div class="timeline-table__actions">
+                                        <button class="btn btn-secondary btn-sm" @onclick="() => ViewContent(item)">
+                                            <i class="fas fa-eye"></i>
+                                            查看内容
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" @onclick="() => EditTimeline(item.Id)">
+                                            <i class="fas fa-edit"></i>
+                                            编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <Pagination CurrentPage="_pageIndex"
+                    TotalPages="_totalPages"
+                    TotalCount="_totalCount"
+                    PageSize="PageSize"
+                    OnPageChanged="HandlePageChanged" />
+    }
+</div>

@@ -1,166 +1,113 @@
-﻿@page "/video"
+@page "/video"
 @attribute [Authorize]
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">视频管理</MudText>
-<MudTable Hover="true"
-          CanCancelEdit="true"
-          OnCommitEditClick="CommitInformationAsync"
-          RowEditCommit="ItemHasBeenCommitted"
-          RowEditPreview="BackupVideo"
-          RowEditCancel="ResetItemToOriginalValues"
-          Loading="_isLoading"
-          Items="_source">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="LoadVideosAsync"
-                       Class="ma-2" />
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            目录
-        </MudTh>
-        <MudTh>
-            名称
-        </MudTh>
-        <MudTh>
-            标题
-        </MudTh>
-        <MudTh>
-            副标题
-        </MudTh>
-        <MudTh>
-            标签
-        </MudTh>
-        <MudTh>
-            描述
-        </MudTh>
-        <MudTh>
-            封面
-        </MudTh>
-        <MudTd>
-            播放量
-        </MudTd>
-        <MudTd>
-            弹幕数量
-        </MudTd>
-        <MudTd>
-            评论数量
-        </MudTd>
-        <MudTh>
-            查看视频
-        </MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="目录">
-            @context.Title
-        </MudTd>
-        <MudTd DataLabel="名称">
-            @context.Name
-        </MudTd>
-        <MudTd DataLabel="标题">
-            @context.VideoTitle
-        </MudTd>
-        <MudTd DataLabel="副标题">
-            @context.SubTitle
-        </MudTd>
-        <MudTd DataLabel="标签">
-            @if (context.Tags != null)
+<link href="css/video-list.css" rel="stylesheet"/>
+
+<div class="video-list">
+    <div class="video-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-video"></i>
+            视频管理
+        </h1>
+        <p class="page-description">管理视频内容、封面、标签等信息</p>
+    </div>
+
+    <div class="video-list__toolbar">
+        <div class="video-list__toolbar-actions">
+            <button class="btn-icon" @onclick="LoadVideosAsync" disabled="@_isLoading" title="刷新">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="video-list-skeleton__grid">
+            @for (int i = 0; i < 6; i++)
             {
-                foreach (var tag in context.Tags)
-                {
-                    <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
-                }
+                <div class="video-card-skeleton">
+                    <div class="video-card-skeleton__thumbnail"></div>
+                    <div class="video-card-skeleton__info">
+                        <div class="video-card-skeleton__title"></div>
+                        <div class="video-card-skeleton__subtitle"></div>
+                    </div>
+                </div>
             }
-        </MudTd>
-        <MudTd DataLabel="描述">
-            <div style="word-wrap: break-word;white-space: pre-wrap">@context.Description</div>
-        </MudTd>
-        <MudTd>
-            <MudStack Spacing="1" Row="true">
-                <MudButton
-                    OnClick="() => PreviewCover(context.Cover)"
-                    Variant="Variant.Filled"
-                    Size="Size.Small"
-                    Color="Color.Primary">
-                    查看
-                </MudButton>
-                <MudButton
-                    OnClick="() => ShowSettingCover(context.Id)"
-                    Variant="Variant.Filled"
-                    Size="Size.Small"
-                    Color="Color.Primary">
-                    设置
-                </MudButton>
-            </MudStack>
-        </MudTd>
-        <MudTd>
-            <MudText>@context.PlayCount</MudText>
-        </MudTd>
-        <MudTd>
-            <MudText>@context.DanmakuCount</MudText>
-        </MudTd>
-        <MudTd>
-            <MudText>@context.CommentCount</MudText>
-        </MudTd>
-        <MudTd DataLabel="查看视频">
-            <MudButton Variant="Variant.Text" Color="Color.Primary"
-                       OnClick="() => PreviewVideo(context.M3u8, context.VideoTitle)">查看
-            </MudButton>
-        </MudTd>
-    </RowTemplate>
-    <RowEditingTemplate>
-        <MudTd DataLabel="目录">
-            @context.Title
-        </MudTd>
-        <MudTd DataLabel="名称">
-            <MudTextField @bind-Value="@context.Name"/>
-        </MudTd>
-        <MudTd DataLabel="标题">
-            <MudTextField @bind-Value="@context.VideoTitle"/>
-        </MudTd>
-        <MudTd DataLabel="副标题">
-            <MudTextField @bind-Value="@context.SubTitle"/>
-        </MudTd>
-        <MudTd DataLabel="标签">
-            <MudTextField @bind-Value="@context.TagsValue"/>
-        </MudTd>
-        <MudTd DataLabel="描述">
-            <MudTextField Lines="3" @bind-Value="@context.Description"/>
-        </MudTd>
-        <MudTd>
-            <MudStack Spacing="1" Row="true">
-                <MudButton
-                    OnClick="() => PreviewCover(context.Cover)"
-                    Variant="Variant.Filled"
-                    Size="Size.Small"
-                    Color="Color.Primary">
-                    查看
-                </MudButton>
-                <MudButton
-                    OnClick="() => ShowSettingCover(context.Id)"
-                    Variant="Variant.Filled"
-                    Size="Size.Small"
-                    Color="Color.Primary">
-                    设置
-                </MudButton>
-            </MudStack>
-        </MudTd>
-        <MudTd>
-            <MudText>@context.PlayCount</MudText>
-        </MudTd>
-        <MudTd>
-            <MudText>@context.DanmakuCount</MudText>
-        </MudTd>
-        <MudTd>
-            <MudText>@context.CommentCount</MudText>
-        </MudTd>
-        <MudTd DataLabel="查看视频">
-            <MudButton Variant="Variant.Text" Color="Color.Primary"
-                       OnClick="() => PreviewVideo(context.M3u8, context.VideoTitle)">查看
-            </MudButton>
-        </MudTd>
-    </RowEditingTemplate>
-</MudTable>
+        </div>
+    }
+    else
+    {
+        <div class="video-list__grid">
+            @foreach (var video in _source)
+            {
+                <div class="video-card">
+                    <div class="video-card__thumbnail" @onclick="() => PreviewVideo(video.M3u8, video.VideoTitle)">
+                        @if (!string.IsNullOrEmpty(video.Cover))
+                        {
+                            <img src="@video.Cover" alt="@video.VideoTitle"/>
+                        }
+                        <div class="video-card__play-icon">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+
+                    <div class="video-card__info">
+                        <h3 class="video-card__title">@video.VideoTitle</h3>
+                        @if (!string.IsNullOrEmpty(video.SubTitle))
+                        {
+                            <p class="video-card__subtitle">@video.SubTitle</p>
+                        }
+
+                        <div class="video-card__meta">
+                            <div class="video-card__meta-item">
+                                <i class="fas fa-play-circle"></i>
+                                <span>@video.PlayCount</span>
+                            </div>
+                            <div class="video-card__meta-item">
+                                <i class="fas fa-comment"></i>
+                                <span>@video.CommentCount</span>
+                            </div>
+                            <div class="video-card__meta-item">
+                                <i class="fas fa-closed-captioning"></i>
+                                <span>@video.DanmakuCount</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(video.Description))
+                        {
+                            <p class="video-card__description">@video.Description</p>
+                        }
+
+                        <div class="video-card__tags">
+                            @if (video.Tags != null && video.Tags.Length > 0)
+                            {
+                                @foreach (var tag in video.Tags)
+                                {
+                                    <span class="video-card__tag">@tag</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="video-card__tag video-card__tag--empty">
+                                    <i class="fas fa-tag"></i>
+                                    未设置标签
+                                </span>
+                            }
+                        </div>
+
+                        <div class="video-card__actions">
+                            <button class="video-card__action-btn" @onclick="() => EditVideo(video.Id)" title="编辑">
+                                <i class="fas fa-edit"></i>
+                                <span>编辑</span>
+                            </button>
+                            <button class="video-card__action-btn" @onclick="() => ShowSettingCover(video.Id)" title="设置封面">
+                                <i class="fas fa-image"></i>
+                                <span>封面</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

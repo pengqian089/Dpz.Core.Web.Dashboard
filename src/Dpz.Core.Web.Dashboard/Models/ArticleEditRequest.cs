@@ -1,7 +1,6 @@
-﻿namespace Dpz.Core.Web.Dashboard.Models
+﻿namespace Dpz.Core.Web.Dashboard.Models;
+
+public class ArticleEditRequest : ArticlePublishRequest
 {
-    public class ArticleEditRequest:ArticlePublishRequest
-    {
-        public string Id { get; set; }
-    }
+    public required string Id { get; set; }
 }

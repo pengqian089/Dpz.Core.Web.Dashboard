@@ -1,0 +1,407 @@
+/* Dialog Component Styles */
+
+/* Overlay */
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dialog-overlay--visible {
+    opacity: 1;
+}
+
+/* Dialog Box */
+.dialog {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9) translateY(-20px);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dialog-overlay--visible .dialog {
+    transform: scale(1) translateY(0);
+}
+
+.dialog--component {
+    max-width: 800px;
+}
+
+/* Dialog Header */
+.dialog__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dialog__close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.25rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+}
+
+.dialog__close:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+
+/* Dialog Body */
+.dialog__body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.dialog__message {
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 0.9375rem;
+}
+
+.dialog__content {
+    color: var(--text-primary);
+}
+
+.dialog__input-wrapper {
+    margin-top: var(--spacing-md);
+}
+
+.dialog__input {
+    width: 100%;
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.dialog__input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Dialog Footer */
+.dialog__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.dialog__btn {
+    padding: 10px 20px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    min-width: 80px;
+}
+
+.dialog__btn--default {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.dialog__btn--default:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+.dialog__btn--primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.dialog__btn--primary:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Toast Styles */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 12px 20px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 300px;
+    max-width: 500px;
+    pointer-events: auto;
+    animation: toast-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.is-leaving {
+    animation: toast-exit 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes toast-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes toast-exit {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.toast__icon {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.toast__content {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.toast--success {
+    border-left: 3px solid var(--success);
+}
+
+.toast--success .toast__icon {
+    color: var(--success);
+}
+
+.toast--error {
+    border-left: 3px solid var(--danger);
+}
+
+.toast--error .toast__icon {
+    color: var(--danger);
+}
+
+.toast--warning {
+    border-left: 3px solid var(--warning);
+}
+
+.toast--warning .toast__icon {
+    color: var(--warning);
+}
+
+.toast--info {
+    border-left: 3px solid var(--info);
+}
+
+.toast--info .toast__icon {
+    color: var(--info);
+}
+
+/* Notification Styles */
+.notification-box {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: var(--spacing-md);
+    position: relative;
+    overflow: hidden;
+    animation: notification-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-box--exit {
+    animation: notification-exit 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes notification-enter {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes notification-exit {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.notification-box__status-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.notification-box--success .notification-box__status-indicator {
+    background-color: var(--success);
+}
+
+.notification-box--error .notification-box__status-indicator {
+    background-color: var(--danger);
+}
+
+.notification-box--warning .notification-box__status-indicator {
+    background-color: var(--warning);
+}
+
+.notification-box--info .notification-box__status-indicator {
+    background-color: var(--info);
+}
+
+.notification-box__title {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    padding-left: var(--spacing-sm);
+}
+
+.notification-box__content-container {
+    padding-left: var(--spacing-sm);
+}
+
+.notification-box__content {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.notification-box__progress {
+    margin-top: var(--spacing-sm);
+}
+
+.notification-box__progress-track {
+    position: relative;
+    height: 20px;
+    background-color: rgba(30, 41, 59, 0.5);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.notification-box__progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+    transition: width 0.3s;
+}
+
+.notification-box__progress-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    z-index: 1;
+}
+
+.notification-box__close {
+    position: absolute;
+    right: var(--spacing-sm);
+    top: var(--spacing-sm);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.5rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.notification-box__close:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+    .dialog-overlay {
+        padding: var(--spacing-sm);
+    }
+
+    .dialog {
+        max-width: 100%;
+    }
+
+    .toast {
+        min-width: auto;
+        max-width: calc(100vw - 40px);
+    }
+
+    .notification-container {
+        width: calc(100vw - 40px) !important;
+        right: 20px !important;
+    }
+}

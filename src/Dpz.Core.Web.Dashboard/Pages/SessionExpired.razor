@@ -11,7 +11,7 @@
 @code {
     [Parameter]
     [SupplyParameterFromQuery(Name = "returnUrl")]
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
     private string ResolvedReturnUrl => string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
 }

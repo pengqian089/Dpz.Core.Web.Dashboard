@@ -1,0 +1,68 @@
+<div class="pagination">
+    <div class="pagination__info">
+        显示 @GetStartIndex() - @GetEndIndex() / 共 @TotalCount.ToString("N0") 条
+    </div>
+    
+    <div class="pagination__controls">
+        <div class="pagination__nav">
+            <button class="pagination__button" 
+                    @onclick="OnFirstPage" 
+                    disabled="@(CurrentPage == 1)">
+                <i class="fas fa-angle-double-left"></i>
+                <span class="pagination__button-text">首页</span>
+            </button>
+            <button class="pagination__button" 
+                    @onclick="OnPreviousPage" 
+                    disabled="@(CurrentPage == 1)">
+                <i class="fas fa-angle-left"></i>
+                <span class="pagination__button-text">上一页</span>
+            </button>
+        </div>
+
+        <div class="pagination__pages">
+            @foreach (var page in GetPageNumbers())
+            {
+                @if (page == -1)
+                {
+                    <span class="pagination__ellipsis">...</span>
+                }
+                else
+                {
+                    <button class="pagination__button pagination__page @(page == CurrentPage ? "pagination__button--active" : "")"
+                            @onclick="() => OnPageClick(page)">
+                        @(page)
+                    </button>
+                }
+            }
+        </div>
+
+        <div class="pagination__nav">
+            <button class="pagination__button" 
+                    @onclick="OnNextPage" 
+                    disabled="@(CurrentPage >= TotalPages)">
+                <span class="pagination__button-text">下一页</span>
+                <i class="fas fa-angle-right"></i>
+            </button>
+            <button class="pagination__button" 
+                    @onclick="OnLastPage" 
+                    disabled="@(CurrentPage >= TotalPages)">
+                <span class="pagination__button-text">末页</span>
+                <i class="fas fa-angle-double-right"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="pagination__mobile-simple">
+        <button class="pagination__button" 
+                @onclick="OnPreviousPage" 
+                disabled="@(CurrentPage == 1)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span class="pagination__current">第 @CurrentPage / @TotalPages 页</span>
+        <button class="pagination__button" 
+                @onclick="OnNextPage" 
+                disabled="@(CurrentPage >= TotalPages)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>

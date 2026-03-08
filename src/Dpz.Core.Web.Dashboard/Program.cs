@@ -3,23 +3,20 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using Dpz.Core.Web.Dashboard;
-using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-BaseAddress = builder.Configuration.GetSection("BaseAddress").Get<string>();
-if (string.IsNullOrWhiteSpace(BaseAddress))
-{
-    throw new Exception("BaseAddress is null.");
-}
+BaseAddress =
+    builder.Configuration.GetSection("BaseAddress").Get<string>() ?? throw new Exception(
+        "BaseAddress is null."
+    );
 
 builder
     .Services.AddHttpClient("ServerAPI")
@@ -43,10 +40,9 @@ builder.Services.AddOidcAuthentication(options =>
     options.UserOptions.RoleClaim = "role";
 });
 
-builder.Services.AddMudServices();
-
-CdnBaseAddress = builder.Configuration["CDNBaseAddress"];
-WebHost = builder.Configuration["SourceSite"];
+CdnBaseAddress =
+    builder.Configuration["CDNBaseAddress"] ?? throw new Exception("CDNBaseAddress is null.");
+WebHost = builder.Configuration["SourceSite"] ?? throw new Exception("SourceSite is null.");
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(BaseAddress) });
 
 RegisterInject(builder);
@@ -60,7 +56,7 @@ static void RegisterInject(WebAssemblyHostBuilder builder)
 {
     var allTypes = Assembly.GetExecutingAssembly().GetTypes();
     var injectTypes = allTypes.Where(x =>
-        x.Namespace == "Dpz.Core.Web.Dashboard.Service" && x.IsInterface
+        x is { Namespace: "Dpz.Core.Web.Dashboard.Service", IsInterface: true }
     );
     var implementAssembly = allTypes
         .Where(x =>
@@ -84,15 +80,15 @@ partial class Program
     /// <summary>
     /// web host
     /// </summary>
-    public static string WebHost { get; private set; }
+    public static string WebHost { get; private set; } = "";
 
     /// <summary>
     /// API base address
     /// </summary>
-    public static string BaseAddress { get; private set; }
+    public static string BaseAddress { get; private set; } = "";
 
     /// <summary>
     /// CDN
     /// </summary>
-    public static string CdnBaseAddress { get; private set; }
+    public static string CdnBaseAddress { get; private set; } = "";
 }

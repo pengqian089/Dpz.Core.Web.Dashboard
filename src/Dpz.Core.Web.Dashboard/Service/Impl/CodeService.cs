@@ -1,19 +1,27 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Dpz.Core.EnumLibrary;
 using Dpz.Core.Web.Dashboard.Models;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
-public class CodeService:ICodeService
+public class CodeService(IHttpService httpService) : ICodeService
 {
-    private readonly IHttpService _httpService;
-
-    public CodeService(IHttpService httpService)
+    private static CodeNoteTree EmptyTree()
     {
-        _httpService = httpService;
+        return new CodeNoteTree
+        {
+            IsRoot = false,
+            IsDirectory = true,
+            Directories = [],
+            Files = [],
+            ParentPaths = [],
+            CurrentPaths = [],
+            Type = FileSystemType.NoExists,
+        };
     }
 
-    public async Task<CodeNoteTree> GetTreeAsync(params string[] path)
+    public async Task<CodeNoteTree> GetTreeAsync(params string[]? path)
     {
         var parameters = "";
         if (path is not null && path.Length > 0)
@@ -21,16 +29,17 @@ public class CodeService:ICodeService
             parameters = string.Join("&", path.Select(x => $"path={x}"));
             parameters = "?" + parameters;
         }
-        return await _httpService.GetAsync<CodeNoteTree>("/api/Code" + parameters);
+        return await httpService.GetAsync<CodeNoteTree>("/api/Code" + parameters) ?? EmptyTree();
     }
 
     public async Task SaveNoteAsync(CodeSaveModel model)
     {
-        await _httpService.PostAsync("/api/Code", model);
+        await httpService.PostAsync("/api/Code", model);
     }
-    
+
     public async Task<CodeNoteTree> SearchAsync(string keyword)
     {
-        return await _httpService.GetAsync<CodeNoteTree>($"/api/Code/search?keyword={keyword}");
+        return await httpService.GetAsync<CodeNoteTree>($"/api/Code/search?keyword={keyword}")
+            ?? EmptyTree();
     }
 }

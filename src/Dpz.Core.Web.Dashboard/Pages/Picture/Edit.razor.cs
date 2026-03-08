@@ -1,162 +1,101 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Picture;
 
-public partial class Edit
+public partial class Edit(
+    IAppDialogService appDialogService,
+    NavigationManager navigationManager,
+    IPictureService pictureService,
+    IJSRuntime jsRuntime
+) : IAsyncDisposable
 {
-    [Parameter]
-    public string Id { get; set; }
-
-    [Inject]
-    private IPictureService PictureService { get; set; }
-
-    [Inject]
-    private ISnackbar Snackbar { get; set; }
-
-    [Inject]
-    private NavigationManager Navigation { get; set; }
-
-    [Inject]
-    private IJSRuntime JsRuntime { get; set; }
-
-    private bool _isPosting;
-
-    private readonly PostPicture _picture = new();
-
+    private bool _editPicture;
+    private EditPictureRequest _picture = new() { Id = "" };
     private List<string> _tags = [];
+    private IJSObjectReference? _jsModule;
+    private bool _pictureLoaded;
 
-    private bool _isLoading;
+    [Parameter]
+    public string? Id { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        _tags = await PictureService.GetTagsAsync();
-        await base.OnInitializedAsync();
-    }
+        _tags = await pictureService.GetTagsAsync();
+        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./Pages/Picture/Edit.razor.js"
+        );
 
-    private async Task PostPictureAsync()
-    {
-        Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-        Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-        if (string.IsNullOrEmpty(Id))
+        if (!string.IsNullOrWhiteSpace(Id))
         {
-            Snackbar.Add("参数错误", Severity.Warning);
-            return;
-        }
-
-        if (_picture.Image != null && !_picture.Image.ContentType.StartsWith("image/"))
-        {
-            Snackbar.Add("请选择图片", Severity.Warning);
-            return;
-        }
-
-        //StateHasChanged();
-        _isPosting = true;
-        using var content = new MultipartFormDataContent();
-
-        if (_picture.Image != null)
-        {
-            var fileContent = new StreamContent(
-                _picture.Image.OpenReadStream(AppTools.MaxFileSize)
-            );
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(_picture.Image.ContentType);
-            content.Add(content: fileContent, name: "\"image\"", fileName: _picture.Image.Name);
-        }
-
-        AppTools.DebugOutPut(_picture.AdditionsTags);
-        AppTools.DebugOutPut(_picture.Tags);
-        // 处理标签
-        var tags =
-            _picture
-                .AdditionsTags?.Split(",")
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrEmpty(x))
-                .ToList() ?? [];
-        if (_picture.Tags?.Count > 0)
-            tags.AddRange(_picture.Tags);
-        tags = tags.Distinct().ToList();
-        await PictureService.EditAsync(
-            new
+            var response = await pictureService.GetPictureAsync(Id);
+            if (response != null)
             {
-                Id,
-                Tags = tags,
-                _picture.Description,
+                _picture = new EditPictureRequest
+                {
+                    Id = response.Id,
+                    Tags = response.Tags.ToList(),
+                    Description = response.Description,
+                    ImageUrl = response.AccessUrl,
+                    FileName = response.AccessUrl.Split('/').LastOrDefault() ?? "",
+                    Length = response.Length,
+                };
+                _pictureLoaded = true;
             }
-        );
-        Navigation.NavigateTo("/picture");
+        }
     }
 
-    private Dictionary<string, long> _selectedFiles = new();
-
-    private async Task OnInputFileChanged(InputFileChangeEventArgs e)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var imageFile = e.File;
-        if (!imageFile.ContentType.StartsWith("image/"))
+        if (_pictureLoaded && _jsModule != null && !string.IsNullOrWhiteSpace(_picture.ImageUrl))
         {
-            _picture.Image = null;
-            Snackbar.Add("请选择图片", Severity.Warning);
+            _pictureLoaded = false;
+            await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+        }
+    }
+
+    private async Task EditPictureAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_picture.Id))
+        {
             return;
         }
 
-        _selectedFiles = new() { { imageFile.Name, imageFile.Size } };
-        _picture.Image = imageFile;
-
-        var resizedImage = await imageFile.RequestImageFileAsync(imageFile.ContentType, 1000, 1000);
-        var jsImageStream = resizedImage.OpenReadStream();
-        var dotnetImageStream = new DotNetStreamReference(jsImageStream);
-        await JsRuntime.InvokeVoidAsync(
-            "setImageUsingStreaming",
-            "imagePreview",
-            dotnetImageStream
-        );
-    }
-
-    private string _imageSrc = "";
-
-    protected override async Task OnParametersSetAsync()
-    {
-        _isLoading = true;
-        var picture = await PictureService.GetPictureAsync(Id);
-        if (picture != null)
+        try
         {
-            _picture.Description = picture.Description;
-            _picture.Tags = picture.Tags.ToList();
-            _selectedFiles = new Dictionary<string, long>
-            {
-                { picture.AccessUrl ?? "暂无图片", picture.Length },
-            };
-            _imageSrc = picture.AccessUrl;
+            _editPicture = true;
+            await pictureService.EditAsync(_picture);
+            appDialogService.Toast("图像信息更新成功", ToastType.Success);
+            navigationManager.NavigateTo("/picture");
         }
-
-        _isLoading = false;
-        await base.OnParametersSetAsync();
+        catch (Exception exception)
+        {
+            appDialogService.Toast(exception.Message, ToastType.Error);
+        }
+        finally
+        {
+            _editPicture = false;
+        }
     }
 
-    private class PostPicture
+    private void HandleNewTagAdded(string tag)
     {
-        public string Description { get; set; }
-
-        public List<string> Tags { get; set; }
-
-        public string AdditionsTags { get; set; }
-
-        public IBrowserFile Image { get; set; }
+        appDialogService.Toast($"标签 '{tag}' 已添加", ToastType.Success);
     }
 
-    private void OnTagsSelected(IEnumerable<string> tags)
+    public async ValueTask DisposeAsync()
     {
-        _picture.Tags = tags.ToList();
+        if (_jsModule != null)
+        {
+            await _jsModule.DisposeAsync();
+        }
     }
 }

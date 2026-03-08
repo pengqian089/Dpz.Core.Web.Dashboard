@@ -1,53 +1,60 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Component;
+﻿using System.Threading.Tasks;
+
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Mumble
+namespace Dpz.Core.Web.Dashboard.Pages.Mumble;
+
+public partial class Post(
+    IMumbleService mumbleService,
+    IAppDialogService dialogService,
+    NavigationManager navigation)
+    : ComponentBase
 {
-    public partial class Post
+    private readonly object _model = new();
+    private bool _isPublishing;
+    private MarkdownEditor? _editor;
+
+    private async Task PostDataAsync(EditContext context)
     {
-        [Inject]private IJSRuntime JsRuntime { get; set; }
-
-        [Inject]private IMumbleService MumbleService { get; set; }
-
-        [Inject]private ISnackbar Snackbar { get; set; }
-
-        [Inject]private NavigationManager Navigation { get; set; }
-
-        private readonly object _t = new();
-
-        private bool _isPublishing = false;
-        private MarkdownEditor _editor;
-        
-        private async Task PostDataAsync(EditContext context)
+        if (_editor == null)
         {
-            var markdown = await _editor.GetValueAsync();
-            var content = Markdown.ToHtml(markdown);
-            if (string.IsNullOrEmpty(markdown) || string.IsNullOrEmpty(content))
-            {
-                Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-                Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-                Snackbar.Add("请输入内容", Severity.Warning);
-                return;
-            }
-
-            _isPublishing = true;
-            StateHasChanged();
-            await MumbleService.CreateAsync(markdown, content);
-            await _editor.DisposeAsync();
-            Navigation.NavigateTo("/mumble");
+            dialogService.Toast("编辑器未初始化", ToastType.Error);
+            return;
         }
 
-        private async Task<string> UploadAsync(MultipartFormDataContent arg)
+        var markdown = await _editor.GetValueAsync();
+        if (string.IsNullOrWhiteSpace(markdown))
         {
-            return await MumbleService.UploadAsync(arg);
+            dialogService.Toast("请输入内容", ToastType.Warning);
+            return;
+        }
+
+        var content = Markdown.ToHtml(markdown);
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            dialogService.Toast("内容解析失败", ToastType.Error);
+            return;
+        }
+
+        _isPublishing = true;
+        StateHasChanged();
+
+        try
+        {
+            await mumbleService.CreateAsync(markdown, content);
+            dialogService.Toast("发布成功", ToastType.Success);
+            navigation.NavigateTo("/mumble");
+        }
+        catch
+        {
+            dialogService.Toast("发布失败，请重试", ToastType.Error);
+            _isPublishing = false;
+            StateHasChanged();
         }
     }
 }

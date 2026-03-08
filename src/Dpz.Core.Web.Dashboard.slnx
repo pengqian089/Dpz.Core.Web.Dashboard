@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/docs/">
+    <File Path="../EncodingConventions.md" />
+    <File Path="../README.md" />
+  </Folder>
+  <Project Path="Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj" />
+</Solution>

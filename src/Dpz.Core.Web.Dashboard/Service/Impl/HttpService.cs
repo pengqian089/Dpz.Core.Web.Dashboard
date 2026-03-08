@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -12,25 +11,29 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Dpz.Core.Web.Dashboard.Helper;
-using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
 public class HttpService(
     ILogger<HttpService> logger,
     IHttpClientFactory httpClientFactory,
-    NavigationManager navigation
+    NavigationManager navigation,
+    IJSRuntime jsRuntime,
+    IAccessTokenProvider tokenProvider
 ) : IHttpService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("ServerAPI");
+    private IJSObjectReference? _uploadModule;
 
-    /// <summary>
-    /// 缓存数据
-    /// </summary>
-    private static readonly Dictionary<string, object> CacheResponseData = new();
+    private static readonly JsonSerializerOptions PagedSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
 
     private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
@@ -97,7 +100,6 @@ public class HttpService(
                     request.RequestUri
                 );
                 NavigateToSessionExpired();
-                return;
             }
         }
         finally
@@ -112,17 +114,14 @@ public class HttpService(
         PropertyNameCaseInsensitive = true,
     };
 
-    private async Task<T> SendRequestAsync<T>(
+    private async Task<T?> SendRequestAsync<T>(
         HttpRequestMessage request,
-        Action<HttpResponseMessage> action = null
+        Action<HttpResponseMessage>? action = null
     )
     {
         await SemaphoreSlim.WaitAsync();
         try
         {
-            // ETag
-            var eTagKey = $"{request.RequestUri}|{request.Method}|ETag";
-
             request.Headers.CacheControl = new CacheControlHeaderValue
             {
                 NoCache = true,
@@ -150,23 +149,11 @@ public class HttpService(
                 logger.LogDebug("request error:{Error}", error);
             }
 
-            // 处理304缓存
-            if (response.StatusCode == HttpStatusCode.NotModified)
-            {
-                if (CacheResponseData.TryGetValue(eTagKey, out var value))
-                {
-                    return (T)value;
-                }
-
-                return default;
-            }
-
             action?.Invoke(response);
 
             if (typeof(T) == typeof(string))
             {
                 object content = await response.Content.ReadAsStringAsync();
-                CacheResponseData[eTagKey] = content;
                 return (T)content;
             }
 
@@ -177,8 +164,6 @@ public class HttpService(
 
             var json = await response.Content.ReadAsStringAsync();
             var responseData = JsonSerializer.Deserialize<T>(json, JsonSerializerOptions);
-
-            CacheResponseData[eTagKey] = responseData;
             return responseData;
         }
         catch (AccessTokenNotAvailableException ex)
@@ -209,7 +194,7 @@ public class HttpService(
         }
     }
 
-    private static string HandleParameter(string uri, object value)
+    private static string HandleParameter(string uri, object? value)
     {
         if (value == null)
         {
@@ -238,7 +223,7 @@ public class HttpService(
         return newUri;
     }
 
-    public async Task<T> GetAsync<T>(string uri, object value = null)
+    public async Task<T?> GetAsync<T>(string uri, object? value = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(uri, value));
         return await SendRequestAsync<T>(request);
@@ -248,7 +233,7 @@ public class HttpService(
         string uri,
         int pageIndex = 1,
         int pageSize = 10,
-        object value = null
+        object? value = null
     )
     {
         var pageUri = $"{uri}?pageIndex={pageIndex}&pageSize={pageSize}";
@@ -263,13 +248,19 @@ public class HttpService(
                 {
                     pagination = JsonSerializer.Deserialize<Pagination>(
                         xPagination,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        PagedSerializerOptions
                     );
                 }
             }
         );
+
+        if (list == null)
+        {
+            return PagedList<T>.Empty();
+        }
+
         var pagedList = new PagedList<T>(
-            list ?? new List<T>(),
+            list,
             pagination.CurrentPage,
             pagination.PageSize,
             pagination.TotalCount
@@ -277,18 +268,23 @@ public class HttpService(
         return pagedList;
     }
 
-    public async Task<T> PostAsync<T>(string uri, object value)
+    public async Task<T?> PostAsync<T>(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, uri);
         if (value != null)
+        {
             request.Content = JsonContent.Create(value);
+        }
+
         return await SendRequestAsync<T>(request);
     }
 
-    public async Task PostAsync(string uri, object value)
+    public async Task PostAsync(string uri, object? value)
     {
         if (uri == null)
+        {
             throw new ArgumentNullException(nameof(uri));
+        }
         var request = new HttpRequestMessage(HttpMethod.Post, uri);
         if (value != null)
         {
@@ -311,58 +307,70 @@ public class HttpService(
         request.Content = httpContent;
     }
 
-    public async Task<T> PutAsync<T>(string uri, object value)
+    public async Task<T?> PutAsync<T>(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Put, uri);
         if (value != null)
+        {
             request.Content = JsonContent.Create(value);
+        }
         return await SendRequestAsync<T>(request);
     }
 
-    public async Task PutAsync(string uri, object value)
+    public async Task PutAsync(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Put, uri);
         if (value != null)
+        {
             request.Content = JsonContent.Create(value);
+        }
         await SendRequestAsync(request);
     }
 
-    public async Task<T> PatchAsync<T>(string uri, object value)
+    public async Task<T?> PatchAsync<T>(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Patch, uri);
         if (value != null)
+        {
             SetHttpContent(value, request);
+        }
         return await SendRequestAsync<T>(request);
     }
 
-    public async Task PatchAsync(string uri, object value)
+    public async Task PatchAsync(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Patch, uri);
         if (value != null)
+        {
             SetHttpContent(value, request);
+        }
         await SendRequestAsync(request);
     }
 
-    public async Task<T> DeleteAsync<T>(string uri, object value)
+    public async Task<T?> DeleteAsync<T>(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, uri);
         if (value != null)
+        {
             request.Content = JsonContent.Create(value);
+        }
         return await SendRequestAsync<T>(request);
     }
 
-    public async Task DeleteAsync(string uri, object value)
+    public async Task DeleteAsync(string uri, object? value)
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, uri);
         if (value != null)
+        {
             request.Content = JsonContent.Create(value);
+        }
         await SendRequestAsync(request);
     }
 
-    public async Task<T> PostFileAsync<T>(
+    public async Task<T?> PostFileAsync<T>(
         string uri,
         MultipartFormDataContent content,
-        HttpMethod method = null
+        HttpMethod? method = null
     )
     {
         var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
@@ -373,11 +381,115 @@ public class HttpService(
     public async Task PostFileAsync(
         string uri,
         MultipartFormDataContent content,
-        HttpMethod method = null
+        HttpMethod? method = null
     )
     {
         var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
         request.Content = content;
         await SendRequestAsync(request);
+    }
+
+    private async Task<IJSObjectReference> GetUploadModuleAsync()
+    {
+        if (_uploadModule != null)
+        {
+            return _uploadModule;
+        }
+
+        _uploadModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./js/modules/upload-interop.js"
+        );
+        return _uploadModule;
+    }
+
+    public async Task PostFileWithProgressAsync(
+        string uri,
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await PostFileWithProgressAsync<string>(uri, files, fields, progress, cancellationToken);
+    }
+
+    public async Task<T?> PostFileWithProgressAsync<T>(
+        string uri,
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<UploadFormField>? fields = null,
+        IProgress<int>? progress = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (files == null || files.Count == 0)
+        {
+            throw new ArgumentException("files is empty.");
+        }
+
+        if (!uri.StartsWith(Program.BaseAddress))
+        {
+            uri = Program.BaseAddress + uri;
+        }
+
+        var tokenResult = await tokenProvider.RequestAccessToken();
+        if (!tokenResult.TryGetToken(out var accessToken))
+        {
+            NavigateToSessionExpired();
+            return default;
+        }
+
+        var module = await GetUploadModuleAsync();
+        var progressReporter = new UploadProgressReporter(progress);
+        using var progressRef = DotNetObjectReference.Create(progressReporter);
+
+        var jsFiles = new List<object>(files.Count);
+        var streamRefs = new List<DotNetStreamReference>(files.Count);
+        foreach (var file in files)
+        {
+            var streamRef = new DotNetStreamReference(file.Content);
+            streamRefs.Add(streamRef);
+            jsFiles.Add(
+                new
+                {
+                    name = file.Name,
+                    fileName = file.FileName,
+                    contentType = file.ContentType,
+                    stream = streamRef,
+                }
+            );
+        }
+
+        try
+        {
+            var response = await module.InvokeAsync<string?>(
+                "uploadFormWithProgress",
+                cancellationToken,
+                jsFiles,
+                fields ?? [],
+                uri,
+                accessToken.Value,
+                progressRef
+            );
+
+            if (typeof(T) == typeof(string))
+            {
+                return (T?)(object?)response;
+            }
+
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return default;
+            }
+
+            return JsonSerializer.Deserialize<T>(response, JsonSerializerOptions);
+        }
+        finally
+        {
+            foreach (var streamRef in streamRefs)
+            {
+                streamRef.Dispose();
+            }
+        }
     }
 }

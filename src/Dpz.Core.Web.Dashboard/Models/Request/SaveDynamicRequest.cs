@@ -8,7 +8,7 @@ public class SaveDynamicRequest
     /// <summary>
     /// HTML 内容
     /// </summary>
-    public HtmlContent HtmlContent { get; set; }
+    public required HtmlContent HtmlContent { get; set; }
 
     /// <summary>
     /// 样式 内容

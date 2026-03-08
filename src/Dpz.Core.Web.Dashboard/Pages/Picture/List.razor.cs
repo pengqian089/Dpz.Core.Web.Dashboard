@@ -1,107 +1,148 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Dpz.Core.EnumLibrary;
+using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Picture
+namespace Dpz.Core.Web.Dashboard.Pages.Picture;
+
+public partial class List(
+    IPictureService pictureService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+) : ComponentBase
 {
-    public partial class List
+    private int _pageIndex = 1;
+    private int _totalPages;
+    private int _totalCount;
+    private const int PageSize = 10;
+
+    private string _tag = "";
+    private string _description = "";
+    private int _pictureType = -1;
+    private string _viewMode = "grid";
+
+    private List<string> _tags = [];
+    private List<PictureResponseModel> _pictures = [];
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject] private IPictureService PictureService { get; set; }
+        ReadQueryParameters();
+        _tags = await pictureService.GetTagsAsync();
+        await LoadDataAsync();
+    }
 
-        [Inject] private NavigationManager Navigation { get; set; }
+    private void ReadQueryParameters()
+    {
+        var uri = new Uri(navigation.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query);
 
-        [Inject] private IDialogService DialogService { get; set; }
-
-        #region query parameter
-        private int _pageIndex = 1;
-
-        private const int PageSize = 12;
-
-        private string _tag = "";
-
-        private string _description = "";
-
-        private int _pictureType = -1;
-
-        #endregion
-
-
-        private List<string> _tags = new();
-
-        private MudTable<PictureResponseModel> _table;
-
-        private readonly Func<int, string> _convert = x => Enum.ToObject(typeof(PictureType), x).ToString();
-
-        #region temp
-        private string _tempTag = "";
-
-        private string _tempDescription = "";
-
-        private int _tempPictureType = -1;
-        #endregion
-
-
-        protected override async Task OnInitializedAsync()
+        if (int.TryParse(query["page"], out var page) && page > 0)
         {
-            _tempTag = _tag;
-            _tempDescription = _description;
-            _tempPictureType = _pictureType;
-
-            _tags = await PictureService.GetTagsAsync();
-            await base.OnInitializedAsync();
+            _pageIndex = page;
         }
 
-        private async Task<TableData<PictureResponseModel>> LoadDataAsync(TableState state)
+        _tag = query["tag"] ?? "";
+        _description = query["description"] ?? "";
+
+        if (int.TryParse(query["type"], out var type))
         {
-            if (_tag == _tempTag && _description == _tempDescription && _pictureType == _tempPictureType)
-            {
-                _pageIndex = state.Page + 1;
-            }
-            else
-            {
-                _tempTag = _tag;
-                _tempDescription = _description;
-                _tempPictureType = _pictureType;
-            }
-            var list = await PictureService.GetPageAsync(_tag,_description,_pictureType,_pageIndex, PageSize);
-            return new TableData<PictureResponseModel>()
-            {
-                TotalItems = list.TotalItemCount,
-                Items = list
-            };
+            _pictureType = type;
         }
 
-        private void Search()
-        {
-            _table.ReloadServerData();
-        }
+        _viewMode = query["view"] ?? "grid";
+    }
 
-        private void PostPicture()
-        {
-            Navigation.NavigateTo("/picture/post");
-        }
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
 
-        private void EditPicture(string id)
-        {
-            Navigation.NavigateTo($"/picture/edit/{id}");
-        }
+        var result = await pictureService.GetPageAsync(
+            _tag,
+            _description,
+            _pictureType,
+            _pageIndex
+        );
 
-        private async Task DeleteAsync(string id)
+        _pictures = result.ToList();
+        _totalCount = result.TotalItemCount;
+        _totalPages = result.TotalPageCount;
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private void UpdateUrl()
+    {
+        var queryParams = new Dictionary<string, string?>
         {
-            var result = await DialogService.ShowMessageBox(
-                "提示",
-                "删除后不能恢复，确定删除？",
-                yesText: "删除!", cancelText: "取消");
-            if (result == true)
-            {
-                await PictureService.DeleteAsync(id);
-                await _table.ReloadServerData();
-            }
+            ["page"] = _pageIndex > 1 ? _pageIndex.ToString() : null,
+            ["tag"] = !string.IsNullOrEmpty(_tag) ? _tag : null,
+            ["description"] = !string.IsNullOrEmpty(_description) ? _description : null,
+            ["type"] = _pictureType >= 0 ? _pictureType.ToString() : null,
+            ["view"] = _viewMode != "grid" ? _viewMode : null,
+        };
+
+        var filteredParams = queryParams
+            .Where(kvp => kvp.Value != null)
+            .Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value!)}");
+
+        var queryString = string.Join("&", filteredParams);
+        var newUrl = string.IsNullOrEmpty(queryString) ? "/picture" : $"/picture?{queryString}";
+
+        navigation.NavigateTo(newUrl, forceLoad: false);
+    }
+
+    private async Task Search()
+    {
+        _pageIndex = 1;
+        UpdateUrl();
+        await LoadDataAsync();
+    }
+
+    private async Task HandlePageChanged(int newPage)
+    {
+        _pageIndex = newPage;
+        UpdateUrl();
+        await LoadDataAsync();
+    }
+
+    private void ToggleViewMode(string mode)
+    {
+        _viewMode = mode;
+        UpdateUrl();
+        StateHasChanged();
+    }
+
+    private void PostPicture()
+    {
+        navigation.NavigateTo("/picture/post");
+    }
+
+    private void EditPicture(string id)
+    {
+        navigation.NavigateTo($"/picture/edit/{id}");
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        var confirmed = await dialogService.ConfirmAsync("删除后不能恢复，确定删除？", "提示");
+        if (confirmed)
+        {
+            await pictureService.DeleteAsync(id);
+            await LoadDataAsync();
         }
+    }
+
+    private string GetPictureTypeText(PictureType type)
+    {
+        return type.ToString();
     }
 }

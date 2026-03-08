@@ -1,99 +1,128 @@
-﻿@page "/picture/post"
-@using System.Linq
+@page "/picture/post"
 @attribute [Authorize]
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">创建图像</MudText>
-<MudOverlay Visible="_isPosting" ZIndex="9999" DarkBackground="true">
-    <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-</MudOverlay>
-<EditForm Model="_picture" OnValidSubmit="PostPictureAsync">
-    <MudExpansionPanels>
-        <MudExpansionPanel Text="表单验证">
-            <MudText Color="@Color.Error">
-                <ValidationSummary/>
-            </MudText>
-        </MudExpansionPanel>
-    </MudExpansionPanels>
-    <MudCard>
-        <MudCardContent>
-            <DataAnnotationsValidator/>
-            <MudGrid>
-                <MudItem xs="12" md="12">
-                    <InputFile OnChange="OnInputFileChanged" id="fileInput112" hidden accept="@(string.Join(',', AppTools.ImageExtensions.Select(x => '.' + x)))"/>
 
-                    <MudButton HtmlTag="label"
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.CloudUpload"
-                               for="fileInput112">
-                        点击选择要上传的图片
-                    </MudButton>
-                    <MudList Style="padding:2em;width:100%;" Dense="true" T="string">
-                        <Preview></Preview>
-                        @foreach (var file in _selectedFiles)
-                        {
-                            <MudListItem @key="@file">
-                                <MudChip Color="Color.Dark"
-                                         Style="width:60px; overflow:hidden;"
-                                         Text="@(file.Key.Split(".").Last())"/>
-                                @file.Key
-                                <MudChip Color="Color.Dark"
-                                         Style="overflow:hidden;"
-                                         Text="@(file.Value.FileSize())"/>
-                            </MudListItem>
-                        }
-                    </MudList>
-                </MudItem>
+<div class="picture-form">
+    <div class="picture-form__header">
+        <h1 class="picture-form__title">上传图片</h1>
+        <p class="picture-form__description">选择并上传新的图片资源到系统</p>
+    </div>
 
-                <MudItem xs="12" md="12">
-                    <MudSelect T="string"
-                               Label="标签"
-                               HelperText="请选择标签"
-                               MultiSelection="true"
-                               ToStringFunc="x => x"
-                               SelectedValuesChanged="OnTagsSelected"
-                               SelectedValues="_picture.Tags">
-                        @foreach (var state in _tags)
+    <EditForm Model="_picture" OnValidSubmit="PostPictureAsync">
+        <DataAnnotationsValidator />
+
+        <div class="picture-form__content">
+            <div class="picture-form__main">
+                <div class="upload-section">
+                    <div class="upload-section__header">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>选择图片文件</span>
+                    </div>
+                    <div class="upload-section__body">
+                        <InputFile OnChange="OnInputFileChanged" id="fileInput" hidden accept="@(string.Join(',', AppTools.ImageExtensions.Select(x => '.' + x)))" />
+
+                        <label for="fileInput" class="upload-area">
+                            <div class="upload-area__icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="upload-area__title">点击或拖拽图片到此处上传</div>
+                            <div class="upload-area__hint">支持 @string.Join(", ", AppTools.ImageExtensions.Take(5)) 等格式</div>
+                        </label>
+
+                        @if (_selectedFiles.Any())
                         {
-                            <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
+                            <div class="file-list">
+                                @foreach (var file in _selectedFiles)
+                                {
+                                    <div class="file-list__item">
+                                        <div class="file-list__icon">
+                                            <i class="fas fa-file-image"></i>
+                                        </div>
+                                        <div class="file-list__info">
+                                            <div class="file-list__name">@file.Key</div>
+                                            <div class="file-list__size">@file.Value.FileSize()</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="preview-image pswp-gallery">
+                                <img id="imagePreview" alt="预览" />
+                            </div>
                         }
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" md="12">
-                    <MudTextField T="string"
-                                  HelperText="上面标签不满足时，在此输入补充标签，多个标签以[,](英文逗号)隔开"
-                                  Immediate="true"
-                                  Label="补充标签"
-                                  @bind-value="_picture.AdditionsTags"
-                                  For="@(() => _picture.AdditionsTags)"
-                                  Variant="Variant.Text">
-                    </MudTextField>
-                </MudItem>
-                <MudItem xs="12" md="12">
-                    <MudTextField T="string"
-                                  HelperText="图像描述"
-                                  Immediate="true"
-                                  Label="描述"
-                                  Lines="5"
-                                  @bind-value="_picture.Description"
-                                  For="@(() => _picture.Description)"
-                                  Variant="Variant.Text">
-                    </MudTextField>
-                </MudItem>
-            </MudGrid>
-        </MudCardContent>
-        <MudCardActions>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPosting" Color="Color.Primary">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <i class="fas fa-tags"></i>
+                        <span>标签选择</span>
+                    </div>
+                    <div class="form-section__body">
+                        <TagSelector AvailableTags="_tags"
+                                     @bind-SelectedTags="_selectedTags"
+                                     ShowLabel="true"
+                                     AddNewPlaceholder="输入新标签"
+                                     HelperText="选择或添加适合的标签，便于后续查找和管理图片"
+                                     OnNewTagAdded="HandleNewTagAdded" />
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <i class="fas fa-align-left"></i>
+                        <span>图片描述</span>
+                    </div>
+                    <div class="form-section__body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-file-alt"></i>
+                                <span>描述内容</span>
+                            </label>
+                            <textarea class="form-input form-textarea"
+                                      rows="5"
+                                      placeholder="请输入图片描述信息..."
+                                      @bind="_picture.Description"></textarea>
+                            <div class="form-helper">
+                                <i class="fas fa-info-circle"></i>
+                                <span>简要描述图片内容，便于后续查找和管理</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="picture-form__actions">
+            <button type="submit" class="btn btn-success btn-lg" disabled="@_isPosting">
                 @if (_isPosting)
                 {
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                    <MudText Class="ms-2">正在上传</MudText>
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>正在上传</span>
                 }
                 else
                 {
-                    <MudText>上传</MudText>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>上传图片</span>
                 }
-            </MudButton>
-            <MudButton Variant="Variant.Filled" Href="/picture">返回列表</MudButton>
-        </MudCardActions>
-    </MudCard>
-</EditForm>
+            </button>
+            <a href="/picture" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i>
+                <span>返回列表</span>
+            </a>
+        </div>
+    </EditForm>
+
+    @if (_isPosting)
+    {
+        <div class="picture-form__loading-overlay">
+            <div class="picture-form__loading-content">
+                <div class="picture-form__loading-spinner"></div>
+                <div class="picture-form__loading-text">正在上传图片，请稍候...</div>
+                <div class="picture-form__progress">
+                    <div class="picture-form__progress-bar" style="width: @(_uploadProgress)%"></div>
+                </div>
+                <div class="picture-form__progress-text">@_uploadProgress%</div>
+            </div>
+        </div>
+    }
+</div>

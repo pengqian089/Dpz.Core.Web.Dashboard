@@ -16,16 +16,18 @@ else
 }
 
 
-@code{
-    [Parameter] public string SearchWord { get; set; }
+@code {
+    [Parameter] public string? SearchWord { get; set; }
 
     [Required, Parameter] public required string ItemName { get; set; }
 
 
-    (string first, string keyword, string end) MatchKeyword()
+    (string first, string? keyword, string? end) MatchKeyword()
     {
         if (string.IsNullOrEmpty(SearchWord))
+        {
             return (ItemName, null, null);
+        }
 
         var startIndex = ItemName.IndexOf(SearchWord, StringComparison.CurrentCultureIgnoreCase);
         if (startIndex >= 0)

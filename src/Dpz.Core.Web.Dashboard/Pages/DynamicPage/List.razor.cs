@@ -1,81 +1,149 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using MudBlazor;
+using Microsoft.AspNetCore.Components.Web;
 
-namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage
+namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage;
+
+public partial class List(
+    IDynamicPageService dynamicPageService,
+    IAppDialogService dialogService
+)
 {
-    public partial class List
+    private const int PageSize = 10;
+    private int _pageIndex = 1;
+    private int _totalCount;
+    private int _totalPages;
+    private bool _isLoading = true;
+    private string _keyword = "";
+    private string _tempKeyword = "";
+    private List<DynamicPageListModel> _pages = [];
+
+    protected override async Task OnInitializedAsync()
     {
-        
-        [Inject] private IDynamicPageService DynamicPageService { get; set; }
+        _tempKeyword = _keyword;
+        await LoadDataAsync();
+    }
 
-        [Inject] private IDialogService DialogService { get; set; }
-
-        [Inject] private IJSRuntime JsRuntime { get; set; }
-
-        #region query parameter
-
-        private int _pageIndex = 1;
-
-        private const int PageSize = 12;
-
-        private string _id = "";
-
-        #endregion
-
-        private MudTable<DynamicPageListModel> _table;
-
-        #region temp
-
-        private string _tempId = "";
-
-        #endregion
-
-
-        protected override async Task OnInitializedAsync()
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+        try
         {
-            _tempId = _id;
-            await base.OnInitializedAsync();
-        }
-
-        private async Task<TableData<DynamicPageListModel>> LoadDataAsync(TableState state)
-        {
-            if (_id == _tempId)
+            if (_keyword != _tempKeyword)
             {
-                _pageIndex = state.Page + 1;
-            }
-            else
-            {
-                _tempId = _id;
+                _tempKeyword = _keyword;
+                _pageIndex = 1;
             }
 
-            var list = await DynamicPageService.GetPageAsync(_id, _pageIndex, PageSize);
-            return new TableData<DynamicPageListModel>()
-            {
-                TotalItems = list.TotalItemCount,
-                Items = list
-            };
+            var list = await dynamicPageService.GetPageAsync(_keyword, _pageIndex, PageSize);
+            _pages = list.ToList();
+            _totalCount = list.TotalItemCount;
+            _totalPages = list.TotalPageCount;
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"加载失败：{ex.Message}", ToastType.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Search()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task Reload()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+
+    private async Task HandlePageChanged(int page)
+    {
+        if (page < 1 || page > _totalPages || page == _pageIndex)
+        {
+            return;
         }
 
-        private void Search()
+        _pageIndex = page;
+        await LoadDataAsync();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
         {
-            _table.ReloadServerData();
+            dialogService.Toast("参数错误", ToastType.Warning);
+            return;
         }
 
-        private async Task DeleteAsync(string id)
+        var confirmed = await dialogService.ConfirmAsync(
+            "删除后不能恢复，确定删除？",
+            "确认删除"
+        );
+        if (!confirmed)
         {
-            var result = await DialogService.ShowMessageBox(
-                "提示",
-                "删除后不能恢复，确定删除？",
-                yesText: "删除!", cancelText: "取消");
-            if (result == true)
-            {
-                await DynamicPageService.DeleteAsync(id);
-                await _table.ReloadServerData();
-            }
+            return;
         }
+
+        try
+        {
+            await dynamicPageService.DeleteAsync(id);
+            dialogService.Toast("删除成功", ToastType.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"删除失败：{ex.Message}", ToastType.Error);
+        }
+    }
+
+    private static string GetCreatorName(DynamicPageListModel model)
+    {
+        if (!string.IsNullOrWhiteSpace(model.Creator?.Name))
+        {
+            return model.Creator.Name;
+        }
+
+        return "未知";
+    }
+
+    private static string GetContentType(DynamicPageListModel model)
+    {
+        if (!string.IsNullOrWhiteSpace(model.ContentTypeStr))
+        {
+            return model.ContentTypeStr;
+        }
+
+        return "未知";
+    }
+
+    private static string BuildPreviewUrl(string id)
+    {
+        var baseUrl = Program.WebHost.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return $"{baseUrl}/act";
+        }
+
+        return $"{baseUrl}/act/{id}";
     }
 }

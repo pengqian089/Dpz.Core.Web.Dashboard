@@ -1,0 +1,18 @@
+﻿@if (!string.IsNullOrEmpty(_editorId))
+{
+    <div id="markdown-container-@(_editorId)" class="markdown-editor-container" style="@HeightStyle">
+        <div id="@_editorId"></div>
+    </div>
+    
+    @if (_isUploading)
+    {
+        <div class="editor-loading-overlay">
+            <div class="editor-loading-spinner"></div>
+            <div class="editor-loading-text">正在上传图片...</div>
+            <div class="editor-loading-progress">
+                <div class="editor-loading-progress-bar" style="width: @(_uploadProgress)%"></div>
+            </div>
+            <div class="editor-loading-progress-text">@_uploadProgress%</div>
+        </div>
+    }
+}

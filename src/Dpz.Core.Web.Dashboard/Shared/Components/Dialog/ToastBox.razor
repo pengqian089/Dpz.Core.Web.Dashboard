@@ -1,0 +1,7 @@
+@implements IDisposable
+
+<div class="toast toast--@GetToastClass() @(_isLeaving ? "is-leaving" : "")">
+    <i class="toast__icon fa @GetIconClass()"></i>
+    <span class="toast__content">@Model.Message</span>
+</div>
+

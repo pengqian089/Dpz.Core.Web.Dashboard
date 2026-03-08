@@ -1,57 +1,72 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
+using Dpz.Core.EnumLibrary;
 using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Models.Response;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Account;
 
-public partial class TokenHistory : ComponentBase
+public partial class TokenHistory(IAccountService accountService) : ComponentBase
 {
     [CascadingParameter]
-    MudDialogInstance MudDialog { get; set; }
-
-    [Inject]
-    private IAccountService AccountService { get; set; }
+    public Action<object?>? CloseDialog { get; set; }
 
     [Parameter, Required]
-    public string Account { get; set; }
-
-    [Parameter]
-    public bool? Used { get; set; }
+    public string Account { get; set; } = "";
 
     private bool _isLoading = true;
-
-    #region query parameter
     private int _pageIndex = 1;
-
+    private int _totalPages;
+    private int _totalCount;
     private const int PageSize = 10;
+    private List<AccountLoginHistoryResponse> _records = [];
 
-    #endregion
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
 
-    private MudTable<AccountLoginHistoryResponse> _table;
-
-    private async Task<TableData<AccountLoginHistoryResponse>> LoadDataAsync(TableState state)
+    private async Task LoadDataAsync()
     {
         _isLoading = true;
-        _pageIndex = state.Page + 1;
-        Console.WriteLine($"PageIndex:{_pageIndex}");
+        StateHasChanged();
+
         var request = new AccountLoginHistoryRequest { Account = Account };
-        var list = await AccountService.GetAccountLoginHistoryAsync(request, _pageIndex, PageSize);
+        var list = await accountService.GetAccountLoginHistoryAsync(request, _pageIndex, PageSize);
+
+        _records = list.ToList();
+        _totalCount = list.TotalItemCount;
+        _totalPages = list.TotalPageCount;
+
         _isLoading = false;
-        Console.WriteLine($"IsLoading:{_isLoading}");
-        return new TableData<AccountLoginHistoryResponse>()
-        {
-            TotalItems = list.TotalItemCount,
-            Items = list,
-        };
+        StateHasChanged();
+    }
+
+    private async Task HandlePageChanged(int newPage)
+    {
+        _pageIndex = newPage;
+        await LoadDataAsync();
     }
 
     private void Close()
     {
-        MudDialog.Cancel();
+        CloseDialog?.Invoke(null);
+    }
+
+    private static string GetStatusClass(LoginResultStatus status)
+    {
+        return status switch
+        {
+            LoginResultStatus.Success => "account-token__status--success",
+            LoginResultStatus.AccountOrPasswordError => "account-token__status--danger",
+            LoginResultStatus.PinCodeError => "account-token__status--warning",
+            LoginResultStatus.AccountLocked => "account-token__status--info",
+            _ => "account-token__status--info",
+        };
     }
 }

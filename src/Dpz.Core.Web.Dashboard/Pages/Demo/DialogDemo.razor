@@ -1,0 +1,99 @@
+@page "/demo/dialog"
+@attribute [Authorize]
+@using Dpz.Core.Web.Dashboard.Models.Dialog
+@using Dpz.Core.Web.Dashboard.Service
+@inject IAppDialogService DialogService
+
+<div class="demo-page">
+    <div class="demo-page__header">
+        <h1 class="page-title">对话框组件测试</h1>
+        <p class="page-description">测试各种对话框、Toast 和通知功能</p>
+    </div>
+
+    <div class="demo-section">
+        <h2 class="demo-section__title">对话框 (Dialog)</h2>
+        <div class="demo-grid">
+            <button class="btn btn-primary" @onclick="ShowAlert">
+                <i class="fas fa-info-circle"></i>
+                Alert 提示框
+            </button>
+            <button class="btn btn-primary" @onclick="ShowConfirm">
+                <i class="fas fa-question-circle"></i>
+                Confirm 确认框
+            </button>
+            <button class="btn btn-primary" @onclick="ShowPrompt">
+                <i class="fas fa-edit"></i>
+                Prompt 输入框
+            </button>
+            <button class="btn btn-primary" @onclick="ShowCustomDialog">
+                <i class="fas fa-window-restore"></i>
+                自定义对话框
+            </button>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2 class="demo-section__title">Toast 提示</h2>
+        <div class="demo-grid">
+            <button class="btn btn-success" @onclick="() => ShowToast(ToastType.Success)">
+                <i class="fas fa-check-circle"></i>
+                Success
+            </button>
+            <button class="btn btn-danger" @onclick="() => ShowToast(ToastType.Error)">
+                <i class="fas fa-times-circle"></i>
+                Error
+            </button>
+            <button class="btn btn-primary" @onclick="() => ShowToast(ToastType.Info)">
+                <i class="fas fa-info-circle"></i>
+                Info
+            </button>
+            <button class="btn btn-warning" @onclick="() => ShowToast(ToastType.Warning)">
+                <i class="fas fa-exclamation-triangle"></i>
+                Warning
+            </button>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2 class="demo-section__title">通知 (Notification)</h2>
+        <div class="demo-grid">
+            <button class="btn btn-success" @onclick="() => ShowNotification(NotificationType.Success)">
+                <i class="fas fa-check-circle"></i>
+                Success 通知
+            </button>
+            <button class="btn btn-danger" @onclick="() => ShowNotification(NotificationType.Error)">
+                <i class="fas fa-times-circle"></i>
+                Error 通知
+            </button>
+            <button class="btn btn-primary" @onclick="() => ShowNotification(NotificationType.Info)">
+                <i class="fas fa-info-circle"></i>
+                Info 通知
+            </button>
+            <button class="btn btn-warning" @onclick="() => ShowNotification(NotificationType.Warning)">
+                <i class="fas fa-exclamation-triangle"></i>
+                Warning 通知
+            </button>
+            <button class="btn btn-primary" @onclick="ShowProgressNotification">
+                <i class="fas fa-tasks"></i>
+                进度条通知
+            </button>
+            <button class="btn btn-danger" @onclick="CloseAllNotifications">
+                <i class="fas fa-trash"></i>
+                清除所有通知
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_lastResult))
+    {
+        <div class="demo-result">
+            <div class="demo-result__title">
+                <i class="fas fa-terminal"></i>
+                最后操作结果
+            </div>
+            <div class="demo-result__content">
+                @_lastResult
+            </div>
+        </div>
+    }
+</div>

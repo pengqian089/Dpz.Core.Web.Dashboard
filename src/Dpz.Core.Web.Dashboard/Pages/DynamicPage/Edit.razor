@@ -1,67 +1,99 @@
-﻿@using BlazorMonaco.Editor
-@page "/dynamic/edit/{*id}"
+﻿@page "/dynamic/edit/{*id}"
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Forms
+
 @if (_isLoading)
 {
-    <MudCard>
-        <MudCardContent>
-            <MudSkeleton Width="30%" Height="42px;" />
-            <MudSkeleton Width="80%" />
-            <MudSkeleton Width="100%" />
-        </MudCardContent>
-        <MudCardActions>
-            <MudSkeleton Width="64px" Height="40px" Class="ml-2" />
-            <MudSkeleton Width="105px" Height="40px" Class="ml-3" />
-        </MudCardActions>
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
-    </MudCard>
+    <div class="dynamic-form__skeleton">
+        <div class="skeleton skeleton--title skeleton--half"></div>
+        <div class="skeleton skeleton--input skeleton--full"></div>
+        <div class="skeleton skeleton--input skeleton--full"></div>
+        <div class="skeleton skeleton--editor skeleton--full"></div>
+        <div class="dynamic-form__skeleton-actions">
+            <div class="skeleton skeleton--button"></div>
+            <div class="skeleton skeleton--button"></div>
+        </div>
+    </div>
 }
 else
 {
-    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">修改动态页</MudText>
-    <MudOverlay Visible="_isPublishing" ZIndex="9999" DarkBackground="true">
-        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
-    </MudOverlay>
-    <EditForm Model="@_t" OnValidSubmit="PostDataAsync">
-        <MudCard>
-            <MudCardContent>
-                <DataAnnotationsValidator/>
-                <MudGrid>
-                    <MudItem xs="12" md="12">
-                        <MudTextField T="string"
-                                      HelperText="如 index.html index.aspx home 之类"
-                                      Immediate="true"
-                                      Label="页面名称"
-                                      Required="true"
-                                      RequiredError="此项必填"
-                                      @bind-value="_name"
-                                      Text="@Id"
-                                      ReadOnly="true"
-                                      Variant="Variant.Text">
-                        </MudTextField>
+    <div class="dynamic-form">
+        <div class="dynamic-form__header">
+            <h1 class="dynamic-form__title">修改动态页</h1>
+            <p class="dynamic-form__description">更新活动页面内容，保持信息及时准确</p>
+        </div>
 
-                    </MudItem>
-                    <MudItem xs="12" md="12">
-                        <HtmlEditor 
-                            @ref="_editor"
-                            Html="@_htmlContent.ToString()"/>
-                    </MudItem>
-                </MudGrid>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isPublishing" Color="Color.Primary">
+        <EditForm Model="@_t" OnValidSubmit="PostDataAsync">
+            <DataAnnotationsValidator/>
+            <div class="dynamic-form__content">
+                <div class="dynamic-form__section">
+                    <div class="dynamic-form__section-title">基础信息</div>
+                    <div class="dynamic-form__grid">
+                        <div class="form-group">
+                            <label class="form-label">页面名称</label>
+                            <input type="text"
+                                   class="form-control"
+                                   value="@_name"
+                                   readonly />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">访问地址</label>
+                            <div class="dynamic-form__link">
+                                <input type="text"
+                                       class="form-control"
+                                       value="@BuildPreviewUrl(_name)"
+                                       readonly />
+                                <a class="btn btn-secondary btn-sm"
+                                   href="@BuildPreviewUrl(_name)"
+                                   target="_blank"
+                                   rel="noreferrer">
+                                    预览
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dynamic-form__section dynamic-form__section--editor">
+                    <div class="dynamic-form__section-title">页面内容</div>
+                    <div class="dynamic-form__editor">
+                        <HtmlEditor @ref="_editor" Html="@_htmlContent.ToString()" />
+                    </div>
+                </div>
+
+                <div class="dynamic-form__validation">
+                    <ValidationSummary/>
+                </div>
+            </div>
+
+            <div class="dynamic-form__actions">
+                <button class="btn btn-secondary" type="button" @onclick="BackToList" disabled="@_isPublishing">
+                    返回列表
+                </button>
+                <button class="btn btn-primary" type="submit" disabled="@_isPublishing">
                     @if (_isPublishing)
                     {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                        <MudText Class="ms-2">正在发布</MudText>
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            发布中
+                        </span>
                     }
                     else
                     {
-                        <MudText>发布</MudText>
+                        <span>保存</span>
                     }
-                </MudButton>
-                <MudButton Variant="Variant.Filled" Href="/dynamic">返回列表</MudButton>
-            </MudCardActions>
-        </MudCard>
-    </EditForm>
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@if (_isPublishing)
+{
+    <div class="dynamic-form__loading-overlay">
+        <div class="dynamic-form__loading-content">
+            <div class="dynamic-form__loading-spinner"></div>
+            <div class="dynamic-form__loading-text">正在保存...</div>
+        </div>
+    </div>
 }

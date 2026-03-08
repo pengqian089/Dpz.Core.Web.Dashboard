@@ -1,63 +1,105 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Timeline
+namespace Dpz.Core.Web.Dashboard.Pages.Timeline;
+
+public partial class Edit(
+    ITimelineService timelineService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+) : ComponentBase
 {
-    public partial class Edit
+    [Parameter]
+    public string Id { get; set; } = "";
+
+    private TimelineEditRequest _timeline = new()
     {
-        [Parameter] public string Id { get; set; }
+        Id = "",
+        Date = DateTime.Now,
+        Title = "",
+    };
 
-        [Inject] private IJSRuntime JsRuntime { get; set; }
+    private bool _isPublishing;
+    private bool _isLoading;
 
-        [Inject] private ITimelineService TimelineService { get; set; }
+    private MarkdownEditor? _editor;
 
-        [Inject] private NavigationManager Navigation { get; set; }
-
-        private TimelineEditRequest _timeline = new();
-
-        private bool _isPublishing = false;
-
-        private bool _isLoading = false;
-        
-        private MarkdownEditor _editor;
-
-        protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        try
         {
-            _isLoading = true;
-            var timelineModel = await TimelineService.GetTimelineAsync(Id);
+            var timelineModel = await timelineService.GetTimelineAsync(Id);
+            if (timelineModel == null)
+            {
+                dialogService.Toast("时间轴不存在", ToastType.Error);
+                navigation.NavigateTo("/timeline");
+                return;
+            }
+
             _timeline = new TimelineEditRequest
             {
                 Id = timelineModel.Id,
                 Content = timelineModel.Content,
                 Date = timelineModel.Date,
                 More = timelineModel.More,
-                Title = timelineModel.Title
+                Title = timelineModel.Title,
             };
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"加载失败：{ex.Message}", ToastType.Error);
+            navigation.NavigateTo("/timeline");
+            return;
+        }
+        finally
+        {
             _isLoading = false;
-            await base.OnInitializedAsync();
+        }
+    }
+
+    private async Task PostDataAsync(EditContext context)
+    {
+        if (_editor == null)
+        {
+            dialogService.Toast("编辑器未初始化", ToastType.Error);
+            return;
         }
 
-        private async Task PostDataAsync(EditContext context)
+        _timeline.Content = await _editor.GetValueAsync();
+        if (string.IsNullOrWhiteSpace(_timeline.Content))
         {
-            _timeline.Content = await _editor.GetValueAsync();
+            dialogService.Toast("请输入内容", ToastType.Warning);
+            return;
+        }
 
-            _isPublishing = true;
+        _isPublishing = true;
+        StateHasChanged();
+        try
+        {
+            await timelineService.EditTimelineAsync(_timeline);
+            dialogService.Toast("保存成功", ToastType.Success);
+            navigation.NavigateTo("/timeline");
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"保存失败：{ex.Message}", ToastType.Error);
+        }
+        finally
+        {
+            _isPublishing = false;
             StateHasChanged();
-            await TimelineService.EditTimelineAsync(_timeline);
-            await _editor.DisposeAsync();
-            Navigation.NavigateTo("/timeline");
         }
+    }
 
-        private async Task<string> UploadPicture(MultipartFormDataContent arg)
-        {
-            return await TimelineService.UploadAsync(arg);
-        }
+    private void BackToList()
+    {
+        navigation.NavigateTo("/timeline");
     }
 }

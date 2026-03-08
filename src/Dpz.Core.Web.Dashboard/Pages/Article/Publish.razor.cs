@@ -1,94 +1,78 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Component;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Article
+namespace Dpz.Core.Web.Dashboard.Pages.Article;
+
+public partial class Publish(
+    IArticleService articleService,
+    IAppDialogService dialogService,
+    NavigationManager navigation
+)
 {
-    public partial class Publish
+    private List<string> _tags = [];
+    private readonly ArticlePublishRequest _article = new();
+    private bool _isPublishing;
+    private MarkdownEditor? _editor;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject]private IJSRuntime JsRuntime { get; set; }
+        _tags = await articleService.GetTagsAsync();
+        await base.OnInitializedAsync();
+    }
 
-        [Inject]private IArticleService ArticleService { get; set; }
+    private void HandleNewTagAdded(string tag)
+    {
+        dialogService.Toast($"标签 '{tag}' 已添加", ToastType.Success);
+    }
 
-        [Inject]private ISnackbar Snackbar { get; set; }
+    private async Task PublishArticleAsync(EditContext context)
+    {
+        _article.Markdown = _editor == null ? null : await _editor.GetValueAsync();
 
-        [Inject]private NavigationManager Navigation { get; set; }
-
-        private List<string> _tags = new();
-
-        private string _addTag = "";
-
-        private ArticlePublishRequest _article = new();
-
-        private bool _isPublishing = false;
-        private MarkdownEditor _editor;
-
-        protected override async Task OnInitializedAsync()
+        if (string.IsNullOrEmpty(_article.Title))
         {
-            _tags = await ArticleService.GetTagsAsync();
-            await base.OnInitializedAsync();
+            dialogService.Toast("请输入标题", ToastType.Warning);
+            return;
+        }
+        if (string.IsNullOrEmpty(_article.Introduction))
+        {
+            dialogService.Toast("请输入简介", ToastType.Warning);
+            return;
+        }
+        if (string.IsNullOrEmpty(_article.Markdown))
+        {
+            dialogService.Toast("请输入文章内容", ToastType.Warning);
+            return;
         }
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            await base.OnAfterRenderAsync(firstRender);
-        }
+        _isPublishing = true;
+        StateHasChanged();
 
-        private async Task PublishArticleAsync(EditContext context)
+        try
         {
-            _article.Markdown = await _editor.GetValueAsync();
-            _article.Content = Markdig.Markdown.ToHtml(_article.Markdown);
-            
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            if (string.IsNullOrEmpty(_article.Content) || string.IsNullOrEmpty(_article.Markdown))
-            {
-               Snackbar.Add("请输入内容", Severity.Warning);
-                return;
-            }
-
-            _isPublishing = true;
-            if (await ArticleService.ExistsAsync(_article.Title))
+            if (await articleService.ExistsAsync(_article.Title))
             {
                 _isPublishing = false;
-                Snackbar.Add("该标题已经存在", Severity.Warning);
+                dialogService.Toast("该标题已经存在", ToastType.Warning);
                 return;
             }
 
-            var tags = _article.Tags.ToList();
-            if (!string.IsNullOrEmpty(_addTag))
-                tags.Add(_addTag);
-            _article.Tags = tags;
-            StateHasChanged();
-            await ArticleService.PublishAsync(_article);
-            await _editor.DisposeAsync();
-            Navigation.NavigateTo("/article");
+            await articleService.PublishAsync(_article);
+            dialogService.Toast("文章发布成功", ToastType.Success);
+            navigation.NavigateTo("/article");
         }
-
-        private async Task<IEnumerable<string>> SearchTagAsync(string value)
+        catch (Exception ex)
         {
-            return await Task.Factory.StartNew(() =>
-            {
-                if (string.IsNullOrEmpty(value))
-                    return _tags;
-                return _tags.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-            });
-        }
-
-        private async Task<string> UploadPicture(MultipartFormDataContent arg)
-        {
-            return await ArticleService.UploadAsync(arg);
+            _isPublishing = false;
+            Console.WriteLine($"发布文章失败: {ex.Message}");
+            dialogService.Toast("发布失败,请重试", ToastType.Error);
         }
     }
 }

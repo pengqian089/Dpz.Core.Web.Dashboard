@@ -1,0 +1,22 @@
+<div class="custom-audio-player">
+    <audio @ref="_audioElement" src="@Src" preload="metadata"></audio>
+    
+    <button type="button" class="custom-audio-player__btn" @onclick="TogglePlay">
+        <i class="fas @(_isPlaying ? "fa-pause" : "fa-play")"></i>
+    </button>
+    
+    <div class="custom-audio-player__progress">
+        <span class="custom-audio-player__time">@FormatTime(_currentTime)</span>
+        
+        <input type="range" 
+               class="custom-audio-player__slider" 
+               min="0" 
+               max="@(_duration > 0 ? _duration : 100)" 
+               step="0.1"
+               value="@_currentTime" 
+               @oninput="OnSeekInput"
+               @onchange="OnSeekChange" />
+               
+        <span class="custom-audio-player__time">@FormatTime(_duration)</span>
+    </div>
+</div>

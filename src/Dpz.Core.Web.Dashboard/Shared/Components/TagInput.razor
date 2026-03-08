@@ -1,0 +1,45 @@
+<div class="tag-input">
+    <div class="tag-input__wrapper">
+        <div class="tag-input__container">
+            @if (Tags != null && Tags.Any())
+            {
+                @foreach (var tag in Tags)
+                {
+                    <div class="tag-input__tag">
+                        <span class="tag-input__tag-text">@tag</span>
+                        <button type="button" class="tag-input__tag-remove" @onclick="() => RemoveTag(tag)" title="删除标签">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                }
+            }
+            
+            <input type="text" 
+                   class="tag-input__input" 
+                   @bind="_inputValue" 
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown"
+                   @onkeydown:preventDefault="@_shouldPreventDefault"
+                   placeholder="@(Tags?.Any() == true ? "添加更多标签..." : "输入标签")"
+                   disabled="@Disabled" />
+        </div>
+        
+        @if (!string.IsNullOrWhiteSpace(_inputValue) && !Disabled)
+        {
+            <button type="button" 
+                    class="tag-input__add-btn" 
+                    @onclick="AddTagAsync"
+                    title="添加标签">
+                <i class="fas fa-plus"></i>
+            </button>
+        }
+    </div>
+    
+    @if (!string.IsNullOrEmpty(HelperText))
+    {
+        <small class="tag-input__helper">
+            <i class="fas fa-info-circle"></i>
+            @HelperText
+        </small>
+    }
+</div>

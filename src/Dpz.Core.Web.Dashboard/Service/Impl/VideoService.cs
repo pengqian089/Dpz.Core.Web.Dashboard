@@ -5,32 +5,25 @@ using Dpz.Core.Web.Dashboard.Models;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
-public class VideoService : IVideoService
+public class VideoService(IHttpService httpService) : IVideoService
 {
-    private readonly IHttpService _httpService;
-
-    public VideoService(IHttpService httpService)
+    public async Task<List<VideoModel>> GetVideosAsync()
     {
-        _httpService = httpService;
-    }
-
-    public async Task<IList<VideoModel>> GetVideosAsync()
-    {
-        return await _httpService.GetAsync<List<VideoModel>>("/api/Video/details");
+        return await httpService.GetAsync<List<VideoModel>>("/api/Video/details") ?? [];
     }
 
     public async Task SaveVideoInformationAsync(VideoModel model)
     {
-        await _httpService.PostAsync("/api/Video", model);
+        await httpService.PostAsync("/api/Video", model);
     }
 
-    public async Task<VideoMetaDataModel> GetVideoMetadataAsync(string id)
+    public async Task<VideoMetaDataModel?> GetVideoMetadataAsync(string id)
     {
-        return await _httpService.GetAsync<VideoMetaDataModel>($"/api/Video/meta/{id}");
+        return await httpService.GetAsync<VideoMetaDataModel>($"/api/Video/meta/{id}");
     }
 
     public Task SetVideoScreenshotAsync(string id, double seconds)
     {
-        return _httpService.PatchAsync($"/api/Video/screenshot/{id}", new { seconds });
+        return httpService.PatchAsync($"/api/Video/screenshot/{id}", new { seconds });
     }
 }

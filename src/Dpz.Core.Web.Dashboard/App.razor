@@ -13,9 +13,16 @@
                     </Authorized>
                     <Authorizing>
                         <LayoutView Layout="@typeof(PublicLayout)">
-                            <div class="d-flex flex-column align-center justify-center" style="min-height: 40vh;">
-                                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true"/>
-                                <MudText Typo="Typo.h5" Class="mt-4">正在验证身份，请稍候...</MudText>
+                            <div class="auth-state">
+                                <div class="auth-state__icon auth-state__icon--primary">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="auth-state__pulse"></div>
+                                <h1 class="auth-state__title">正在验证身份</h1>
+                                <p class="auth-state__description">请稍候，正在检查您的登录状态...</p>
+                                <div class="auth-state__progress">
+                                    <div class="auth-state__progress-bar"></div>
+                                </div>
                             </div>
                         </LayoutView>
                     </Authorizing>

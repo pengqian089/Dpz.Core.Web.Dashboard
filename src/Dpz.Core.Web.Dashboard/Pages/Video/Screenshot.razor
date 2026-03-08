@@ -1,36 +1,50 @@
-﻿<MudDialog>
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.VideoLabel" Class="mr-3 mb-n1"/>
-            设置缩略图
-        </MudText>
-    </TitleContent>
-    <DialogContent>
+﻿<div class="form-section">
+    <div class="form-section__body">
         @if (_isLoading)
         {
-            <MudSkeleton Width="100%"/>
+            <div class="skeleton-form">
+                <div class="skeleton-form__field"></div>
+            </div>
         }
-        else
+        else if (_model != null)
         {
-            <MudNumericField 
-                @bind-Value="_seconds" 
-                Label="设置视频截图所在的时间点（秒）" 
-                Variant="Variant.Text" 
-                Min="1"
-                Max="(_model?.Duration ?? 0)"/>
+            <div class="form-group">
+                <label class="form-label form-label--required">设置视频截图所在的时间点（秒）</label>
+                <input type="number"
+                       class="form-control"
+                       @bind="_seconds"
+                       step="0.01"
+                       min="0.01"
+                       max="@_model.Duration"
+                       required/>
+                <small class="form-helper">
+                    <i class="fas fa-info-circle"></i>
+                    请输入0.01到@_model.Duration.ToString("F2")秒之间的数值（支持小数）
+                </small>
+                @if (!string.IsNullOrEmpty(_validationError))
+                {
+                    <div class="validation-message">@_validationError</div>
+                }
+            </div>
+
+            <div class="form-group" style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" @onclick="Cancel" disabled="@_isSaving">
+                    取消
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="SaveAsync" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            保存中...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>保存</span>
+                    }
+                </button>
+            </div>
         }
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">取消</MudButton>
-        <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="_isLoading">
-            @if (_isLoading)
-            {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-            }
-            else
-            {
-                <MudText>保存</MudText>
-            }
-        </MudButton>
-    </DialogActions>
-</MudDialog>
+    </div>
+</div>

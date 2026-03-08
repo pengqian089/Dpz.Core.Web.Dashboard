@@ -1,50 +1,42 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.AudioPage.Music;
 
-public partial class Add
+public partial class Add(
+    IMusicService musicService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+)
 {
-    [Inject] private IMusicService MusicService { get; set; }
-
-    [Inject] private IJSRuntime JsRuntime { get; set; }
-
-    [Inject] private ISnackbar Snackbar { get; set; }
-
-    [Inject] private NavigationManager Navigation { get; set; }
-
     private readonly string[] _musicExtensions = ["mp3", "flac", "ogg"];
-
     private readonly string[] _lrcExtensions = ["lrc"];
-
-    private bool _isPosting = false;
-
-    private IBrowserFile _musicFile;
-
-    private IBrowserFile _lrcFile;
-
-    private IBrowserFile _coverFile;
-
-    private IEnumerable<string> _selectedGroups = new List<string>();
-
-    private string _addGroup = "";
-
+    private bool _isPosting;
+    private IBrowserFile? _musicFile;
+    private IBrowserFile? _lrcFile;
+    private IBrowserFile? _coverFile;
+    private List<string> _selectedGroupsList = [];
     private readonly object _t = new();
-
-    private List<string> _groups = new();
+    private List<string> _groups = [];
+    private Dictionary<string, long> _selectMusic = new();
+    private Dictionary<string, long> _selectLrc = new();
+    private Dictionary<string, long> _selectCover = new();
+    private string _lrcContent = "";
+    private string? _coverPreviewUrl;
+    private int _uploadProgress;
 
     protected override async Task OnInitializedAsync()
     {
-        _groups = await MusicService.GetGroupsAsync();
+        _groups = await musicService.GetGroupsAsync();
         await base.OnInitializedAsync();
     }
 
@@ -52,96 +44,105 @@ public partial class Add
     {
         if (_musicFile == null)
         {
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            Snackbar.Add("请选择音乐", Severity.Warning);
+            dialogService.Toast("请选择音乐文件", Models.Dialog.ToastType.Warning);
             return;
         }
 
         if (!_musicExtensions.Contains(_musicFile.Name.Split(".").Last()))
         {
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            Snackbar.Add($"只允许【{string.Join(" ", _musicExtensions)}】格式音乐，请重新选择", Severity.Warning);
+            dialogService.Toast(
+                $"只允许【{string.Join(" ", _musicExtensions)}】格式音乐，请重新选择",
+                Models.Dialog.ToastType.Warning
+            );
             return;
         }
 
         StateHasChanged();
         _isPosting = true;
-        using var content = new MultipartFormDataContent();
+        _uploadProgress = 0;
+        var files = new List<UploadFilePart>();
+        var fields = new List<UploadFormField>();
+        var streams = new List<Stream>();
 
-        var musicContent =
-            new StreamContent(_musicFile.OpenReadStream(AppTools.MaxFileSize));
-        musicContent.Headers.ContentType =
-            new MediaTypeHeaderValue(_musicFile.ContentType);
-        content.Add(
-            content: musicContent,
-            name: "\"Music\"",
-            fileName: _musicFile.Name);
-
-        if (_lrcFile != null)
+        try
         {
-            if (!_lrcExtensions.Contains(_lrcFile.Name.Split(".").Last()))
+            var musicStream = _musicFile.OpenReadStream(AppTools.MaxFileSize);
+            streams.Add(musicStream);
+            files.Add(
+                new UploadFilePart("Music", _musicFile.Name, _musicFile.ContentType, musicStream)
+            );
+
+            if (_lrcFile != null)
             {
-                Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-                Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-                Snackbar.Add($"只允许【{string.Join(" ", _musicExtensions)}】格式歌词，请重新选择", Severity.Warning);
-                _isPosting = false;
-                return;
+                if (!_lrcExtensions.Contains(_lrcFile.Name.Split(".").Last()))
+                {
+                    dialogService.Toast(
+                        $"只允许【{string.Join(" ", _lrcExtensions)}】格式歌词，请重新选择",
+                        Models.Dialog.ToastType.Warning
+                    );
+                    _isPosting = false;
+                    return;
+                }
+
+                var lrcStream = _lrcFile.OpenReadStream(AppTools.MaxFileSize);
+                streams.Add(lrcStream);
+                files.Add(
+                    new UploadFilePart(
+                        "Lyrics",
+                        _lrcFile.Name,
+                        "application/octet-stream",
+                        lrcStream
+                    )
+                );
             }
 
-            var lrcContent =
-                new StreamContent(_lrcFile.OpenReadStream(AppTools.MaxFileSize));
-            lrcContent.Headers.ContentType =
-                new MediaTypeHeaderValue("application/octet-stream");
-            content.Add(
-                content: lrcContent,
-                name: "\"Lyrics\"",
-                fileName: _lrcFile.Name);
-        }
-
-        if (_coverFile != null)
-        {
-            if (!AppTools.ImageExtensions.Contains(_coverFile.Name.Split(".").Last()))
+            if (_coverFile != null)
             {
-                Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-                Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-                Snackbar.Add($"只允许【{string.Join(" ", _musicExtensions)}】格式，请重新选择", Severity.Warning);
-                _isPosting = false;
-                return;
+                if (!AppTools.ImageExtensions.Contains(_coverFile.Name.Split(".").Last()))
+                {
+                    dialogService.Toast(
+                        $"只允许【{string.Join(" ", AppTools.ImageExtensions)}】格式，请重新选择",
+                        Models.Dialog.ToastType.Warning
+                    );
+                    _isPosting = false;
+                    return;
+                }
+
+                var coverStream = _coverFile.OpenReadStream(AppTools.MaxFileSize);
+                streams.Add(coverStream);
+                files.Add(
+                    new UploadFilePart(
+                        "Cover",
+                        _coverFile.Name,
+                        _coverFile.ContentType,
+                        coverStream
+                    )
+                );
             }
-                
-            var coverContent =
-                new StreamContent(_coverFile.OpenReadStream(AppTools.MaxFileSize));
-            coverContent.Headers.ContentType = new MediaTypeHeaderValue(_coverFile.ContentType);
-            content.Add(
-                content: coverContent,
-                name: "\"Cover\"",
-                fileName: _coverFile.Name);
-        }
 
-        foreach (var item in _selectedGroups)
+            foreach (var item in _selectedGroupsList)
+            {
+                fields.Add(new UploadFormField("Group", item));
+            }
+
+            var progress = new Progress<int>(value =>
+            {
+                _uploadProgress = value;
+                StateHasChanged();
+            });
+
+            await musicService.AddMusicWithProgressAsync(files, fields, progress);
+            dialogService.Toast("音乐上传成功！", Models.Dialog.ToastType.Success);
+            navigation.NavigateTo("/music");
+        }
+        finally
         {
-            content.Add(content: new StringContent(item),
-                name: "\"Group\"");
+            foreach (var stream in streams)
+            {
+                stream.Dispose();
+            }
         }
-
-        if (!string.IsNullOrEmpty(_addGroup))
-        {
-            content.Add(content: new StringContent(_addGroup),
-                name: "\"Group\"");
-        }
-
-
-        await MusicService.AddMusicAsync(content);
-        Navigation.NavigateTo("/music");
     }
-
-    private Dictionary<string, long> _selectMusic = new();
 
     private void OnMusicChanged(InputFileChangeEventArgs e)
     {
@@ -150,26 +151,51 @@ public partial class Add
         _musicFile = files.FirstOrDefault();
     }
 
-    private Dictionary<string, long> _selectLrc = new();
-
-    private void OnLrcChanged(InputFileChangeEventArgs e)
+    private async Task OnLrcChanged(InputFileChangeEventArgs e)
     {
         var files = e.GetMultipleFiles();
         _selectLrc = files.ToDictionary(x => x.Name, x => x.Size);
         _lrcFile = files.FirstOrDefault();
+        if (_lrcFile != null)
+        {
+            await using var stream = _lrcFile.OpenReadStream(AppTools.MaxFileSize);
+            using var reader = new StreamReader(stream);
+            _lrcContent = await reader.ReadToEndAsync();
+        }
+        else
+        {
+            _lrcContent = "";
+        }
     }
 
-    private Dictionary<string, long> _selectCover = new();
     private async Task OnCoverChanged(InputFileChangeEventArgs e)
     {
-        _coverFile = e.File;
-        _selectCover = new Dictionary<string, long> {{_coverFile.Name, _coverFile.Size}};;
-            
-        var resizedImage =
-            await _coverFile.RequestImageFileAsync(_coverFile.ContentType, 1000, 1000);
-        var jsImageStream = resizedImage.OpenReadStream(AppTools.MaxFileSize);
-        var dotnetImageStream = new DotNetStreamReference(jsImageStream);
-        await JsRuntime.InvokeVoidAsync("setImageUsingStreaming",
-            "imagePreview", dotnetImageStream);
+        var files = e.GetMultipleFiles();
+        _selectCover = files.ToDictionary(x => x.Name, x => x.Size);
+        _coverFile = files.FirstOrDefault();
+
+        if (_coverFile != null)
+        {
+            var imageFile = await _coverFile.RequestImageFileAsync(
+                _coverFile.ContentType,
+                800,
+                800
+            );
+            await using var stream = imageFile.OpenReadStream(AppTools.MaxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64 = Convert.ToBase64String(memoryStream.ToArray());
+            _coverPreviewUrl = $"data:{_coverFile.ContentType};base64,{base64}";
+            _coverFile = imageFile;
+        }
+        else
+        {
+            _coverPreviewUrl = null;
+        }
+    }
+
+    private void HandleNewGroupAdded(string group)
+    {
+        dialogService.Toast($"分组 '{group}' 已添加", Models.Dialog.ToastType.Success);
     }
 }

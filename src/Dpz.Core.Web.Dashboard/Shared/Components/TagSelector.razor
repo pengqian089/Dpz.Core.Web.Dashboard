@@ -1,0 +1,58 @@
+<div class="tag-selector-component">
+    @if (ShowLabel)
+    {
+        <div class="tag-selector-component__label">
+            <i class="fas fa-tag"></i>
+            <span>选择标签（可多选）</span>
+        </div>
+    }
+    
+    <div class="tag-selector">
+        @foreach (var tag in AvailableTags)
+        {
+            <button type="button"
+                    class="tag-selector__item @(SelectedTags.Contains(tag) ? "tag-selector__item--active" : "")"
+                    @onclick="() => ToggleTag(tag)"
+                    disabled="@Disabled">
+                <i class="fas @(SelectedTags.Contains(tag) ? "fa-check-circle" : "fa-circle")"></i>
+                <span>@tag</span>
+            </button>
+        }
+    </div>
+
+    @if (AllowAddNew)
+    {
+        <div class="tag-selector-component__add">
+            <label class="tag-selector-component__add-label">
+                <i class="fas fa-plus-circle"></i>
+                <span>@AddNewLabel</span>
+            </label>
+            <div class="tag-selector-component__input-wrapper">
+                <input type="text"
+                       class="tag-selector-component__input"
+                       placeholder="@AddNewPlaceholder"
+                       @bind="_newTagInput"
+                       @bind:event="oninput"
+                       @onkeydown="HandleKeyDown"
+                       @onkeydown:preventDefault="@_shouldPreventDefault"
+                       disabled="@Disabled" />
+                @if (!string.IsNullOrWhiteSpace(_newTagInput) && !Disabled)
+                {
+                    <button type="button"
+                            class="tag-selector-component__add-btn"
+                            @onclick="AddNewTag"
+                            title="添加新标签">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(HelperText))
+            {
+                <small class="tag-selector-component__helper">
+                    <i class="fas fa-info-circle"></i>
+                    <span>@HelperText</span>
+                </small>
+            }
+        </div>
+    }
+</div>

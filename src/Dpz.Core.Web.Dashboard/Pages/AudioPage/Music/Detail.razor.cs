@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -9,29 +9,18 @@ using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.AudioPage.Music;
 
-public partial class Detail
+public partial class Detail(
+    IMusicService musicService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+)
 {
     [Parameter]
-    public string Id { get; set; }
-
-    [Inject]
-    private IMusicService MusicService { get; set; }
-
-    [Inject]
-    private IJSRuntime JsRuntime { get; set; }
-
-    [Inject]
-    private ISnackbar Snackbar { get; set; }
-
-    [Inject]
-    private NavigationManager Navigation { get; set; }
-
-    private string _addGroup = "";
+    public string Id { get; set; } = "";
 
     private readonly string[] _lrcExtensions = ["lrc"];
 
@@ -39,46 +28,31 @@ public partial class Detail
 
     private bool _isLoading;
 
-    private MusicModel _musicModel = new();
+    private MusicModel _musicModel = new() { Id = "", MusicUrl = "" };
 
     private string _lrcContent = "";
 
     private readonly object _t = new();
 
-    private IBrowserFile _lrcFile;
+    private IBrowserFile? _lrcFile;
 
-    private IBrowserFile _coverFile;
+    private IBrowserFile? _coverFile;
 
-    private IEnumerable<string> _selectedGroups = new List<string>();
+    private List<string> _selectedGroupsList = [];
 
     private async Task PostInformationAsync()
     {
         if (string.IsNullOrEmpty(Id))
         {
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            Snackbar.Add("参数错误", Severity.Warning);
+            dialogService.Toast("参数错误", Models.Dialog.ToastType.Warning);
             return;
         }
 
-        //if (_lrcFile == null)
-        //{
-        //    Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-        //    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-        //    Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-        //    Snackbar.Add("请选择歌词文件", Severity.Warning);
-        //    return;
-        //}
-
         if (_lrcFile != null && !_lrcExtensions.Contains(_lrcFile.Name.Split(".").Last()))
         {
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            Snackbar.Add(
+            dialogService.Toast(
                 $"只允许【{string.Join(" ", _lrcExtensions)}】格式歌词，请重新选择",
-                Severity.Warning
+                Models.Dialog.ToastType.Warning
             );
             return;
         }
@@ -104,19 +78,14 @@ public partial class Detail
         var idContent = new StringContent(Id);
         content.Add(content: idContent, name: "\"Id\"");
 
-        foreach (var item in _selectedGroups)
+        foreach (var item in _selectedGroupsList)
         {
             content.Add(content: new StringContent(item), name: "\"Group\"");
         }
 
-        if (!string.IsNullOrEmpty(_addGroup))
-        {
-            content.Add(content: new StringContent(_addGroup), name: "\"Group\"");
-        }
-
-        await MusicService.EditInformationAsync(content);
-
-        Navigation.NavigateTo("/music");
+        await musicService.EditInformationAsync(content);
+        dialogService.Toast("音乐信息更新成功！", Models.Dialog.ToastType.Success);
+        navigation.NavigateTo("/music");
     }
 
     private Dictionary<string, long> _selectLrc = new();
@@ -136,11 +105,11 @@ public partial class Detail
         _lrcContent = "";
     }
 
-    private List<string> _groups = new();
+    private List<string> _groups = [];
 
     protected override async Task OnInitializedAsync()
     {
-        _groups = await MusicService.GetGroupsAsync();
+        _groups = await musicService.GetGroupsAsync();
         await base.OnInitializedAsync();
     }
 
@@ -149,15 +118,16 @@ public partial class Detail
     protected override async Task OnParametersSetAsync()
     {
         _isLoading = true;
-        _musicModel = await MusicService.GetMusicAsync(Id);
-        if (_musicModel != null)
+        var music = await musicService.GetMusicAsync(Id);
+        if (music != null)
         {
+            _musicModel = music;
             _selectMusic = new Dictionary<string, long>
             {
-                { _musicModel.FileName, _musicModel.MusicLength },
+                { music.FileName ?? music.Title ?? "未命名", music.MusicLength },
             };
-            _selectedGroups = _musicModel.Group;
-            _lrcContent = _musicModel.LyricContent;
+            _selectedGroupsList = music.Group.ToList();
+            _lrcContent = music.LyricContent ?? "";
         }
         _isLoading = false;
         await base.OnParametersSetAsync();
@@ -166,23 +136,20 @@ public partial class Detail
     private Dictionary<string, long> _selectCover = new();
     private bool _showCover = true;
 
-    private async Task OnCoverChanged(InputFileChangeEventArgs e)
+    private void OnCoverChanged(InputFileChangeEventArgs e)
     {
-        _showCover = false;
-        _coverFile = e.File;
-        _selectCover = new Dictionary<string, long> { { _coverFile.Name, _coverFile.Size } };
+        var files = e.GetMultipleFiles();
+        _selectCover = files.ToDictionary(x => x.Name, x => x.Size);
+        _coverFile = files.FirstOrDefault();
+        if (_coverFile != null)
+        {
+            _showCover = true;
+            StateHasChanged();
+        }
+    }
 
-        var resizedImage = await _coverFile.RequestImageFileAsync(
-            _coverFile.ContentType,
-            1000,
-            1000
-        );
-        var jsImageStream = resizedImage.OpenReadStream(AppTools.MaxFileSize);
-        var dotnetImageStream = new DotNetStreamReference(jsImageStream);
-        await JsRuntime.InvokeVoidAsync(
-            "setImageUsingStreaming",
-            "imagePreview",
-            dotnetImageStream
-        );
+    private void HandleNewGroupAdded(string group)
+    {
+        dialogService.Toast($"分组 '{group}' 已添加", Models.Dialog.ToastType.Success);
     }
 }

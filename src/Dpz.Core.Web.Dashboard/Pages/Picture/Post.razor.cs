@@ -1,131 +1,137 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
-using MudBlazor;
 
-namespace Dpz.Core.Web.Dashboard.Pages.Picture
+namespace Dpz.Core.Web.Dashboard.Pages.Picture;
+
+public partial class Post(
+    IPictureService pictureService,
+    IAppDialogService dialogService,
+    NavigationManager navigation,
+    IJSRuntime jsRuntime
+) : IAsyncDisposable
 {
-    public partial class Post
+    private bool _isPosting;
+    private readonly PostPictureModel _picture = new();
+    private List<string> _tags = [];
+    private List<string> _selectedTags = [];
+    private Dictionary<string, long> _selectedFiles = [];
+
+    private int _uploadProgress;
+    private IJSObjectReference? _jsModule;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject] private IPictureService PictureService { get; set; }
+        _tags = await pictureService.GetTagsAsync();
+        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./Pages/Picture/Post.razor.js"
+        );
+    }
 
-        [Inject] private ISnackbar Snackbar { get; set; }
-
-        [Inject] private NavigationManager Navigation { get; set; }
-
-        [Inject] private IJSRuntime JsRuntime { get; set; }
-
-        private bool _isPosting = false;
-
-        private PostPicture _picture = new();
-
-        private List<string> _tags = new();
-
-        //private readonly string[] _inputTags = new string[6];
-
-        protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _jsModule != null)
         {
-            _tags = await PictureService.GetTagsAsync();
-            await base.OnInitializedAsync();
+            await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+        }
+    }
+
+    private async Task PostPictureAsync()
+    {
+        if (_picture.Image == null || !_picture.Image.ContentType.StartsWith("image/"))
+        {
+            dialogService.Toast("请选择图片", ToastType.Warning);
+            return;
         }
 
-        private async Task PostPictureAsync()
-        {
-            Snackbar.Configuration.SnackbarVariant = Variant.Outlined;
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
-            Snackbar.Configuration.MaxDisplayedSnackbars = 10;
-            if (_picture.Image == null || !_picture.Image.ContentType.StartsWith("image/"))
-            {
-                Snackbar.Add("请选择图片", Severity.Warning);
-                return;
-            }
+        _isPosting = true;
+        _uploadProgress = 0;
+        StateHasChanged();
 
+        try
+        {
+            var fields = new List<UploadFormField>();
+            foreach (var tag in _selectedTags.Distinct())
+            {
+                fields.Add(new UploadFormField("tags", tag));
+            }
+            fields.Add(new UploadFormField("description", _picture.Description ?? ""));
+
+            await using var stream = _picture.Image.OpenReadStream(AppTools.MaxFileSize);
+            var files = new List<UploadFilePart>
+            {
+                new("image", _picture.Image.Name, _picture.Image.ContentType, stream),
+            };
+            var progress = new Progress<int>(value =>
+            {
+                _uploadProgress = value;
+                StateHasChanged();
+            });
+
+            await pictureService.UploadWithProgressAsync(files, fields, progress);
+
+            dialogService.Toast("上传成功", ToastType.Success);
+            navigation.NavigateTo("/picture");
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"上传失败: {ex.Message}", ToastType.Error);
+            _isPosting = false;
             StateHasChanged();
-            _isPosting = true;
-            using var content = new MultipartFormDataContent();
+        }
+    }
 
-            var fileContent =
-                new StreamContent(_picture.Image.OpenReadStream(AppTools.MaxFileSize));
-            fileContent.Headers.ContentType =
-                new MediaTypeHeaderValue(_picture.Image.ContentType);
-            content.Add(
-                content: fileContent,
-                name: "\"image\"",
-                fileName: _picture.Image.Name);
-
-            // 处理标签
-            var tags = _picture.AdditionsTags?.Split(",")?.Select(x => x?.Trim())?.Where(x => !string.IsNullOrEmpty(x))
-                ?.ToList() ?? new List<string>();
-            if (_picture.Tags?.Any() == true)
-                tags.AddRange(_picture.Tags);
-            foreach (var tag in tags.GroupBy(x => x).Select(x => x.Key))
-            {
-                var tagContent = new StringContent(tag);
-                tagContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-                {
-                    Name = "\"tags\""
-                };
-                content.Add(
-                    content: tagContent
-                );
-            }
-
-            var descContent = new StringContent(_picture.Description ?? "");
-            content.Add(
-                content: descContent,
-                name: "\"description\"");
-
-
-            await PictureService.UploadAsync(content);
-            Navigation.NavigateTo("/picture");
+    private async Task OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        var imageFile = e.File;
+        if (!imageFile.ContentType.StartsWith("image/"))
+        {
+            _picture.Image = null;
+            dialogService.Toast("请选择图片", ToastType.Warning);
+            return;
         }
 
-        private Dictionary<string, long> _selectedFiles = new();
-        
-        private async Task OnInputFileChanged(InputFileChangeEventArgs e)
-        {
-            var imageFile = e.File;
-            if (!imageFile.ContentType.StartsWith("image/"))
-            {
-                _picture.Image = null;
-                Snackbar.Add("请选择图片", Severity.Warning);
-                return;
-            }
-            _selectedFiles = new() {{imageFile.Name, imageFile.Size}};
-            _picture.Image = imageFile;
+        _selectedFiles = new() { { imageFile.Name, imageFile.Size } };
+        _picture.Image = imageFile;
 
-            var resizedImage =
-                await imageFile.RequestImageFileAsync(imageFile.ContentType, 1000, 1000);
+        if (_jsModule != null)
+        {
+            var resizedImage = await imageFile.RequestImageFileAsync(
+                imageFile.ContentType,
+                1000,
+                1000
+            );
             var jsImageStream = resizedImage.OpenReadStream(AppTools.MaxFileSize);
             var dotnetImageStream = new DotNetStreamReference(jsImageStream);
-            await JsRuntime.InvokeVoidAsync("setImageUsingStreaming",
-                "imagePreview", dotnetImageStream);
+            await _jsModule.InvokeVoidAsync("setImagePreview", "imagePreview", dotnetImageStream);
         }
+    }
 
+    private void HandleNewTagAdded(string tag)
+    {
+        dialogService.Toast($"标签 '{tag}' 已添加", ToastType.Success);
+    }
 
-        private class PostPicture
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null)
         {
-            public string Description { get; set; }
-
-            public List<string> Tags { get; set; }
-
-            public string AdditionsTags { get; set; }
-
-            public IBrowserFile Image { get; set; }
+            await _jsModule.DisposeAsync();
         }
+    }
 
-        private void OnTagsSelected(IEnumerable<string> tags)
-        {
-            _picture.Tags = tags.ToList();
-        }
+    private class PostPictureModel
+    {
+        public string? Description { get; set; }
+        public IBrowserFile? Image { get; set; }
     }
 }

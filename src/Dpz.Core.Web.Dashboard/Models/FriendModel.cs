@@ -4,17 +4,17 @@ namespace Dpz.Core.Web.Dashboard.Models;
 
 public class FriendModel
 {
-    public string Name { get; set; }
-    
-    public string Avatar { get; set; }
+    public required string Name { get; set; }
 
-    public string Link { get; set; }
+    public required string Avatar { get; set; }
 
-    public string Description { get; set; }
-    
-    public string Id { get; set; }
+    public required string Link { get; set; }
 
-    public string OptionName { get; set; }
+    public string? Description { get; set; }
+
+    public required string Id { get; set; }
+
+    public required string OptionName { get; set; }
 
     public DateTime CreateTime { get; set; }
 

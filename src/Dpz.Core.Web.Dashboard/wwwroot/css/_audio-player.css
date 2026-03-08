@@ -1,0 +1,108 @@
+/* _audio-player.css */
+.custom-audio-player {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    gap: 1rem;
+    width: 100%;
+    max-width: 400px; /* Limit width */
+    height: 48px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.custom-audio-player:hover {
+    border-color: var(--primary);
+}
+
+.custom-audio-player__btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.custom-audio-player__btn:hover {
+    background: var(--primary-hover);
+}
+
+.custom-audio-player__btn i {
+    font-size: 0.8rem;
+    margin-left: 2px; /* Visual balance for play icon */
+}
+
+.custom-audio-player__btn i.fa-pause {
+    margin-left: 0;
+}
+
+.custom-audio-player__progress {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-audio-player__time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    min-width: 35px;
+    text-align: center;
+}
+
+/* Custom Range Slider */
+.custom-audio-player__slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    flex: 1;
+}
+
+.custom-audio-player__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--text-primary);
+    border-radius: 50%;
+    transition: transform 0.1s;
+}
+
+.custom-audio-player__slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: var(--primary);
+}
+
+.custom-audio-player__slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: none;
+    background: var(--text-primary);
+    border-radius: 50%;
+    transition: transform 0.1s;
+}
+
+.custom-audio-player__slider::-moz-range-track {
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+}
+
+.custom-audio-player__slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}

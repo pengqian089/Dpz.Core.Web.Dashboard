@@ -1,78 +1,98 @@
-﻿<MudDialog>
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Token" Class="mr-3 mb-n1"/>
-            登录记录
-        </MudText>
-    </TitleContent>
+﻿@using Dpz.Core.Web.Dashboard.Shared.Components
 
-    <DialogContent>
-        <MudTable Hover="true"
-                  @ref="_table"
-                  Loading="_isLoading"
-                  ServerData="(x, _) => LoadDataAsync(x)"
-                  CurrentPage="@(_pageIndex - 1)"
-                  RowsPerPage="PageSize">
-            <HeaderContent>
-                <MudTh>
-                    账号
-                </MudTh>
-                <MudTh>
-                    IP地址
-                </MudTh>
-                <MudTh Style="max-width: 15em">
-                    User-Agent
-                </MudTh>
-                <MudTh>
-                    SessionId
-                </MudTh>
-                <MudTh>
-                    登录方式
-                </MudTh>
-                <MudTh>
-                    登录结果
-                </MudTh>
-                <MudTh>
-                    创建时间
-                </MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="账号">
-                    @context.Account
-                </MudTd>
-                <MudTd DataLabel="IP地址">
-                    @context.IpAddress
-                </MudTd>
-                <MudTd DataLabel="User-Agent">
-                    <MudTooltip Text="@context.UserAgent">
-                        <div
-                            style="overflow: hidden;display: -webkit-box;-webkit-line-clamp: 1;-webkit-box-orient:vertical;max-width: 15em">
-                            @context.UserAgent
-                        </div>
-                    </MudTooltip>
-                </MudTd>
-                <MudTd DataLabel="SessionId">
-                    @context.SessionId
-                </MudTd>
-                <MudTd DataLabel="登录方式">
-                    @context.MethodStr
-                </MudTd>
-                <MudTd DataLabel="登录结果">
-                    <MudChip T="string" Color="@context.Color">@context.StatusStr</MudChip>
-                </MudTd>
-                <MudTd DataLabel="创建时间">
-                    @context.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
-                </MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager RowsPerPageString="每页数量"
-                               HideRowsPerPage="true"
-                               PageSizeOptions="new[] { 15, 20, 30 }"
-                               InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-            </PagerContent>
-        </MudTable>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Close">关闭</MudButton>
-    </DialogActions>
-</MudDialog>
+<div class="account-token">
+    <div class="account-token__header">
+        <div class="account-token__title">
+            <i class="fas fa-shield-alt"></i>
+            登录记录
+        </div>
+        <div class="account-token__subtitle">
+            账号：@Account
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="account-token__skeleton">
+            @for (var i = 0; i < 5; i++)
+            {
+                <div class="account-token__skeleton-row">
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text-lg"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                </div>
+            }
+        </div>
+    }
+    else if (_records.Count == 0)
+    {
+        <div class="account-token__empty">
+            <i class="fas fa-history"></i>
+            暂无登录记录
+        </div>
+    }
+    else
+    {
+        <div class="account-token__table">
+            <div class="account-token__table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>账号</th>
+                            <th>IP地址</th>
+                            <th>User-Agent</th>
+                            <th>SessionId</th>
+                            <th>登录方式</th>
+                            <th>登录结果</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in _records)
+                        {
+                            <tr>
+                                <td data-label="账号">@record.Account</td>
+                                <td data-label="IP地址">
+                                    <span class="account-token__ip" title="@record.IpAddress">
+                                        @record.IpAddress
+                                    </span>
+                                </td>
+                                <td data-label="User-Agent">
+                                    <span class="account-token__agent" title="@record.UserAgent">
+                                        @record.UserAgent
+                                    </span>
+                                </td>
+                                <td data-label="SessionId">
+                                    <span class="account-token__session">@record.SessionId</span>
+                                </td>
+                                <td data-label="登录方式">@record.MethodStr</td>
+                                <td data-label="登录结果">
+                                    <span class="account-token__status @GetStatusClass(record.Status)">
+                                        @record.StatusStr
+                                    </span>
+                                </td>
+                                <td data-label="创建时间">
+                                    @record.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged"/>
+        </div>
+    }
+
+    <div class="account-token__footer">
+        <button class="btn btn-secondary" @onclick="Close">关闭</button>
+    </div>
+</div>

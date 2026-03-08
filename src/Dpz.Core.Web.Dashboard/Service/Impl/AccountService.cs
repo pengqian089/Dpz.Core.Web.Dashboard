@@ -9,7 +9,7 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl;
 public class AccountService(IHttpService httpService) : IAccountService
 {
     public async Task<IPagedList<UserInfo>> GetPageAsync(
-        string account = null,
+        string? account = null,
         int pageIndex = 1,
         int pageSize = 10
     )
@@ -22,7 +22,7 @@ public class AccountService(IHttpService httpService) : IAccountService
         );
     }
 
-    public async Task CreateAccountAsync(string account, string name, string password = null)
+    public async Task CreateAccountAsync(string account, string name, string? password = null)
     {
         await httpService.PostAsync(
             "/api/Account",
@@ -35,7 +35,7 @@ public class AccountService(IHttpService httpService) : IAccountService
         );
     }
 
-    public async Task<UserInfo> GetUserAsync(string account)
+    public async Task<UserInfo?> GetUserAsync(string account)
     {
         return await httpService.GetAsync<UserInfo>($"/api/Account/{account}");
     }

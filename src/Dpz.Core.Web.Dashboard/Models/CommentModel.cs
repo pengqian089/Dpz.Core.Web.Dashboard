@@ -7,7 +7,7 @@ namespace Dpz.Core.Web.Dashboard.Models;
 
 public class CommentModel
 {
-    public string Id { get; set; }
+    public required string Id { get; set; }
 
     /// <summary>
     /// 评论类型
@@ -18,7 +18,7 @@ public class CommentModel
     /// <summary>
     /// 关联
     /// </summary>
-    public string Relation { get; set; }
+    public required string Relation { get; set; }
 
     /// <summary>
     /// 回复时间
@@ -28,37 +28,37 @@ public class CommentModel
     /// <summary>
     /// 回复内容
     /// </summary>
-    public string CommentText { get; set; }
+    public string? CommentText { get; set; }
 
     /// <summary>
     /// 回复ID
     /// </summary>
-    public List<string> Replies { get; set; }
+    public List<string> Replies { get; set; } = [];
 
     /// <summary>
     /// 昵称
     /// </summary>
-    public string NickName { get; set; }
+    public required string NickName { get; set; }
 
     /// <summary>
     /// 头像
     /// </summary>
-    public string Avatar { get; set; }
+    public required string Avatar { get; set; }
 
     /// <summary>
     /// 身份标识
     /// </summary>
-    public string Identity { get; set; }
+    public string? Identity { get; set; }
 
     /// <summary>
-    /// 邮箱
+    /// 邮箱MD5
     /// </summary>
-    public string Email { get; set; }
+    public string? EmailMd5 { get; set; }
 
     /// <summary>
     /// 网站
     /// </summary>
-    public string Site { get; set; }
+    public string? Site { get; set; }
 
     /// <summary>
     /// 是否匿名评论
@@ -68,7 +68,7 @@ public class CommentModel
     /// <summary>
     /// 是否删除
     /// </summary>
-    public bool? IsDelete { get; set; }
+    public bool IsDelete { get; set; }
 
     /// <summary>
     /// 是否展开完整评论

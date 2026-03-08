@@ -3,55 +3,47 @@ using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Request;
 
-namespace Dpz.Core.Web.Dashboard.Service.Impl
+namespace Dpz.Core.Web.Dashboard.Service.Impl;
+
+public class DynamicPageService(IHttpService httpService) : IDynamicPageService
 {
-    public class DynamicPageService : IDynamicPageService
+    public async Task<IPagedList<DynamicPageListModel>> GetPageAsync(
+        string? name = null,
+        int pageIndex = 1,
+        int pageSize = 10
+    )
     {
-        private readonly IHttpService _httpService;
+        return await httpService.GetPageAsync<DynamicPageListModel>(
+            "/api/DynamicPage",
+            pageIndex,
+            pageSize,
+            new { id = name }
+        );
+    }
 
-        public DynamicPageService(IHttpService httpService)
-        {
-            _httpService = httpService;
-        }
+    public async Task<DynamicPageModel?> GetDynamicPageAsync(string id)
+    {
+        return await httpService.GetAsync<DynamicPageModel>($"/api/DynamicPage/{id}");
+    }
 
-        public async Task<IPagedList<DynamicPageListModel>> GetPageAsync(
-            string name = null,
-            int pageIndex = 1,
-            int pageSize = 10
-        )
-        {
-            return await _httpService.GetPageAsync<DynamicPageListModel>(
-                "/api/DynamicPage",
-                pageIndex,
-                pageSize,
-                new { id = name }
-            );
-        }
+    public async Task<bool> ExistsAsync(string id)
+    {
+        var result = await httpService.GetAsync<Exists>($"/api/DynamicPage/exists/{id}");
+        return result?.IsExists ?? false;
+    }
 
-        public async Task<DynamicPageModel> GetDynamicPageAsync(string id)
-        {
-            return await _httpService.GetAsync<DynamicPageModel>($"/api/DynamicPage/{id}");
-        }
+    public async Task CreateDynamicPage(SaveDynamicRequest request)
+    {
+        await httpService.PostAsync("/api/DynamicPage", request);
+    }
 
-        public async Task<bool> ExistsAsync(string id)
-        {
-            var result = await _httpService.GetAsync<Exists>($"/api/DynamicPage/exists/{id}");
-            return result?.IsExists ?? false;
-        }
+    public async Task EditDynamicPage(SaveDynamicRequest request)
+    {
+        await httpService.PatchAsync($"/api/DynamicPage/", request);
+    }
 
-        public async Task CreateDynamicPage(SaveDynamicRequest request)
-        {
-            await _httpService.PostAsync("/api/DynamicPage", request);
-        }
-
-        public async Task EditDynamicPage(SaveDynamicRequest request)
-        {
-            await _httpService.PatchAsync($"/api/DynamicPage/", request);
-        }
-
-        public async Task DeleteAsync(string id)
-        {
-            await _httpService.DeleteAsync($"/api/DynamicPage/{id}");
-        }
+    public async Task DeleteAsync(string id)
+    {
+        await httpService.DeleteAsync($"/api/DynamicPage/{id}");
     }
 }

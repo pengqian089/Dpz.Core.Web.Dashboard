@@ -10,5 +10,5 @@ public class VideoMetaDataModel
     /// <summary>
     /// 分片时长
     /// </summary>
-    public double[] Points { get; set; }
+    public double[] Points { get; set; } = [];
 }

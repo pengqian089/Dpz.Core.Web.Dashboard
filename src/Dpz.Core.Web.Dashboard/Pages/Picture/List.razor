@@ -1,133 +1,255 @@
 ﻿@page "/picture"
 @page "/picture/list"
 @attribute [Authorize]
-@using Dpz.Core.EnumLibrary
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">图像列表</MudText>
-<MudTable Hover="true"
-          @ref="_table"
-          ServerData="(x,_) => LoadDataAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          RowsPerPage="PageSize">
-    <ToolBarContent>
-        <MudIconButton Icon="@Icons.Material.Filled.Publish"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       title="上传图片"
-                       Size="Size.Medium"
-                       OnClick="PostPicture"
-                       Class="ma-2"/>
-        <MudSpacer/>
-        <MudSelect T="string"
-                   Placeholder="请选择标签"
-                   @bind-value="_tag"
-                   Clearable="true"
-                   AdornmentIcon="@Icons.Material.Filled.Tag"
-                   Adornment="Adornment.Start"
-                   IconSize="Size.Medium"
-                   Class="mt-2"
-                   AdornmentColor="Color.Primary">
-            @foreach (var item in _tags)
-            {
-                <MudSelectItem Value="@item">@item</MudSelectItem>
-            }
-        </MudSelect>
-        <MudSelect T="int"
-                   @bind-value="_pictureType"
-                   Placeholder="请选择类型"
-                   Strict="true"
-                   ToStringFunc="_convert"
-                   AdornmentIcon="@Icons.Material.Filled.MergeType"
-                   Adornment="Adornment.Start"
-                   IconSize="Size.Medium"
-                   Class="mt-2"
-                   AdornmentColor="Color.Primary">
-            @foreach (var item in AppTools.PictureTypes)
-            {
-                <MudSelectItem Value="@item.Key">@item.Value</MudSelectItem>
-            }
-        </MudSelect>
-        <MudTextField T="string"
-                      Placeholder="描述"
-                      @bind-value="_description"
-                      Clearable="true"
-                      Adornment="Adornment.Start"
-                      AdornmentColor="Color.Primary"
-                      AdornmentIcon="@Icons.Material.Filled.Title"
-                      IconSize="Size.Medium"
-                      Class="mt-2">
-        </MudTextField>
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       title="搜索"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            标签
-        </MudTh>
-        <MudTh>
-            上传人
-        </MudTh>
-        <MudTh>
-            上传时间
-        </MudTh>
-        <MudTh>
-            描述
-        </MudTh>
-        <MudTh>
-            类型
-        </MudTh>
-        <MudTh>
-            图片大小
-        </MudTh>
-        <MudTh>
-            高度
-        </MudTh>
-        <MudTh>
-            宽度
-        </MudTh>
-        <MudTh>
-            MD5
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="标签">
-            @foreach (var tag in context.Tags)
-            {
-                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.Tag">@tag</MudChip>
-            }
-        </MudTd>
-        <MudTd DataLabel="上传人">@context.Creator?.Name</MudTd>
-        <MudTd DataLabel="上传时间">@context.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="描述">
-            <MudHighlighter Text="@context.Description" HighlightedText="@_description"/>
-        </MudTd>
-        <MudTd DataLabel="类型">@context.Category.ToString()</MudTd>
-        <MudTd DataLabel="图片大小">
-            <MudText>@context.Length.FileSize()</MudText>
-        </MudTd>
-        <MudTd DataLabel="高度">
-            <MudText>@context.Height</MudText>
-        </MudTd>
-        <MudTd DataLabel="宽度">
-            <MudText>@context.Width</MudText>
-        </MudTd>
-        <MudTd DataLabel="MD5">
-            <MudText>@context.Md5</MudText>
-        </MudTd>
-        <MudTd DataLabel="操作">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => EditPicture(context.Id)">编辑</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] {15, 20, 30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+@using Dpz.Core.Web.Dashboard.Shared.Components
+
+<div class="picture-list">
+    <div class="picture-list__header">
+        <h1 class="page-title">图片管理</h1>
+        <p class="page-description">管理和维护网站的所有图片资源</p>
+    </div>
+
+    <div class="picture-list__toolbar">
+        <div class="picture-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="PostPicture">
+                <i class="fas fa-upload"></i>
+                上传图片
+            </button>
+
+            <div class="picture-list__view-toggle">
+                <button class="view-toggle-btn @(_viewMode == "grid" ? "view-toggle-btn--active" : "")"
+                        @onclick='() => ToggleViewMode("grid")'
+                        title="网格视图">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button class="view-toggle-btn @(_viewMode == "table" ? "view-toggle-btn--active" : "")"
+                        @onclick='() => ToggleViewMode("table")'
+                        title="表格视图">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="picture-list__toolbar-right">
+            <select class="form-control form-select" @bind="_tag" @bind:after="Search">
+                <option value="">全部标签</option>
+                @foreach (var item in _tags)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+
+            <select class="form-control form-select" @bind="_pictureType" @bind:after="Search">
+                <option value="-1">全部类型</option>
+                @foreach (var item in AppTools.PictureTypes.Value)
+                {
+                    <option value="@item.Key">@item.Value</option>
+                }
+            </select>
+
+            <input type="text"
+                   class="form-control"
+                   placeholder="搜索描述..."
+                   @bind="_description"
+                   @bind:event="oninput"
+                   @onkeydown="@(async e => { if (e.Key == "Enter") await Search(); })" />
+
+            <button class="btn btn-primary" @onclick="Search">
+                <i class="fas fa-search"></i>
+                搜索
+            </button>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        @if (_viewMode == "grid")
+        {
+            <div class="picture-grid-skeleton">
+                @for (var i = 0; i < 12; i++)
+                {
+                    <div class="picture-card-skeleton">
+                        <div class="picture-card-skeleton__image skeleton skeleton--full"></div>
+                        <div class="picture-card-skeleton__content">
+                            <div class="skeleton skeleton--text-lg skeleton--full"></div>
+                            <div class="skeleton skeleton--text skeleton--full"></div>
+                            <div class="skeleton skeleton--text skeleton--half"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="article-list-skeleton">
+                <div class="article-list-skeleton__table">
+                    @for (var i = 0; i < 12; i++)
+                    {
+                        <div class="article-list-skeleton__row">
+                            <div class="skeleton skeleton--avatar"></div>
+                            <div class="skeleton skeleton--text-lg"></div>
+                            <div class="skeleton skeleton--text"></div>
+                            <div class="skeleton skeleton--text"></div>
+                            <div class="skeleton skeleton--text"></div>
+                            <div class="skeleton skeleton--text"></div>
+                            <div class="skeleton skeleton--text"></div>
+                            <div class="skeleton skeleton--button"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else if (_pictures.Count == 0)
+    {
+        <div class="picture-list__empty">
+            <i class="fas fa-image fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无图片数据</p>
+        </div>
+    }
+    else
+    {
+        @if (_viewMode == "grid")
+        {
+            <div class="picture-grid">
+                @foreach (var picture in _pictures)
+                {
+                    <div class="picture-card">
+                        <div class="picture-card__image">
+                            <img src="@(picture.AccessUrl + "!albums")" alt="@picture.Description" loading="lazy" />
+                            <span class="picture-card__type">@picture.Category</span>
+                        </div>
+                        <div class="picture-card__content">
+                            <div class="picture-card__description">@picture.Description</div>
+
+                            <div class="picture-card__meta">
+                                <div class="picture-card__meta-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>@picture.Creator?.Name</span>
+                                </div>
+                                <div class="picture-card__meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>@picture.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                </div>
+                                <div class="picture-card__meta-item">
+                                    <i class="fas fa-expand-arrows-alt"></i>
+                                    <span>@(picture.Width) × @(picture.Height)</span>
+                                </div>
+                                <div class="picture-card__meta-item">
+                                    <i class="fas fa-file"></i>
+                                    <span>@picture.Length.FileSize()</span>
+                                </div>
+                                <div class="picture-card__meta-item">
+                                    <i class="fas fa-fingerprint "></i>
+                                    <span>@picture.Md5</span>
+                                </div>
+                            </div>
+
+                            @if (picture.Tags.Any())
+                            {
+                                <div class="picture-card__tags">
+                                    @foreach (var tag in picture.Tags)
+                                    {
+                                        <span class="picture-card__tag">@tag</span>
+                                    }
+                                </div>
+                            }
+
+                            <div class="picture-card__footer">
+                                <div class="picture-card__actions">
+                                    <button class="btn btn-primary btn-sm" @onclick="() => EditPicture(picture.Id)">
+                                        <i class="fas fa-edit"></i>
+                                        编辑
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(picture.Id)">
+                                        <i class="fas fa-trash"></i>
+                                        删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="picture-table">
+                <div class="picture-table__wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>预览</th>
+                                <th>描述</th>
+                                <th>标签</th>
+                                <th>上传人</th>
+                                <th>上传时间</th>
+                                <th>类型</th>
+                                <th>尺寸</th>
+                                <th>大小</th>
+                                <th>MD5</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var picture in _pictures)
+                            {
+                                <tr>
+                                    <td data-label="预览">
+                                        <img src="@(picture.AccessUrl + "!albums")" alt="@picture.Description" class="picture-table__thumbnail" loading="lazy" />
+                                    </td>
+                                    <td data-label="描述">
+                                        <div class="picture-table__description" title="@picture.Description">
+                                            @picture.Description
+                                        </div>
+                                    </td>
+                                    <td data-label="标签">
+                                        <div class="picture-table__tags">
+                                            @foreach (var tag in picture.Tags)
+                                            {
+                                                <span class="picture-table__tag">@tag</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td data-label="上传人">@picture.Creator.Name</td>
+                                    <td data-label="上传时间">@picture.UploadTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td data-label="类型">@picture.Category</td>
+                                    <td data-label="尺寸">@(picture.Width) × @(picture.Height)</td>
+                                    <td data-label="大小">@picture.Length.FileSize()</td>
+                                    <td data-label="MD5">@picture.Md5</td>
+                                    <td data-label="操作">
+                                        <div class="picture-table__actions">
+                                            <button class="btn btn-primary btn-sm" @onclick="() => EditPicture(picture.Id)">
+                                                <i class="fas fa-edit"></i>
+                                                编辑
+                                            </button>
+                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(picture.Id)">
+                                                <i class="fas fa-trash"></i>
+                                                删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <Pagination CurrentPage="_pageIndex"
+                            TotalPages="_totalPages"
+                            TotalCount="_totalCount"
+                            PageSize="PageSize"
+                            OnPageChanged="HandlePageChanged" />
+            </div>
+        }
+
+        @if (_viewMode == "grid")
+        {
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged" />
+        }
+    }
+</div>

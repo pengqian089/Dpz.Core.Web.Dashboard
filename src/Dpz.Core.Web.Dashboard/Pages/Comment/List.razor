@@ -1,161 +1,177 @@
 ﻿@page "/comment"
+@page "/comment/{NodeParam?}"
 @using Dpz.Core.EnumLibrary
 @attribute [Authorize]
 
-<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">评论列表</MudText>
-<MudTable Hover="true"
-          ServerData="(x,_) => LoadAsync(x)"
-          CurrentPage="@(_pageIndex - 1)"
-          Loading="_isLoading"
-          RowsPerPage="PageSize"
-          @ref="_table">
-    <ToolBarContent>
-        <MudSpacer/>
-        <MudSelect T="string"
-                   Placeholder="请选择类型"
-                   Clearable="true"
-                   AdornmentIcon="@Icons.Material.Filled.Category"
-                   Adornment="Adornment.Start"
-                   IconSize="Size.Medium"
-                   Class="mt-2"
-                   Value="Node"
-                   ValueChanged="async x => await OnNodeChange(x)"
-                   AdornmentColor="Color.Primary">
-            <MudSelectItem Value="@CommentNode.Article.ToString()">文章</MudSelectItem>
-            <MudSelectItem Value="@CommentNode.Code.ToString()">源码</MudSelectItem>
-            <MudSelectItem Value="@CommentNode.Friends.ToString()">友链</MudSelectItem>
-            <MudSelectItem Value="@CommentNode.Mumble.ToString()">碎碎念</MudSelectItem>
-            <MudSelectItem Value="@CommentNode.Other.ToString()">其它</MudSelectItem>
-        </MudSelect>
+<div class="comment-list">
+    <div class="comment-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-comments"></i>
+            评论管理
+        </h1>
+        <p class="page-description">集中管理用户评论与回复内容</p>
+    </div>
 
-        <MudSelect T="string"
-                   Placeholder="请选择类型"
-                   @bind-value="Relation"
-                   Clearable="true"
-                   AdornmentIcon="@Icons.Material.Filled.Link"
-                   Adornment="Adornment.Start"
-                   IconSize="Size.Medium"
-                   Class="mt-2"
-                   AdornmentColor="Color.Primary"
-                   @ref="_secondSelect">
-                @foreach (var item in _secondItems.OrderBy(x => x.Id))
+    <div class="comment-list__toolbar">
+        <div class="comment-list__toolbar-left">
+            <select class="form-control form-select" @bind="_nodeValue" @bind:after="HandleNodeChanged">
+                <option value="">全部类型</option>
+                <option value="@CommentNode.Article">文章</option>
+                <option value="@CommentNode.Code">源码</option>
+                <option value="@CommentNode.Friends">友链</option>
+                <option value="@CommentNode.Mumble">碎碎念</option>
+                <option value="@CommentNode.Other">其它</option>
+            </select>
+
+            <select class="form-control form-select" @bind="_relation" @bind:after="HandleRelationChanged">
+                <option value="">全部关联</option>
+                @foreach (var item in _relationItems.OrderBy(x => x.Id))
                 {
-                    <MudSelectItem Value="@item.Id">@item.Title</MudSelectItem>
+                    <option value="@item.Id">@item.Title</option>
                 }
-        </MudSelect>
+            </select>
+        </div>
 
-        <MudIconButton Icon="@Icons.Material.Filled.Search"
-                       Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       Size="Size.Medium"
-                       OnClick="Search"
-                       Class="ma-2"/>
-    </ToolBarContent>
-    <HeaderContent>
-        <MudTh>
-            类型
-        </MudTh>
-        <MudTh>
-            关联
-        </MudTh>
-        <MudTh>
-            是否匿名
-        </MudTh>
-        <MudTh>
-            昵称
-        </MudTh>
-        <MudTh>
-            邮箱
-        </MudTh>
-        <MudTh>
-            个人网站
-        </MudTh>
-        <MudTh>
-            评论内容
-        </MudTh>
-        <MudTh>
-            身份标识
-        </MudTh>
-        <MudTh>
-            评论时间
-        </MudTh>
-        <MudTh>操作</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="类型">
-            @* <MudHighlighter Text="@context.BlogTitle" HighlightedText="@_title"/> *@
-            @context.Node
-        </MudTd>
-        <MudTd DataLabel="关联">
-            @if (FindRelation(context.Relation,out var title))
-            {
-                <span>@title</span>
-            }
-            else
-            {
-                <span>@context.Relation</span>
-            }
-        </MudTd>
-        <MudTd DataLabel="是否匿名">
-            @if (context.IsGuest)
-            {
-                <span style="color: #d9aa51">匿名</span>
-            }
-            else
-            {
-                <span style="color: #00b5c3">成员</span>
-            }
-        </MudTd>
-        <MudTd DataLabel="昵称">@context.NickName</MudTd>
-        <MudTd DataLabel="邮箱">@context.Email</MudTd>
-        <MudTd DataLabel="个人网站">@context.Site</MudTd>
-        <MudTd DataLabel="评论内容">
-            <div style="overflow: hidden;display: -webkit-box;-webkit-line-clamp: 1;-webkit-box-orient:vertical;max-width: 200px">
-                @context.CommentText
+        <div class="comment-list__toolbar-right">
+            <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                <i class="fas fa-search"></i>
+                查询
+            </button>
+            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+            <div class="comment-list__summary">
+                <span class="comment-list__summary-label">共</span>
+                <span class="comment-list__summary-value">@_totalCount</span>
+                <span class="comment-list__summary-label">条</span>
             </div>
-            @if (context.CommentText.Contains("\n"))
-            {
-                <MudButton Variant="Variant.Text" OnClick="@(() => context.ShowComment = !context.ShowComment)" Color="Color.Primary">
-                     @((context.ShowComment) ? "收起评论" : "展开评论")
-                </MudButton>
-            }
-        </MudTd>
-        <MudTd DataLabel="身份标识">@context.Identity</MudTd>
-        <MudTd DataLabel="评论时间">@context.PublishTime.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-        <MudTd DataLabel="操作">
-            @if (context.IsDelete == true)
-            {
-                <span>已删除</span>
-            }
-            else
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => DeleteAsync(context.Id)">删除</MudButton>    
-            }
-        </MudTd>
-    </RowTemplate>
-        <ChildRowContent>
-            @if (context.ShowComment)
-            {
-                <MudTr>
-                    <td colspan="9">
-                        <MudCard>
-                            <MudCardHeader>
-                                <CardHeaderContent>
-                                    <MudText Typo="Typo.body1">Markdown内容</MudText>
-                                </CardHeaderContent>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <pre style="width: calc(100vw - 30.5em);max-height: 300px" class="line-numbers language-markdown"><code>@context.CommentText</code></pre>
-                            </MudCardContent>
-                        </MudCard>
-                    </td>
-                </MudTr>
-            }
-        </ChildRowContent>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="每页数量"
-                       HideRowsPerPage="true"
-                       PageSizeOptions="new[] {15, 20, 30}"
-                       InfoFormat="此页显示{first_item}-{last_item} 共{all_items}条"/>
-    </PagerContent>
-</MudTable>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="comment-list-skeleton">
+            <div class="comment-list-skeleton__table">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="comment-list-skeleton__row">
+                        <div class="skeleton skeleton--avatar"></div>
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_comments.Count == 0)
+    {
+        <div class="comment-list__empty">
+            <i class="fas fa-comment-slash fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无评论数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="comment-table">
+            <div class="comment-table__wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>用户</th>
+                        <th>关联</th>
+                        <th>内容</th>
+                        <th>时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in _comments)
+                    {
+                        <tr>
+                            <td data-label="用户">
+                                <div class="comment-table__user">
+                                    <img src="@GetAvatarUrl(item)" alt="@item.NickName" class="comment-table__avatar" loading="lazy" />
+                                    <div class="comment-table__user-info">
+                                        <div class="comment-table__user-name">@item.NickName</div>
+                                        <div class="comment-table__user-meta">
+                                            <span class="comment-table__badge @(item.IsGuest ? "comment-table__badge--guest" : "comment-table__badge--member")">
+                                                @(item.IsGuest ? "匿名" : "成员")
+                                            </span>
+                                            @if (!string.IsNullOrWhiteSpace(item.Identity))
+                                            {
+                                                <span class="comment-table__identity">@item.Identity</span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(item.Site))
+                                        {
+                                            <div class="comment-table__user-links">
+                                                <a href="@item.Site" target="_blank" rel="noreferrer">个人网站</a>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="关联">
+                                <div class="comment-table__relation">
+                                    <span class="comment-table__node">@GetNodeText(item.Node)</span>
+                                    <span class="comment-table__relation-title">
+                                        @if (item.Node == CommentNode.Article)
+                                        {
+                                            <a target="_blank" href="@ArticleReadLink(item)">@GetRelationTitle(item.Relation)</a>
+                                        }
+                                        else
+                                        {
+                                            @GetRelationTitle(item.Relation)
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="内容">
+                                <div class="comment-table__content @(IsLongComment(item.CommentText) ? "comment-table__content--preview" : "")"
+                                     title="@item.CommentText">
+                                    @GetCommentPreview(item.CommentText)
+                                </div>
+                            </td>
+                            <td data-label="时间">
+                                <div class="comment-table__time">
+                                    @item.PublishTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </div>
+                            </td>
+                            <td data-label="操作">
+                                <div class="comment-table__actions">
+                                    @if (IsLongComment(item.CommentText))
+                                    {
+                                        <button class="btn btn-secondary btn-sm" @onclick="() => ViewContent(item)">
+                                            <i class="fas fa-eye"></i>
+                                            查看
+                                        </button>
+                                    }
+                                    @if (item.IsDelete)
+                                    {
+                                        <span class="comment-table__deleted">已删除</span>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <Pagination CurrentPage="_pageIndex"
+                    TotalPages="_totalPages"
+                    TotalCount="_totalCount"
+                    PageSize="PageSize"
+                    OnPageChanged="HandlePageChanged" />
+    }
+</div>

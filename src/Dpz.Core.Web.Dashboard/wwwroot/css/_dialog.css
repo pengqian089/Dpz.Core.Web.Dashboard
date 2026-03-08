@@ -398,14 +398,13 @@
 @media (max-width: 600px) {
     .dialog-overlay {
         padding: var(--spacing-xs);
-        align-items: stretch;
+        align-items: center;
     }
 
     .dialog {
         max-width: 100%;
         max-height: calc(100vh - 16px);
         border-radius: var(--border-radius-sm);
-        margin: var(--spacing-xs) 0;
     }
 
     .dialog__header {
@@ -442,16 +441,13 @@
 /* Extra small devices */
 @media (max-width: 400px) {
     .dialog-overlay {
-        padding: 0;
-        align-items: stretch;
+        padding: var(--spacing-xs) 0;
+        align-items: center;
     }
 
     .dialog {
-        max-height: 100vh;
-        border-radius: 0;
-        margin: 0;
-        border-left: none;
-        border-right: none;
+        max-height: calc(100vh - 16px);
+        border-radius: var(--border-radius-sm);
     }
 
     .dialog__header {
@@ -469,7 +465,6 @@
 
     .dialog__btn {
         padding: 8px 16px;
-        font-size: 0.8125rempx) !important;
-        right: 20px !important;
+        font-size: 0.8125rem;
     }
 }

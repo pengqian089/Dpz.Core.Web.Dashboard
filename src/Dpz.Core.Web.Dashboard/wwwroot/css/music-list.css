@@ -223,7 +223,7 @@
     }
 
     .music-list-skeleton__row {
-        display: none;
+        grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr 1fr 0.5fr 1fr;
     }
 }
 
@@ -303,5 +303,34 @@
     .music-table__actions .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    /* Mobile Skeleton Styles */
+    .music-list-skeleton__table {
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+
+    .music-list-skeleton__row {
+        display: block;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        grid-template-columns: none;
+    }
+
+    .music-list-skeleton__row:last-child {
+        margin-bottom: 0;
+    }
+
+    .music-list-skeleton__row .skeleton {
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .music-list-skeleton__row .skeleton:last-child {
+        margin-bottom: 0;
     }
 }

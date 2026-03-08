@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -22,8 +22,6 @@ public partial class Detail(
     [Parameter]
     public string Id { get; set; } = "";
 
-    private string _addGroup = "";
-
     private readonly string[] _lrcExtensions = ["lrc"];
 
     private bool _isPosting;
@@ -40,7 +38,7 @@ public partial class Detail(
 
     private IBrowserFile? _coverFile;
 
-    private IEnumerable<string> _selectedGroups = new List<string>();
+    private List<string> _selectedGroupsList = [];
 
     private async Task PostInformationAsync()
     {
@@ -80,14 +78,9 @@ public partial class Detail(
         var idContent = new StringContent(Id);
         content.Add(content: idContent, name: "\"Id\"");
 
-        foreach (var item in _selectedGroups)
+        foreach (var item in _selectedGroupsList)
         {
             content.Add(content: new StringContent(item), name: "\"Group\"");
-        }
-
-        if (!string.IsNullOrEmpty(_addGroup))
-        {
-            content.Add(content: new StringContent(_addGroup), name: "\"Group\"");
         }
 
         await musicService.EditInformationAsync(content);
@@ -133,7 +126,7 @@ public partial class Detail(
             {
                 { music.FileName ?? music.Title ?? "未命名", music.MusicLength },
             };
-            _selectedGroups = music.Group;
+            _selectedGroupsList = music.Group.ToList();
             _lrcContent = music.LyricContent ?? "";
         }
         _isLoading = false;
@@ -155,49 +148,8 @@ public partial class Detail(
         }
     }
 
-    private void ToggleGroup(string group)
+    private void HandleNewGroupAdded(string group)
     {
-        var list = _selectedGroups.ToList();
-        if (!list.Remove(group))
-        {
-            list.Add(group);
-        }
-        _selectedGroups = list;
-    }
-
-    private void AddNewGroup()
-    {
-        if (string.IsNullOrWhiteSpace(_addGroup))
-        {
-            return;
-        }
-
-        if (!_groups.Contains(_addGroup))
-        {
-            _groups.Add(_addGroup);
-        }
-
-        var list = _selectedGroups.ToList();
-        if (!list.Contains(_addGroup))
-        {
-            list.Add(_addGroup);
-        }
-        _selectedGroups = list;
-        _addGroup = "";
-    }
-
-    private bool _preventDefault;
-
-    private void HandleAddGroupKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            _preventDefault = true;
-            AddNewGroup();
-        }
-        else
-        {
-            _preventDefault = false;
-        }
+        dialogService.Toast($"分组 '{group}' 已添加", Models.Dialog.ToastType.Success);
     }
 }

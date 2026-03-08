@@ -164,33 +164,13 @@
                         <span>分组设置</span>
                     </div>
                     <div class="form-section__body">
-                        <div class="form-group">
-                            <label class="form-label">选择分组</label>
-                            <div class="tag-selector">
-                                @foreach (var group in _groups)
-                                {
-                                    <button type="button"
-                                            class="tag-selector__item @(_selectedGroups.Contains(group) ? "tag-selector__item--active" : "")"
-                                            @onclick="() => ToggleGroup(group)">
-                                        <i class="fas @(_selectedGroups.Contains(group) ? "fa-check-circle" : "fa-circle")"></i>
-                                        @group
-                                    </button>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="addGroup">添加新分组</label>
-                            <div style="display: flex; gap: var(--spacing-sm);">
-                                <input type="text" id="addGroup" class="form-control" placeholder="输入新分组名称"
-                                    @bind="_addGroup" @bind:event="oninput" @onkeydown="HandleAddGroupKeyDown"
-                                    @onkeydown:preventDefault="@_preventDefault" />
-                                <button type="button" class="btn btn-primary" @onclick="AddNewGroup">
-                                    <i class="fas fa-plus"></i>
-                                    添加
-                                </button>
-                            </div>
-                        </div>
+                        <TagSelector AvailableTags="_groups"
+                                     @bind-SelectedTags="_selectedGroupsList"
+                                     ShowLabel="true"
+                                     AddNewLabel="添加新分组"
+                                     AddNewPlaceholder="输入新分组名称"
+                                     HelperText="选择或添加适合的分组，便于音乐分类和管理"
+                                     OnNewTagAdded="HandleNewGroupAdded" />
                     </div>
                 </div>
             </div>

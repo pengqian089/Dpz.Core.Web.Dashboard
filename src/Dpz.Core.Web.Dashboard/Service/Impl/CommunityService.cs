@@ -12,7 +12,8 @@ public class CommunityService(IHttpService httpService) : ICommunityService
 
     public async Task<SummaryInformation> GetSummaryAsync()
     {
-        return await httpService.GetAsync<SummaryInformation>("/api/Community/summary") ?? new SummaryInformation();
+        return await httpService.GetAsync<SummaryInformation>("/api/Community/summary")
+            ?? new SummaryInformation();
     }
 
     public async Task<string> GetFooterAsync()
@@ -23,5 +24,15 @@ public class CommunityService(IHttpService httpService) : ICommunityService
     public async Task SaveFooterAsync(string content)
     {
         await httpService.PostAsync("/api/Community/footer", new { content });
+    }
+
+    public async Task<string> GetRobotsAsync()
+    {
+        return await httpService.GetAsync<string>("/api/Community/robots.txt") ?? "";
+    }
+
+    public async Task SaveRobotsAsync(string content)
+    {
+        await httpService.PostAsync("/api/Community/robots.txt", new { content });
     }
 }

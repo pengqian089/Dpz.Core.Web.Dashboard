@@ -6,9 +6,9 @@ using System.Web;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Dpz.Core.Web.Dashboard.Shared.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Dpz.Core.Web.Dashboard.Shared.Components;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Timeline;
 

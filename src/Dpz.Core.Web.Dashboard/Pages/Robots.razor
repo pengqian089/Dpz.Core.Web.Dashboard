@@ -1,0 +1,228 @@
+@page "/robots"
+@attribute [Authorize]
+
+<div class="robots-form">
+    <div class="robots-form__header">
+        <h1 class="robots-form__title">Robots.txt 管理</h1>
+        <p class="robots-form__description">管理搜索引擎爬虫抓取规则</p>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="robots-form__skeleton">
+            <div class="skeleton skeleton--title skeleton--half"></div>
+            <div class="skeleton skeleton--input skeleton--full"></div>
+            <div class="skeleton skeleton--editor skeleton--full"></div>
+            <div class="robots-form__skeleton-actions">
+                <div class="skeleton skeleton--button"></div>
+                <div class="skeleton skeleton--button"></div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="robots-form__mode-switch">
+            <button
+                class="robots-form__mode-btn @(_isTextMode ? "is-active" : "")"
+                @onclick="() => SwitchMode(true)">
+                <i class="fas fa-code"></i> 文本模式
+            </button>
+            <button
+                class="robots-form__mode-btn @(!_isTextMode ? "is-active" : "")"
+                @onclick="() => SwitchMode(false)">
+                <i class="fas fa-list"></i> 表单模式
+            </button>
+        </div>
+
+        <EditForm Model="@_formState" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator/>
+
+            @if (_isTextMode)
+            {
+                <!-- 文本模式 -->
+                <div class="robots-form__content">
+                    <div class="robots-form__section">
+                        <div class="robots-form__section-title">
+                            Robots.txt 内容
+                        </div>
+                        <div class="robots-form__textarea-wrapper">
+                            <textarea
+                                class="robots-form__textarea"
+                                @bind="_textContent"
+                                placeholder="请输入 robots.txt 内容"
+                                rows="20"
+                                spellcheck="false"></textarea>
+                        </div>
+                        <div class="robots-form__hint">
+                            <i class="fas fa-info-circle"></i>
+                            直接编辑 robots.txt 文本内容，支持完整语法
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- 表单模式 -->
+                <div class="robots-form__content">
+                    <!-- User-agent 规则组 -->
+                    <div class="robots-form__section">
+                        <div class="robots-form__section-header">
+                            <div class="robots-form__section-title">
+                                <i class="fas fa-robot"></i> User-Agent 规则
+                            </div>
+                            <button class="btn btn-sm btn-secondary" type="button" @onclick="AddUserAgentGroup">
+                                <i class="fas fa-plus"></i> 添加规则组
+                            </button>
+                        </div>
+
+                        @if (_userAgentGroups.Count == 0)
+                        {
+                            <div class="robots-form__empty">
+                                <i class="fas fa-inbox"></i>
+                                <p>暂无规则，点击上方按钮添加</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var group in _userAgentGroups)
+                            {
+                                <div class="robots-form__rule-group">
+                                    <div class="robots-form__rule-group-header">
+                                        <input
+                                            class="robots-form__input"
+                                            @bind="group.UserAgent"
+                                            placeholder="User-agent (例如: * 或 Googlebot)"
+                                            />
+                                        <button class="btn btn-sm btn-danger" type="button" @onclick="() => RemoveUserAgentGroup(group)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="robots-form__rules-list">
+                                        @foreach (var rule in group.Rules)
+                                        {
+                                            <div class="robots-form__rule-item">
+                                                <select class="robots-form__select" @bind="rule.Type">
+                                                    <option value="Disallow">Disallow</option>
+                                                    <option value="Allow">Allow</option>
+                                                </select>
+                                                <input
+                                                    class="robots-form__input flex-1"
+                                                    @bind="rule.Path"
+                                                    placeholder="路径 (例如: /admin/)"
+                                                    />
+                                                <button class="btn btn-sm btn-danger" type="button" @onclick="() => RemoveRule(group, rule)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <button class="btn btn-sm btn-secondary mt-2" type="button" @onclick="() => AddRule(group)">
+                                        <i class="fas fa-plus"></i> 添加规则
+                                    </button>
+
+                                    @if (group.CrawlDelay != null)
+                                    {
+                                        <div class="robots-form__crawl-delay">
+                                            <label>Crawl-delay (秒):</label>
+                                            <input
+                                                type="number"
+                                                class="robots-form__input"
+                                                @bind="group.CrawlDelay"
+                                                min="0"
+                                                step="0.1"
+                                                />
+                                            <button class="btn btn-sm btn-secondary" type="button" @onclick="() => group.CrawlDelay = null">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-secondary mt-2" type="button" @onclick="() => group.CrawlDelay = 1">
+                                            <i class="fas fa-clock"></i> 添加 Crawl-delay
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Sitemap -->
+                    <div class="robots-form__section">
+                        <div class="robots-form__section-header">
+                            <div class="robots-form__section-title">
+                                <i class="fas fa-sitemap"></i> Sitemap
+                            </div>
+                            <button class="btn btn-sm btn-secondary" type="button" @onclick="AddSitemap">
+                                <i class="fas fa-plus"></i> 添加 Sitemap
+                            </button>
+                        </div>
+
+                        @if (_sitemaps.Count == 0)
+                        {
+                            <div class="robots-form__empty">
+                                <i class="fas fa-inbox"></i>
+                                <p>暂无 Sitemap</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var sitemap in _sitemaps)
+                            {
+                                <div class="robots-form__sitemap-item">
+                                    <input
+                                        class="robots-form__input flex-1"
+                                        @bind="sitemap.Url"
+                                        placeholder="Sitemap URL (例如: https://example.com/sitemap.xml)"
+                                        />
+                                    <button class="btn btn-sm btn-danger" type="button" @onclick="() => RemoveSitemap(sitemap)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- 预览 -->
+                    <div class="robots-form__section">
+                        <div class="robots-form__section-title">
+                            <i class="fas fa-eye"></i> 预览
+                        </div>
+                        <pre class="robots-form__preview">@GenerateRobotsText()</pre>
+                    </div>
+                </div>
+            }
+
+            <div class="robots-form__actions">
+                <button class="btn btn-secondary" type="button" @onclick="ReloadAsync" disabled="@_isSaving">
+                    <i class="fas fa-sync"></i> 重新加载
+                </button>
+                <button class="btn btn-primary" type="submit" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="btn-loading">
+                            <span class="btn-loading__spinner"></span>
+                            保存中
+                        </span>
+                    }
+                    else
+                    {
+                        <span><i class="fas fa-save"></i> 保存</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@if (_isSaving)
+{
+    <div class="robots-form__loading-overlay">
+        <div class="robots-form__loading-content">
+            <div class="robots-form__loading-spinner"></div>
+            <div class="robots-form__loading-text">正在保存...</div>
+        </div>
+    </div>
+}

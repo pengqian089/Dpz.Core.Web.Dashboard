@@ -64,8 +64,11 @@ public class PageMetadataService(IHttpService httpService) : IPageMetadataServic
         return httpService.DeleteAsync($"/api/Seo/{id}", cancellationToken: cancellationToken);
     }
 
-    public Task RefreshCacheAsync(CancellationToken cancellationToken)
+    public Task RefreshCacheAsync(CancellationToken cancellationToken = default)
     {
-        return httpService.PostAsync("/api/Seo/refresh-cache", cancellationToken: cancellationToken);
+        return httpService.PostAsync(
+            "/api/Seo/refresh-cache",
+            cancellationToken: cancellationToken
+        );
     }
 }

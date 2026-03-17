@@ -15,10 +15,7 @@ public interface IPageMetadataService
         CancellationToken cancellationToken = default
     );
 
-    Task<PageMetadataResponse?> GetAsync(
-        string id,
-        CancellationToken cancellationToken = default
-    );
+    Task<PageMetadataResponse?> GetAsync(string id, CancellationToken cancellationToken = default);
 
     Task<PageMetadataResponse?> GetByRoute(
         string controller,
@@ -31,5 +28,5 @@ public interface IPageMetadataService
 
     Task DeleteAsync(string id, CancellationToken cancellationToken = default);
 
-    Task RefreshCacheAsync(CancellationToken cancellationToken);
+    Task RefreshCacheAsync(CancellationToken cancellationToken = default);
 }

@@ -46,8 +46,8 @@
                             <th>IP地址</th>
                             <th>User-Agent</th>
                             <th>SessionId</th>
-                            <th>登录方式</th>
-                            <th>登录结果</th>
+                            <th class="account-token__col--method">登录方式</th>
+                            <th class="account-token__col--result">登录结果</th>
                             <th>创建时间</th>
                         </tr>
                     </thead>
@@ -69,8 +69,8 @@
                                 <td data-label="SessionId">
                                     <span class="account-token__session">@record.SessionId</span>
                                 </td>
-                                <td data-label="登录方式">@record.MethodStr</td>
-                                <td data-label="登录结果">
+                                <td data-label="登录方式" class="account-token__col--method">@record.MethodStr</td>
+                                <td data-label="登录结果" class="account-token__col--result">
                                     <span class="account-token__status @GetStatusClass(record.Status)">
                                         @record.StatusStr
                                     </span>
@@ -92,7 +92,4 @@
         </div>
     }
 
-    <div class="account-token__footer">
-        <button class="btn btn-secondary" @onclick="Close">关闭</button>
-    </div>
 </div>

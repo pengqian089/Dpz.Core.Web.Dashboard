@@ -1,0 +1,175 @@
+@page "/seo"
+@page "/seo/list"
+@attribute [Authorize]
+
+<div class="seo-list">
+    <div class="seo-list__header">
+        <h1 class="page-title">
+            <i class="fas fa-search"></i>
+            SEO 管理
+        </h1>
+        <p class="page-description">管理页面元数据，优化搜索引擎展示效果</p>
+    </div>
+
+    <div class="seo-list__toolbar">
+        <div class="seo-list__toolbar-left">
+            <button class="btn btn-primary" @onclick="AddAsync" disabled="@_isLoading">
+                <i class="fas fa-plus"></i>
+                新增元数据
+            </button>
+            <button class="btn btn-secondary" @onclick="RefreshCacheAsync" disabled="@_isLoading">
+                <i class="fas fa-sync-alt"></i>
+                刷新缓存
+            </button>
+            <button class="btn-icon" title="刷新列表" @onclick="ReloadAsync" disabled="@_isLoading">
+                <i class="fas fa-redo-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+
+        <div class="seo-list__toolbar-right">
+            <div class="seo-list__search">
+                <input type="text"
+                       class="form-control"
+                       placeholder="搜索关联路径或标题..."
+                       @bind="_searchText"
+                       @bind:event="oninput"
+                       @onkeydown="HandleSearchKeyDown" />
+                <button class="btn btn-primary" @onclick="SearchAsync" disabled="@_isLoading">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+            <div class="seo-list__summary">
+                <span class="seo-list__summary-label">共</span>
+                <span class="seo-list__summary-value">@_totalCount</span>
+                <span class="seo-list__summary-label">条</span>
+            </div>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="seo-list-skeleton">
+            <div class="seo-list-skeleton__table">
+                @for (var i = 0; i < 5; i++)
+                {
+                    <div class="seo-list-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <div class="seo-list__empty">
+            <i class="fas fa-search fa-3x" style="margin-bottom: var(--spacing-md); opacity: 0.3;"></i>
+            <p>暂无 SEO 数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="seo-table">
+            <div class="seo-table__wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>关联路径</th>
+                            <th>页面标题</th>
+                            <th>关键词</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _items)
+                        {
+                            <tr>
+                                <td data-label="关联路径">
+                                    <div class="seo-table__relation">
+                                        <span class="seo-table__relation-path">@item.RelationPath</span>
+                                        <div class="seo-table__relation-tags">
+                                            @foreach (var rel in item.Relations)
+                                            {
+                                                <span class="seo-table__relation-tag">@rel</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="页面标题">
+                                    <div class="seo-table__title" title="@item.Title">
+                                        @if (!string.IsNullOrWhiteSpace(item.Title))
+                                        {
+                                            @item.Title
+                                        }
+                                        else
+                                        {
+                                            <span class="seo-table__empty">-</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td data-label="关键词">
+                                    <div class="seo-table__keywords">
+                                        @if (item.Keywords.Count > 0)
+                                        {
+                                            @foreach (var keyword in item.Keywords.Take(3))
+                                            {
+                                                <span class="seo-table__keyword">@keyword</span>
+                                            }
+                                            @if (item.Keywords.Count > 3)
+                                            {
+                                                <span class="seo-table__keyword-more">+@(item.Keywords.Count - 3)</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="seo-table__empty">无</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td data-label="描述">
+                                    <div class="seo-table__description" title="@item.Description">
+                                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                                        {
+                                            @item.Description
+                                        }
+                                        else
+                                        {
+                                            <span class="seo-table__empty">-</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td data-label="操作">
+                                    <div class="seo-table__actions">
+                                        <button class="btn btn-secondary btn-sm" @onclick="() => ViewMetasAsync(item)">
+                                            <i class="fas fa-eye"></i>
+                                            查看
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" @onclick="() => EditAsync(item)">
+                                            <i class="fas fa-edit"></i>
+                                            编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged" />
+        </div>
+    }
+</div>

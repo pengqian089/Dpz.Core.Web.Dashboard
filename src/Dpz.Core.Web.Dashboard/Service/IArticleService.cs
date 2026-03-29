@@ -1,19 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 
 namespace Dpz.Core.Web.Dashboard.Service;
 
 public interface IArticleService
 {
-    Task<IPagedList<ArticleModel>> GetPageAsync(
-        int pageIndex,
-        int pageSize,
-        string? tag,
-        string? title
-    );
+    Task<IPagedList<ArticleModel>> GetPageAsync(ArticleSearchRequest request);
 
     Task PublishAsync(ArticlePublishRequest request);
 
@@ -32,4 +29,6 @@ public interface IArticleService
     Task<bool> ExistsAsync(string title);
 
     Task<string?> UploadAsync(MultipartFormDataContent content);
+
+    Task<List<string>> GetAllAuthorsAsync(CancellationToken cancellationToken = default);
 }

@@ -2,26 +2,23 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
 public class ArticleService(IHttpService httpService) : IArticleService
 {
-    public async Task<IPagedList<ArticleModel>> GetPageAsync(
-        int pageIndex,
-        int pageSize,
-        string? tag,
-        string? title
-    )
+    public async Task<IPagedList<ArticleModel>> GetPageAsync(ArticleSearchRequest request)
     {
         return await httpService.GetPageAsync<ArticleModel>(
             "/api/Article",
-            pageIndex,
-            pageSize,
-            new { tags = tag, title }
+            request.PageIndex,
+            request.PageSize,
+            request
         );
     }
 
@@ -83,5 +80,15 @@ public class ArticleService(IHttpService httpService) : IArticleService
             Console.WriteLine(e);
             return null;
         }
+    }
+
+    public async Task<List<string>> GetAllAuthorsAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await httpService.GetAsync<List<string>>(
+                "/api/Article/authors",
+                cancellationToken: cancellationToken
+            ) ?? [];
     }
 }

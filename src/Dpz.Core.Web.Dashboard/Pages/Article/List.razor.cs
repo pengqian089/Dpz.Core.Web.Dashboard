@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Article;
 
@@ -23,16 +23,18 @@ public partial class List(
     private const int PageSize = 10;
     private string _tag = "";
     private string _title = "";
+    private string _author = "";
     private List<string> _tags = [];
+    private List<string> _authors = [];
     private List<ArticleModel>? _articles;
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         _tags = await articleService.GetTagsAsync();
+        _authors = await articleService.GetAllAuthorsAsync();
         ReadQueryParameters();
         await LoadArticlesAsync();
-        await base.OnInitializedAsync();
     }
 
     private void ReadQueryParameters()
@@ -47,6 +49,7 @@ public partial class List(
 
         _tag = query["tag"] ?? "";
         _title = query["title"] ?? "";
+        _author = query["author"] ?? "";
     }
 
     private void UpdateUrl()
@@ -69,6 +72,11 @@ public partial class List(
             queryParams.Add($"title={Uri.EscapeDataString(_title)}");
         }
 
+        if (!string.IsNullOrWhiteSpace(_author))
+        {
+            queryParams.Add($"author={Uri.EscapeDataString(_author)}");
+        }
+
         var url = queryParams.Count > 0 ? $"{baseUri}?{string.Join("&", queryParams)}" : baseUri;
 
         navigation.NavigateTo(url, false);
@@ -88,7 +96,15 @@ public partial class List(
 
         try
         {
-            var result = await articleService.GetPageAsync(_pageIndex, PageSize, _tag, _title);
+            var request = new ArticleSearchRequest
+            {
+                PageIndex = _pageIndex,
+                PageSize = PageSize,
+                Tag = string.IsNullOrWhiteSpace(_tag) ? null : _tag,
+                Title = string.IsNullOrWhiteSpace(_title) ? null : _title,
+                Author = string.IsNullOrWhiteSpace(_author) ? null : _author,
+            };
+            var result = await articleService.GetPageAsync(request);
             _articles = result.ToList();
             _totalCount = result.TotalItemCount;
             _totalPages = result.TotalPageCount;

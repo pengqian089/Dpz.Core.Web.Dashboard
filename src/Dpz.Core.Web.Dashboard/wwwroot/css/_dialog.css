@@ -27,11 +27,12 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     width: 100%;
     max-width: 480px;
-    max-height: 90vh;
+    max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
     transform: scale(0.9) translateY(-20px);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
 .dialog-overlay--visible .dialog {
@@ -52,6 +53,7 @@
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-primary);
+    flex-shrink: 0;
 }
 
 .dialog__close {
@@ -78,7 +80,9 @@
 .dialog__body {
     padding: var(--spacing-lg);
     overflow-y: auto;
-    flex: 1;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 }
@@ -87,10 +91,14 @@
     color: var(--text-primary);
     line-height: 1.6;
     font-size: 0.9375rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .dialog__content {
     color: var(--text-primary);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .dialog__input-wrapper {
@@ -122,6 +130,7 @@
     gap: var(--spacing-sm);
     padding: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .dialog__btn {
@@ -401,6 +410,7 @@
         max-width: 100%;
         max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
         margin: 0;
+        border-radius: var(--border-radius-sm);
     }
 
     .dialog__header {
@@ -408,15 +418,63 @@
         top: 0;
         z-index: 1;
         background-color: var(--bg-surface);
+        padding: var(--spacing-md);
+        font-size: 1rem;
+    }
+
+    .dialog__body {
+        padding: var(--spacing-md);
+    }
+
+    .dialog__footer {
+        padding: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .dialog__btn {
+        flex: 1;
+        min-width: 100px;
     }
 
     .toast {
         min-width: auto;
-        max-width: calc(100vw - 40px);
+        max-width: calc(100vw - 32px);
     }
 
     .notification-container {
-        width: calc(100vw - 40px) !important;
-        right: 20px !important;
+        width: calc(100vw - 32px) !important;
+        right: 16px !important;
+        top: 70px !important;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 400px) {
+    .dialog-overlay {
+        padding: var(--spacing-xs) 0;
+        align-items: center;
+    }
+
+    .dialog {
+        max-height: calc(100vh - 16px);
+        border-radius: var(--border-radius-sm);
+    }
+
+    .dialog__header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .dialog__body {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .dialog__footer {
+        padding: var(--spacing-sm) var(--spacing-md);
+        gap: var(--spacing-xs);
+    }
+
+    .dialog__btn {
+        padding: 8px 16px;
+        font-size: 0.8125rem;
     }
 }

@@ -1,0 +1,109 @@
+<div class="seo-form">
+    <div class="seo-form__header">
+        <div>
+            <div class="seo-form__title">@FormTitle</div>
+            <div class="seo-form__subtitle">配置页面在搜索引擎中的展示效果</div>
+        </div>
+        <div class="seo-form__icon">
+            <i class="fas fa-search"></i>
+        </div>
+    </div>
+
+    <div class="seo-form__body">
+        <div class="form-group">
+            <label class="form-label form-label--required">关联关系</label>
+            <p class="form-hint">至少需要 Controller 和 Action，如：Article, List, 123</p>
+            <TagInput @bind-Tags="_relations" HelperText="按 Enter 或逗号添加，点击 X 可删除" />
+            @if (_relations.Count < 2)
+            {
+                <p class="form-error">至少需要两个关联项（Controller + Action）</p>
+            }
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">页面标题 (Title)</label>
+            <input type="text"
+                   class="form-control"
+                   placeholder="留空则使用默认标题"
+                   @bind="_title"
+                   @bind:event="oninput"
+                   maxlength="100" />
+            <p class="form-hint">自定义页面标题，将显示在浏览器标签页和搜索结果中</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">关键词 (Keywords)</label>
+            <TagInput @bind-Tags="_keywords" HelperText="按 Enter 或逗号添加，点击 X 可删除" />
+            <p class="form-hint">帮助搜索引擎理解页面主题，建议 3-5 个</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">描述 (Description)</label>
+            <textarea class="form-control seo-form__textarea"
+                      placeholder="简短描述页面内容，将显示在搜索结果中"
+                      rows="4"
+                      @bind="_description"
+                      @bind:event="oninput"
+                      maxlength="200"></textarea>
+            <p class="form-hint">建议 120-160 个字符，简洁明了地描述页面内容</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">其他元数据 (Metas)</label>
+            <div class="seo-form__metas">
+                @foreach (var meta in _metas)
+                {
+                    <div class="seo-form__meta-item">
+                        <input type="text"
+                               class="form-control seo-form__meta-key"
+                               placeholder="属性名"
+                               @bind="meta.Key"
+                               @bind:event="oninput" />
+                        <input type="text"
+                               class="form-control seo-form__meta-value"
+                               placeholder="属性值"
+                               @bind="meta.Value"
+                               @bind:event="oninput" />
+                        <button class="btn btn-sm btn-danger seo-form__meta-remove" type="button" @onclick="() => RemoveMeta(meta)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                }
+                <button class="btn btn-sm btn-secondary" type="button" @onclick="AddMeta">
+                    <i class="fas fa-plus"></i>
+                    添加元数据
+                </button>
+            </div>
+            <p class="form-hint">如 og:image, twitter:card 等社交媒体元标签</p>
+        </div>
+
+        <div class="seo-form__preview">
+            <div class="seo-form__preview-title">
+                <i class="fas fa-eye"></i>
+                搜索结果预览
+            </div>
+            <div class="seo-form__preview-card">
+                <div class="seo-form__preview-url">@PreviewUrl</div>
+                <div class="seo-form__preview-page-title">@PreviewTitle</div>
+                <div class="seo-form__preview-desc">@PreviewDescription</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="seo-form__footer">
+        <button class="btn btn-secondary" @onclick="Cancel" disabled="@_isSubmitting">取消</button>
+        <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <span class="btn-loading">
+                    <span class="btn-loading__spinner"></span>
+                    保存中
+                </span>
+            }
+            else
+            {
+                <span>保存</span>
+            }
+        </button>
+    </div>
+</div>

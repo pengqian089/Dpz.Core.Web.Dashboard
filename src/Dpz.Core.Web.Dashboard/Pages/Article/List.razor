@@ -26,6 +26,14 @@
                 }
             </select>
 
+            <select class="form-control form-select" @bind="_author" @bind:after="Search">
+                <option value="">全部作者</option>
+                @foreach (var item in _authors)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+
             <input type="text"
                    class="form-control"
                    placeholder="搜索标题..."

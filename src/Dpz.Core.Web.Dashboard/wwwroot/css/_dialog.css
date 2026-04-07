@@ -83,6 +83,8 @@
     overflow-x: hidden;
     flex: 1 1 auto;
     min-height: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .dialog__message {
@@ -397,17 +399,25 @@
 /* Mobile Responsive */
 @media (max-width: 600px) {
     .dialog-overlay {
-        padding: var(--spacing-xs);
         align-items: center;
+        padding: var(--spacing-sm);
+        padding-top: max(var(--spacing-sm), env(safe-area-inset-top));
+        padding-bottom: max(var(--spacing-sm), env(safe-area-inset-bottom));
+        overflow-y: auto;
     }
 
     .dialog {
         max-width: 100%;
-        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
+        margin: 0;
         border-radius: var(--border-radius-sm);
     }
 
     .dialog__header {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background-color: var(--bg-surface);
         padding: var(--spacing-md);
         font-size: 1rem;
     }

@@ -281,6 +281,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    min-height: 0;
 }
 
 .account-token__header {
@@ -379,6 +380,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     border: 1px solid transparent;
+    white-space: nowrap;
 }
 
 .account-token__status--success {
@@ -405,11 +407,6 @@
     border-color: rgba(59, 130, 246, 0.3);
 }
 
-.account-token__footer {
-    display: flex;
-    justify-content: flex-end;
-}
-
 .account-token__empty {
     display: flex;
     align-items: center;
@@ -432,6 +429,13 @@
 
 .account-token__skeleton-row:last-child {
     border-bottom: none;
+}
+
+@media (min-width: 641px) {
+    .account-token__col--method,
+    .account-token__col--result {
+        white-space: nowrap;
+    }
 }
 
 /* Responsive */
@@ -475,6 +479,10 @@
 }
 
 @media (max-width: 640px) {
+    .account-token {
+        gap: var(--spacing-sm);
+    }
+
     .account-table {
         border: none;
         background: transparent;

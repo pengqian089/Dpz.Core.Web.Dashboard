@@ -1,16 +1,20 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Models.Upload;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -60,15 +64,18 @@ public class HttpService(
         navigation.NavigateTo(target);
     }
 
-    private async Task SendRequestAsync(HttpRequestMessage request)
+    private async Task SendRequestAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken = default
+    )
     {
-        await SemaphoreSlim.WaitAsync();
+        await SemaphoreSlim.WaitAsync(cancellationToken);
         try
         {
             try
             {
                 // 开始请求API
-                using var response = await _httpClient.SendAsync(request);
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
                 // 如果响应401，就返回登录页面
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -87,7 +94,7 @@ public class HttpService(
                     && response.StatusCode != HttpStatusCode.NotModified
                 )
                 {
-                    var result = await response.Content.ReadAsStringAsync();
+                    var result = await response.Content.ReadAsStringAsync(cancellationToken);
                     throw new FetchException(result);
                 }
             }
@@ -116,10 +123,11 @@ public class HttpService(
 
     private async Task<T?> SendRequestAsync<T>(
         HttpRequestMessage request,
-        Action<HttpResponseMessage>? action = null
+        Action<HttpResponseMessage>? action = null,
+        CancellationToken cancellationToken = default
     )
     {
-        await SemaphoreSlim.WaitAsync();
+        await SemaphoreSlim.WaitAsync(cancellationToken);
         try
         {
             request.Headers.CacheControl = new CacheControlHeaderValue
@@ -129,7 +137,7 @@ public class HttpService(
             };
 
             // 开始请求API
-            using var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
             // 如果响应401，就返回登录页面
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -145,7 +153,9 @@ public class HttpService(
 
             if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotModified)
             {
-                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(
+                    cancellationToken: cancellationToken
+                );
                 logger.LogDebug("request error:{Error}", error);
             }
 
@@ -153,7 +163,7 @@ public class HttpService(
 
             if (typeof(T) == typeof(string))
             {
-                object content = await response.Content.ReadAsStringAsync();
+                object content = await response.Content.ReadAsStringAsync(cancellationToken);
                 return (T)content;
             }
 
@@ -162,7 +172,7 @@ public class HttpService(
                 return default;
             }
 
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
             var responseData = JsonSerializer.Deserialize<T>(json, JsonSerializerOptions);
             return responseData;
         }
@@ -194,6 +204,39 @@ public class HttpService(
         }
     }
 
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> TypePropertiesCache = new();
+    private static readonly ConcurrentDictionary<string, object?> PropertyGetterCache = new();
+
+    private static Func<object, object?>? GetPropertyGetter(Type type, PropertyInfo? property)
+    {
+        if (property == null || !property.CanRead)
+        {
+            return null;
+        }
+
+        var propertyName = property.Name;
+        var key = $"{type.FullName}.{propertyName}";
+        if (
+            PropertyGetterCache.TryGetValue(key, out var cacheValue)
+            && cacheValue is Func<object, object> getter
+        )
+        {
+            return getter;
+        }
+
+        // 创建表达式树
+        // 参数类型是 object，需要先转换为实际类型
+        var target = Expression.Parameter(typeof(object), "__q");
+        var typedTarget = Expression.Convert(target, type);
+        var propertyAccess = Expression.Property(typedTarget, property);
+        var convertValue = Expression.Convert(propertyAccess, typeof(object));
+        var lambda = Expression.Lambda<Func<object, object>>(convertValue, target);
+        getter = lambda.Compile();
+
+        PropertyGetterCache.TryAdd(key, getter);
+        return getter;
+    }
+
     private static string HandleParameter(string uri, object? value)
     {
         if (value == null)
@@ -201,19 +244,46 @@ public class HttpService(
             return uri;
         }
         var index = uri.IndexOf("?", StringComparison.CurrentCultureIgnoreCase);
-        var query = index >= 0 ? uri.Substring(index) : "";
+        var query = index >= 0 ? uri[index..] : "";
         var queryParameters = HttpUtility.ParseQueryString(query);
 
-        var properties = value.GetType().GetProperties();
+        var parameterType = value.GetType();
+        var properties = TypePropertiesCache.GetOrAdd(parameterType, x => x.GetProperties());
+
         foreach (var property in properties)
         {
-            queryParameters.Add(property.Name, property.GetValue(value)?.ToString());
+            // 忽略 PageIndex 和 PageSize，它们已经在 GetPageAsync 中处理
+            if (
+                property.Name.Equals(
+                    nameof(PaginationRequest.PageIndex),
+                    StringComparison.CurrentCultureIgnoreCase
+                )
+                || property.Name.Equals(
+                    nameof(PaginationRequest.PageSize),
+                    StringComparison.CurrentCultureIgnoreCase
+                )
+            )
+            {
+                continue;
+            }
+
+            var getter = GetPropertyGetter(parameterType, property);
+            if (getter == null)
+            {
+                continue;
+            }
+
+            var propertyValue = getter(value);
+            if (propertyValue != null)
+            {
+                queryParameters.Add(property.Name, propertyValue.ToString());
+            }
         }
 
         var newUri = "";
         if (index >= 0)
         {
-            newUri = uri.Substring(0, index + 1) + queryParameters;
+            newUri = uri[..(index + 1)] + queryParameters;
         }
         else
         {
@@ -223,17 +293,22 @@ public class HttpService(
         return newUri;
     }
 
-    public async Task<T?> GetAsync<T>(string uri, object? value = null)
+    public async Task<T?> GetAsync<T>(
+        string uri,
+        object? value = null,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Get, HandleParameter(uri, value));
-        return await SendRequestAsync<T>(request);
+        return await SendRequestAsync<T>(request, cancellationToken: cancellationToken);
     }
 
     public async Task<IPagedList<T>> GetPageAsync<T>(
         string uri,
         int pageIndex = 1,
         int pageSize = 10,
-        object? value = null
+        object? value = null,
+        CancellationToken cancellationToken = default
     )
     {
         var pageUri = $"{uri}?pageIndex={pageIndex}&pageSize={pageSize}";
@@ -251,7 +326,8 @@ public class HttpService(
                         PagedSerializerOptions
                     );
                 }
-            }
+            },
+            cancellationToken
         );
 
         if (list == null)
@@ -268,7 +344,11 @@ public class HttpService(
         return pagedList;
     }
 
-    public async Task<T?> PostAsync<T>(string uri, object? value)
+    public async Task<T?> PostAsync<T>(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Post, uri);
         if (value != null)
@@ -276,10 +356,14 @@ public class HttpService(
             request.Content = JsonContent.Create(value);
         }
 
-        return await SendRequestAsync<T>(request);
+        return await SendRequestAsync<T>(request, cancellationToken: cancellationToken);
     }
 
-    public async Task PostAsync(string uri, object? value)
+    public async Task PostAsync(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         if (uri == null)
         {
@@ -290,7 +374,7 @@ public class HttpService(
         {
             SetHttpContent(value, request);
         }
-        await SendRequestAsync(request);
+        await SendRequestAsync(request, cancellationToken);
     }
 
     private static void SetHttpContent(object value, HttpRequestMessage request)
@@ -307,89 +391,117 @@ public class HttpService(
         request.Content = httpContent;
     }
 
-    public async Task<T?> PutAsync<T>(string uri, object? value)
+    public async Task<T?> PutAsync<T>(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Put, uri);
         if (value != null)
         {
             request.Content = JsonContent.Create(value);
         }
-        return await SendRequestAsync<T>(request);
+        return await SendRequestAsync<T>(request, cancellationToken: cancellationToken);
     }
 
-    public async Task PutAsync(string uri, object? value)
+    public async Task PutAsync(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Put, uri);
         if (value != null)
         {
             request.Content = JsonContent.Create(value);
         }
-        await SendRequestAsync(request);
+        await SendRequestAsync(request, cancellationToken);
     }
 
-    public async Task<T?> PatchAsync<T>(string uri, object? value)
+    public async Task<T?> PatchAsync<T>(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Patch, uri);
         if (value != null)
         {
             SetHttpContent(value, request);
         }
-        return await SendRequestAsync<T>(request);
+        return await SendRequestAsync<T>(request, cancellationToken: cancellationToken);
     }
 
-    public async Task PatchAsync(string uri, object? value)
+    public async Task PatchAsync(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Patch, uri);
         if (value != null)
         {
             SetHttpContent(value, request);
         }
-        await SendRequestAsync(request);
+        await SendRequestAsync(request, cancellationToken);
     }
 
-    public async Task<T?> DeleteAsync<T>(string uri, object? value)
+    public async Task<T?> DeleteAsync<T>(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, uri);
         if (value != null)
         {
             request.Content = JsonContent.Create(value);
         }
-        return await SendRequestAsync<T>(request);
+        return await SendRequestAsync<T>(request, cancellationToken: cancellationToken);
     }
 
-    public async Task DeleteAsync(string uri, object? value)
+    public async Task DeleteAsync(
+        string uri,
+        object? value,
+        CancellationToken cancellationToken = default
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, uri);
         if (value != null)
         {
             request.Content = JsonContent.Create(value);
         }
-        await SendRequestAsync(request);
+        await SendRequestAsync(request, cancellationToken);
     }
 
     public async Task<T?> PostFileAsync<T>(
         string uri,
         MultipartFormDataContent content,
-        HttpMethod? method = null
+        HttpMethod? method = null,
+        CancellationToken cancellationToken = default
     )
     {
         var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
         request.Content = content;
-        return await SendRequestAsync<T>(request);
+        return await SendRequestAsync<T>(request, cancellationToken: cancellationToken);
     }
 
     public async Task PostFileAsync(
         string uri,
         MultipartFormDataContent content,
-        HttpMethod? method = null
+        HttpMethod? method = null,
+        CancellationToken cancellationToken = default
     )
     {
         var request = new HttpRequestMessage(method ?? HttpMethod.Post, uri);
         request.Content = content;
-        await SendRequestAsync(request);
+        await SendRequestAsync(request, cancellationToken);
     }
 
-    private async Task<IJSObjectReference> GetUploadModuleAsync()
+    private async Task<IJSObjectReference> GetUploadModuleAsync(
+        CancellationToken cancellationToken = default
+    )
     {
         if (_uploadModule != null)
         {
@@ -398,6 +510,7 @@ public class HttpService(
 
         _uploadModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
             "import",
+            cancellationToken,
             "./js/modules/upload-interop.js"
         );
         return _uploadModule;
@@ -439,7 +552,7 @@ public class HttpService(
             return default;
         }
 
-        var module = await GetUploadModuleAsync();
+        var module = await GetUploadModuleAsync(cancellationToken);
         var progressReporter = new UploadProgressReporter(progress);
         using var progressRef = DotNetObjectReference.Create(progressReporter);
 

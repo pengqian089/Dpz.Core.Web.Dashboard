@@ -13,6 +13,12 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Code;
 
+public enum ViewMode
+{
+    Tree,
+    List,
+}
+
 public partial class Code(
     ICodeService codeService,
     IAppDialogService dialogService,
@@ -27,6 +33,7 @@ public partial class Code(
     private string _searchWord = "";
     private string _tempSearch = "";
     private bool _isNavigating = false;
+    private ViewMode _viewMode = ViewMode.Tree;
 
     private bool IsUnavailable =>
         _treeData is null
@@ -46,22 +53,17 @@ public partial class Code(
 
     protected override async Task OnInitializedAsync()
     {
-        // 注册导航事件监听
         Navigation.LocationChanged += OnLocationChanged;
-
-        // 从URL参数读取路径
         await LoadFromUrlAsync();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // 避免在UpdateUrl时触发循环
         if (_isNavigating)
         {
             return;
         }
 
-        // 异步加载新路径
         _ = InvokeAsync(async () =>
         {
             await LoadFromUrlAsync();
@@ -73,15 +75,25 @@ public partial class Code(
     {
         var uri = new Uri(Navigation.Uri);
         var query = HttpUtility.ParseQueryString(uri.Query);
-        var pathParam = query["path"];
 
-        string[]? initialPath = null;
-        if (!string.IsNullOrWhiteSpace(pathParam))
+        var viewParam = query["view"];
+        if (viewParam == "list")
         {
-            initialPath = pathParam.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            _viewMode = ViewMode.List;
         }
+        else
+        {
+            _viewMode = ViewMode.Tree;
+            var pathParam = query["path"];
 
-        await LoadTreeDataAsync(initialPath, updateUrl: false);
+            string[]? initialPath = null;
+            if (!string.IsNullOrWhiteSpace(pathParam))
+            {
+                initialPath = pathParam.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            }
+
+            await LoadTreeDataAsync(initialPath, updateUrl: false);
+        }
     }
 
     public void Dispose()
@@ -304,5 +316,57 @@ public partial class Code(
         }
 
         return _currentPath.Count == 0 ? "未命名文件" : _currentPath[^1];
+    }
+
+    private void SwitchViewMode(ViewMode mode)
+    {
+        _viewMode = mode;
+        UpdateViewModeUrl();
+    }
+
+    private void UpdateViewModeUrl()
+    {
+        try
+        {
+            _isNavigating = true;
+
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var basePath = uri.GetLeftPart(UriPartial.Path);
+
+            if (_viewMode == ViewMode.List)
+            {
+                Navigation.NavigateTo($"{basePath}?view=list", replace: false);
+            }
+            else
+            {
+                if (_currentPath.Count > 0)
+                {
+                    var pathParam = string.Join("/", _currentPath);
+                    Navigation.NavigateTo(
+                        $"{basePath}?path={HttpUtility.UrlEncode(pathParam)}",
+                        replace: false
+                    );
+                }
+                else
+                {
+                    Navigation.NavigateTo(basePath, replace: false);
+                }
+            }
+        }
+        finally
+        {
+            _isNavigating = false;
+        }
+    }
+
+    private async Task HandleViewFile(List<string> pathSegments)
+    {
+        _viewMode = ViewMode.Tree;
+        await LoadTreeDataAsync(pathSegments);
+    }
+
+    private Task HandleListQueryChanged()
+    {
+        return Task.CompletedTask;
     }
 }

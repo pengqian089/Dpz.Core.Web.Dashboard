@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.EnumLibrary;
+using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
@@ -41,5 +43,42 @@ public class CodeService(IHttpService httpService) : ICodeService
     {
         return await httpService.GetAsync<CodeNoteTree>($"/api/Code/search?keyword={keyword}")
             ?? EmptyTree();
+    }
+
+    public async Task<IPagedList<CodeFileSystemEntryListResponse>> GetFlatListAsync(
+        CodeFlatRequest request
+    )
+    {
+        return await httpService.GetPageAsync<CodeFileSystemEntryListResponse>(
+            "/api/Code/flat",
+            request.PageIndex,
+            request.PageSize,
+            request
+        );
+    }
+
+    public async Task<List<string[]>> GetDirectoriesAsync(params string[]? pathSegments)
+    {
+        var parameters = "";
+        if (pathSegments is not null && pathSegments.Length > 0)
+        {
+            parameters = string.Join("&", pathSegments.Select(x => $"pathSegments={x}"));
+            parameters = "?" + parameters;
+        }
+        return await httpService.GetAsync<List<string[]>>("/api/Code/directories" + parameters)
+            ?? [];
+    }
+
+    public async Task<CodeFileSystemEntryResponse?> GetDetailAsync(params string[] pathSegments)
+    {
+        if (pathSegments == null || pathSegments.Length == 0)
+        {
+            return null;
+        }
+
+        var parameters = string.Join("&", pathSegments.Select(x => $"pathSegments={x}"));
+        return await httpService.GetAsync<CodeFileSystemEntryResponse>(
+            $"/api/Code/detail?{parameters}"
+        );
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -276,7 +277,25 @@ public class HttpService(
             var propertyValue = getter(value);
             if (propertyValue != null)
             {
-                queryParameters.Add(property.Name, propertyValue.ToString());
+                // 检查是否是集合或数组
+                if (propertyValue is not string && propertyValue is IEnumerable enumerable)
+                {
+                    var items = new List<string>();
+                    foreach (var item in enumerable)
+                    {
+                        var itemValue = item?.ToString();
+                        if (!string.IsNullOrWhiteSpace(itemValue))
+                        {
+                            queryParameters.Add(property.Name, itemValue);
+                        }
+                    }
+                    continue;
+                }
+                var stringValue = propertyValue.ToString();
+                if (!string.IsNullOrWhiteSpace(stringValue))
+                {
+                    queryParameters.Add(property.Name, stringValue);
+                }
             }
         }
 

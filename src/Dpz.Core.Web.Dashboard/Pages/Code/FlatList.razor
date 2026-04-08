@@ -1,0 +1,271 @@
+@using Dpz.Core.Web.Dashboard.Helper
+@using Dpz.Core.Web.Dashboard.Models.Request
+
+<div class="code-flat">
+    <div class="code-flat__toolbar">
+        <div class="code-flat__toolbar-left">
+            <select class="form-control form-select" @bind="_selectedPath" @bind:after="HandlePathChanged">
+                <option value="">全部路径</option>
+                @foreach (var path in _availablePaths)
+                {
+                    var pathStr = string.Join("/", path);
+                    <option value="@pathStr">@pathStr</option>
+                }
+            </select>
+
+            <input type="text"
+                   class="form-control"
+                   placeholder="搜索名称..."
+                   @bind="_request.Name"
+                   @bind:event="oninput"
+                   @onkeydown="HandleSearchKeyDown" />
+
+            <input type="text"
+                   class="form-control form-control--short"
+                   placeholder="扩展名"
+                   @bind="_request.Extension"
+                   @bind:event="oninput"
+                   @onkeydown="HandleSearchKeyDown" />
+        </div>
+
+        <div class="code-flat__toolbar-right">
+            <div class="code-flat__sort-mobile">
+                <select class="form-control form-select form-select--compact" @bind="_sortFieldValue" @bind:after="HandleSortChanged">
+                    <option value="">默认排序</option>
+                    <option value="size-desc">大小 ↓</option>
+                    <option value="size-asc">大小 ↑</option>
+                    <option value="created-desc">创建时间 ↓</option>
+                    <option value="created-asc">创建时间 ↑</option>
+                    <option value="write-desc">最后修改 ↓</option>
+                    <option value="write-asc">最后修改 ↑</option>
+                    <option value="update-desc">数据更新 ↓</option>
+                    <option value="update-asc">数据更新 ↑</option>
+                    <option value="ai-desc">AI分析 ↓</option>
+                    <option value="ai-asc">AI分析 ↑</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" @onclick="SearchAsync" disabled="@_isLoading">
+                <i class="fas fa-search"></i>
+                搜索
+            </button>
+            <button class="btn btn-secondary" @onclick="ResetFiltersAsync" disabled="@_isLoading">
+                <i class="fas fa-redo"></i>
+                重置
+            </button>
+            <div class="code-flat__summary">
+                <span class="code-flat__summary-label">共</span>
+                <span class="code-flat__summary-value">@(_pagedList?.TotalItemCount ?? 0)</span>
+                <span class="code-flat__summary-label">项</span>
+            </div>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="code-skeleton">
+            <div class="code-skeleton__table">
+                @for (var i = 0; i < 10; i++)
+                {
+                    <div class="code-skeleton__row">
+                        <div class="skeleton skeleton--text-lg"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--button"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (_pagedList == null || _pagedList.Count == 0)
+    {
+        <div class="code-page__empty">
+            <i class="fas fa-folder-open"></i>
+            <p>暂无数据</p>
+        </div>
+    }
+    else
+    {
+        <div class="code-table">
+            <div class="code-table__wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th>路径</th>
+                        <th>类型</th>
+                        <th @onclick="() => ToggleSortAsync(CodeFileSortField.Size)" class="sortable code-table__th--size">
+                            <div class="code-table__th-content">
+                                大小
+                                @if (_request.SortField == CodeFileSortField.Size)
+                                {
+                                    <i class="fas fa-sort-@(_request.IsDescending ? "down" : "up") sort-icon--active"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon--default"></i>
+                                }
+                            </div>
+                        </th>
+                        <th>扩展名</th>
+                        <th>说明</th>
+                        <th @onclick="() => ToggleSortAsync(CodeFileSortField.CreatedTime)" class="sortable code-table__th--time">
+                            <div class="code-table__th-content">
+                                创建时间
+                                @if (_request.SortField == CodeFileSortField.CreatedTime)
+                                {
+                                    <i class="fas fa-sort-@(_request.IsDescending ? "down" : "up") sort-icon--active"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon--default"></i>
+                                }
+                            </div>
+                        </th>
+                        <th @onclick="() => ToggleSortAsync(CodeFileSortField.LastWriteTime)" class="sortable code-table__th--time">
+                            <div class="code-table__th-content">
+                                最后写入时间
+                                @if (_request.SortField == CodeFileSortField.LastWriteTime)
+                                {
+                                    <i class="fas fa-sort-@(_request.IsDescending ? "down" : "up") sort-icon--active"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon--default"></i>
+                                }
+                            </div>
+                        </th>
+                        <th @onclick="() => ToggleSortAsync(CodeFileSortField.LastUpdateTime)" class="sortable code-table__th--time">
+                            <div class="code-table__th-content">
+                                数据更新时间
+                                @if (_request.SortField == CodeFileSortField.LastUpdateTime)
+                                {
+                                    <i class="fas fa-sort-@(_request.IsDescending ? "down" : "up") sort-icon--active"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon--default"></i>
+                                }
+                            </div>
+                        </th>
+                        <th @onclick="() => ToggleSortAsync(CodeFileSortField.AiAnalyzeTime)" class="sortable code-table__th--time">
+                            <div class="code-table__th-content">
+                                AI分析时间
+                                @if (_request.SortField == CodeFileSortField.AiAnalyzeTime)
+                                {
+                                    <i class="fas fa-sort-@(_request.IsDescending ? "down" : "up") sort-icon--active"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon--default"></i>
+                                }
+                            </div>
+                        </th>
+                        <th class="code-table__th--actions">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in _pagedList)
+                    {
+                        <tr>
+                            <td data-label="名称">
+                                <div class="code-table__name">
+                                    <i class="fas @(item.IsDirectory ? "fa-folder" : GetFileIcon(item.Extension))"></i>
+                                    <span>@item.Name</span>
+                                </div>
+                            </td>
+                            <td data-label="路径">
+                                <span class="code-flat__path-text">
+                                    @GetDisplayPath(item.ParentPathSegments)
+                                </span>
+                            </td>
+                            <td data-label="类型">
+                                <span class="code-table__tag @(item.IsDirectory ? "" : "code-table__tag--file")">
+                                    @(item.IsDirectory ? "目录" : "文件")
+                                </span>
+                            </td>
+                            <td data-label="大小">
+                                @if (item.Size.HasValue)
+                                {
+                                    <span class="code-flat__size">@FormatFileSize(item.Size.Value)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="扩展名">
+                                @if (!string.IsNullOrWhiteSpace(item.Extension))
+                                {
+                                    <code class="code-flat__extension">@item.Extension</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="说明">
+                                <span class="code-table__note">@GetNoteText(item.Description)</span>
+                            </td>
+                            <td data-label="创建时间">
+                                <span class="code-table__time">
+                                    @item.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </span>
+                            </td>
+                            <td data-label="最后写入时间">
+                                <span class="code-table__time">
+                                    @item.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </span>
+                            </td>
+                            <td data-label="数据更新时间">
+                                <span class="code-table__time">
+                                    @item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </span>
+                            </td>
+                            <td data-label="AI分析时间">
+                                @if (item.AiAnalyzeTime.HasValue)
+                                {
+                                    <span class="code-table__time">
+                                        @item.AiAnalyzeTime.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="操作">
+                                <div class="code-table__actions">
+                                    @if (item.IsDirectory)
+                                    {
+                                        <button class="btn-icon" title="过滤此路径" @onclick="() => FilterByPathAsync(item.PathSegments)">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-icon" title="查看文件" @onclick="() => ViewFileAsync(item)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    }
+                                    <button class="btn-icon" title="编辑说明" @onclick="() => EditNoteAsync(item)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (_pagedList.TotalPageCount > 1)
+        {
+            <Pagination CurrentPage="@_pagedList.CurrentPageIndex"
+                        TotalPages="@_pagedList.TotalPageCount"
+                        TotalCount="@_pagedList.TotalItemCount"
+                        PageSize="@_pagedList.PageSize"
+                        OnPageChanged="HandlePageChangedAsync" />
+        }
+    }
+</div>

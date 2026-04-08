@@ -11,34 +11,54 @@
         <p class="page-description">浏览站点源码并维护说明信息</p>
     </div>
 
-    <div class="code-page__toolbar">
-        <div class="code-page__toolbar-left">
-            <button class="btn btn-secondary" @onclick="BackToRoot" disabled="@_isLoading">
-                <i class="fas fa-home"></i>
-                根目录
-            </button>
-            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
-                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
-            </button>
-        </div>
-        <div class="code-page__toolbar-right">
-            <div class="code-page__search">
-                <input type="text" class="form-control" placeholder="搜索文件或目录" @bind="_searchWord" @bind:event="oninput"
-                    @onkeydown="HandleSearchKeyDown" />
-                <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
-                    <i class="fas fa-search"></i>
-                    搜索
-                </button>
-            </div>
-            <div class="code-page__summary">
-                <span class="code-page__summary-label">共</span>
-                <span class="code-page__summary-value">@TotalItems</span>
-                <span class="code-page__summary-label">项</span>
-            </div>
-        </div>
+    <div class="code-page__tabs">
+        <button class="code-page__tab @(_viewMode == ViewMode.Tree ? "active" : "")" 
+                @onclick="() => SwitchViewMode(ViewMode.Tree)">
+            <i class="fas fa-sitemap"></i>
+            树结构
+        </button>
+        <button class="code-page__tab @(_viewMode == ViewMode.List ? "active" : "")" 
+                @onclick="() => SwitchViewMode(ViewMode.List)">
+            <i class="fas fa-list"></i>
+            列表视图
+        </button>
     </div>
 
-    @if (_isLoading)
+    @if (_viewMode == ViewMode.Tree)
+    {
+        <div class="code-page__toolbar">
+            <div class="code-page__toolbar-left">
+                <button class="btn btn-secondary" @onclick="BackToRoot" disabled="@_isLoading">
+                    <i class="fas fa-home"></i>
+                    根目录
+                </button>
+                <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                    <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+                </button>
+            </div>
+            <div class="code-page__toolbar-right">
+                <div class="code-page__search">
+                    <input type="text" class="form-control" placeholder="搜索文件或目录" @bind="_searchWord" @bind:event="oninput"
+                        @onkeydown="HandleSearchKeyDown" />
+                    <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                        <i class="fas fa-search"></i>
+                        搜索
+                    </button>
+                </div>
+                <div class="code-page__summary">
+                    <span class="code-page__summary-label">共</span>
+                    <span class="code-page__summary-value">@TotalItems</span>
+                    <span class="code-page__summary-label">项</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (_viewMode == ViewMode.List)
+    {
+        <FlatList OnViewFile="HandleViewFile" OnQueryChanged="HandleListQueryChanged" />
+    }
+    else if (_isLoading)
     {
         <div class="code-skeleton">
             <div class="code-skeleton__table">

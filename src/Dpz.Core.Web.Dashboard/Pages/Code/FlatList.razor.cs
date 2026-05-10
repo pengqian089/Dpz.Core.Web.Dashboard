@@ -33,7 +33,7 @@ public partial class FlatList(
     };
 
     private IPagedList<CodeFileSystemEntryListResponse>? _pagedList;
-    private bool _isLoading;
+    private bool _isLoading = true;
     private List<string[]> _availablePaths = [];
     private string _selectedPath = "";
     private bool _isNavigating;
@@ -111,6 +111,8 @@ public partial class FlatList(
     private async Task LoadDataAsync(bool updateUrl = true)
     {
         _isLoading = true;
+        StateHasChanged();
+
         try
         {
             _pagedList = await codeService.GetFlatListAsync(_request);
@@ -132,6 +134,7 @@ public partial class FlatList(
         finally
         {
             _isLoading = false;
+            StateHasChanged();
         }
     }
 

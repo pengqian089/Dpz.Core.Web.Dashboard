@@ -1,0 +1,128 @@
+@page "/system-notification"
+@attribute [Authorize]
+
+<div class="system-notification">
+    <div class="system-notification__hero">
+        <div class="system-notification__hero-icon">
+            <i class="fas fa-bullhorn"></i>
+        </div>
+        <div>
+            <p class="system-notification__eyebrow">SignalR Broadcast</p>
+            <h1 class="system-notification__title">系统通知</h1>
+            <p class="system-notification__description">
+                向前台所有在线用户推送实时系统消息，适合维护公告、服务提醒和临时通知。
+            </p>
+        </div>
+    </div>
+
+    <EditForm Model="@_formState" OnSubmit="SendAsync">
+        <div class="system-notification__grid">
+            <section class="system-notification__panel system-notification__panel--composer">
+                <div class="system-notification__panel-header">
+                    <div>
+                        <h2 class="system-notification__section-title">
+                            <i class="fas fa-pen-nib"></i>
+                            编写通知
+                        </h2>
+                        <p class="system-notification__section-description">
+                            消息会通过前台 SignalR Hub 立即广播。
+                        </p>
+                    </div>
+                    <span class="system-notification__counter @CounterClass">@MessageLength / @MaxMessageLength</span>
+                </div>
+
+                <div class="system-notification__textarea-shell">
+                    <textarea
+                        class="system-notification__textarea"
+                        @bind="_message"
+                        @bind:event="oninput"
+                        maxlength="@MaxMessageLength"
+                        placeholder="例如：系统将在今晚 23:30 进行短暂维护，期间部分功能可能不可用。"
+                        rows="9"></textarea>
+                </div>
+
+                <div class="system-notification__templates">
+                    <span class="system-notification__templates-label">快捷模板</span>
+                    @foreach (var template in Templates)
+                    {
+                        <button
+                            class="system-notification__template"
+                            type="button"
+                            @onclick="() => UseTemplate(template.Message)">
+                            <i class="@template.Icon"></i>
+                            @template.Title
+                        </button>
+                    }
+                </div>
+
+                <div class="system-notification__actions">
+                    <button class="btn btn-secondary" type="button" @onclick="ClearMessage" disabled="@_isSending">
+                        <i class="fas fa-eraser"></i>
+                        清空
+                    </button>
+                    <button class="btn btn-primary system-notification__send" type="submit" disabled="@(!CanSend)">
+                        @if (_isSending)
+                        {
+                            <span class="btn-loading">
+                                <span class="btn-loading__spinner"></span>
+                                发送中
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                <i class="fas fa-paper-plane"></i>
+                                发送通知
+                            </span>
+                        }
+                    </button>
+                </div>
+            </section>
+
+            <aside class="system-notification__side">
+                <section class="system-notification__panel">
+                    <h2 class="system-notification__section-title">
+                        <i class="fas fa-satellite-dish"></i>
+                        发送目标
+                    </h2>
+                    <div class="system-notification__endpoint">
+                        <span>前台地址</span>
+                        <strong>@Program.WebHost</strong>
+                    </div>
+                    <div class="system-notification__endpoint">
+                        <span>SignalR Hub</span>
+                        <strong>@HubUrl</strong>
+                    </div>
+                </section>
+
+                <section class="system-notification__panel system-notification__preview">
+                    <div class="system-notification__preview-badge">
+                        <i class="fas fa-bell"></i>
+                        前台预览
+                    </div>
+                    <div class="system-notification__preview-card">
+                        <div class="system-notification__preview-icon">
+                            <i class="fas fa-info"></i>
+                        </div>
+                        <div>
+                            <div class="system-notification__preview-title">系统通知</div>
+                            <p class="system-notification__preview-message">@PreviewMessage</p>
+                        </div>
+                    </div>
+                </section>
+
+                @if (_lastSentAt.HasValue)
+                {
+                    <section class="system-notification__panel system-notification__last">
+                        <h2 class="system-notification__section-title">
+                            <i class="fas fa-clock-rotate-left"></i>
+                            最近发送
+                        </h2>
+                        <time>@_lastSentAt.Value.ToString("yyyy-MM-dd HH:mm:ss")</time>
+                        <p>@_lastSentMessage</p>
+                    </section>
+                }
+            </aside>
+        </div>
+    </EditForm>
+</div>

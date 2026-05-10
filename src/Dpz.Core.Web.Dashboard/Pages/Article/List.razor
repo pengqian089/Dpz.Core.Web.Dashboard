@@ -147,7 +147,9 @@
                                         }
                                     </div>
                                 </td>
-                                <td data-label="来源">@article.From</td>
+                                <td data-label="来源">
+                                    <span class="article-table__source">@article.From</span>
+                                </td>
                                 <td data-label="图片">@article.ImagesAddress.Count</td>
                                 <td data-label="发布时间">@article.CreateTime.ToString("yyyy-MM-dd HH:mm")</td>
                                 <td data-label="修改时间">@article.LastUpdateTime.ToString("yyyy-MM-dd HH:mm")</td>

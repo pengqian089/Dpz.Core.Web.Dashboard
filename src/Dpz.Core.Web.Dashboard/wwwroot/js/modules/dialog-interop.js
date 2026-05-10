@@ -5,6 +5,37 @@
  */
 
 let isDialogOpen = false;
+let viewportChangeHandler = null;
+
+function updateDialogViewportHeight() {
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    document.documentElement.style.setProperty('--dialog-viewport-height', `${viewportHeight}px`);
+}
+
+function bindViewportChange() {
+    if (viewportChangeHandler) {
+        return;
+    }
+
+    viewportChangeHandler = updateDialogViewportHeight;
+    updateDialogViewportHeight();
+
+    window.addEventListener('resize', viewportChangeHandler);
+    window.visualViewport?.addEventListener('resize', viewportChangeHandler);
+    window.visualViewport?.addEventListener('scroll', viewportChangeHandler);
+}
+
+function unbindViewportChange() {
+    if (!viewportChangeHandler) {
+        return;
+    }
+
+    window.removeEventListener('resize', viewportChangeHandler);
+    window.visualViewport?.removeEventListener('resize', viewportChangeHandler);
+    window.visualViewport?.removeEventListener('scroll', viewportChangeHandler);
+    viewportChangeHandler = null;
+    document.documentElement.style.removeProperty('--dialog-viewport-height');
+}
 
 /**
  * 检查对话框是否打开
@@ -20,6 +51,7 @@ export function isOpen() {
  */
 export function disableBodyScroll(disableScroll = true) {
     isDialogOpen = true;
+    bindViewportChange();
 
     if (disableScroll) {
         // Pause DOM change manager to avoid performance issues
@@ -36,6 +68,7 @@ export function disableBodyScroll(disableScroll = true) {
  */
 export function enableBodyScroll() {
     isDialogOpen = false;
+    unbindViewportChange();
     document.body.style.overflow = '';
     
     // Resume DOM change manager after layout settled

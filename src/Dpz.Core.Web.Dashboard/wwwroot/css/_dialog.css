@@ -4,6 +4,10 @@
 .dialog-overlay {
     position: fixed;
     inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    height: var(--dialog-viewport-height, 100dvh);
+    bottom: auto;
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     z-index: 1000;
@@ -28,6 +32,8 @@
     width: 100%;
     max-width: 480px;
     max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+    max-height: calc(var(--dialog-viewport-height, 100dvh) - 40px);
     display: flex;
     flex-direction: column;
     transform: scale(0.9) translateY(-20px);
@@ -399,7 +405,7 @@
 /* Mobile Responsive */
 @media (max-width: 600px) {
     .dialog-overlay {
-        align-items: center;
+        align-items: flex-start;
         padding: var(--spacing-sm);
         padding-top: max(var(--spacing-sm), env(safe-area-inset-top));
         padding-bottom: max(var(--spacing-sm), env(safe-area-inset-bottom));
@@ -407,8 +413,10 @@
     }
 
     .dialog {
-        max-width: 100%;
+        max-width: 100% !important;
+        max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
         max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
+        max-height: calc(var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
         margin: 0;
         border-radius: var(--border-radius-sm);
     }
@@ -452,11 +460,13 @@
 @media (max-width: 400px) {
     .dialog-overlay {
         padding: var(--spacing-xs) 0;
-        align-items: center;
+        align-items: flex-start;
     }
 
     .dialog {
-        max-height: calc(100vh - 16px);
+        max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-xs) * 2));
+        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-xs) * 2));
+        max-height: calc(var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-xs) * 2));
         border-radius: var(--border-radius-sm);
     }
 

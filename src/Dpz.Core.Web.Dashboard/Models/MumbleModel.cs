@@ -21,7 +21,10 @@ public class MumbleModel
     /// </summary>
     public DateTime LastUpdateTime { get; set; }
 
-    public int Zan { get; set; }
+    /// <summary>
+    /// 点赞数
+    /// </summary>
+    public int Like { get; set; }
 
     /// <summary>
     /// 回复

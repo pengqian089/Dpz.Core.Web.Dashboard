@@ -417,7 +417,8 @@
         max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
         max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
         max-height: calc(var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (var(--spacing-sm) * 2));
-        margin: 0;
+        margin-block: auto;
+        margin-inline: 0;
         border-radius: var(--border-radius-sm);
     }
 

@@ -1,5 +1,7 @@
 @page "/system-notification"
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Forms
+@using Dpz.Core.Web.Dashboard.Shared.Components
 
 <div class="system-notification">
     <div class="system-notification__hero">
@@ -125,4 +127,83 @@
             </aside>
         </div>
     </EditForm>
+
+    <section class="system-notification__history">
+        <div class="system-notification__history-header">
+            <div>
+                <p class="system-notification__eyebrow">History</p>
+                <h2 class="system-notification__history-title">通知记录</h2>
+                <p class="system-notification__section-description">
+                    查看和管理已发送的系统通知记录，共 @_historyTotalCount 条。
+                </p>
+            </div>
+            <button class="btn btn-secondary" type="button" @onclick="RefreshHistoryAsync" disabled="@_isHistoryLoading">
+                <i class="fas fa-sync-alt @(_isHistoryLoading ? "fa-spin" : "")"></i>
+                刷新
+            </button>
+        </div>
+
+        @if (_isHistoryLoading)
+        {
+            <div class="system-notification__history-grid">
+                @for (var i = 0; i < HistoryPageSize; i++)
+                {
+                    <article class="system-notification__history-card system-notification__history-card--skeleton">
+                        <div class="system-notification__history-meta">
+                            <span class="skeleton skeleton-badge"></span>
+                            <span class="skeleton skeleton-badge"></span>
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 88%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 62%;"></div>
+                    </article>
+                }
+            </div>
+        }
+        else if (_histories.Count > 0)
+        {
+            <div class="system-notification__history-grid">
+                @foreach (var item in _histories)
+                {
+                    <article class="system-notification__history-card">
+                        <div class="system-notification__history-meta">
+                            <span>
+                                <i class="fas fa-clock"></i>
+                                @FormatTime(item)
+                            </span>
+                            <span title="@item.DisplayId">
+                                <i class="fas fa-hashtag"></i>
+                                @(string.IsNullOrWhiteSpace(item.DisplayId) ? "未知 ID" : item.DisplayId)
+                            </span>
+                        </div>
+                        <p class="system-notification__history-message">
+                            @(string.IsNullOrWhiteSpace(item.DisplayMessage) ? "（空通知内容）" : item.DisplayMessage)
+                        </p>
+                        <div class="system-notification__history-actions">
+                            <button
+                                class="btn btn-danger btn-sm"
+                                type="button"
+                                @onclick="() => DeleteHistoryAsync(item)">
+                                <i class="fas fa-trash"></i>
+                                删除
+                            </button>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <Pagination CurrentPage="@_historyPageIndex"
+                        TotalPages="@_historyTotalPages"
+                        TotalCount="@_historyTotalCount"
+                        PageSize="@HistoryPageSize"
+                        OnPageChanged="HandleHistoryPageChanged" />
+        }
+        else
+        {
+            <div class="system-notification__empty">
+                <i class="fas fa-inbox"></i>
+                <p>暂无系统通知记录</p>
+                <span>发送一条通知后，历史记录会显示在这里。</span>
+            </div>
+        }
+    </section>
 </div>

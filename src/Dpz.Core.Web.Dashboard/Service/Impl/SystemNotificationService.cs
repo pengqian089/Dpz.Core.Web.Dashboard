@@ -1,11 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models.Response;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
-public sealed class SystemNotificationService : ISystemNotificationService, IAsyncDisposable
+public sealed class SystemNotificationService(IHttpService httpService)
+    : ISystemNotificationService,
+        IAsyncDisposable
 {
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private HubConnection? _connection;
@@ -21,6 +26,39 @@ public sealed class SystemNotificationService : ISystemNotificationService, IAsy
 
         var connection = await GetConnectionAsync(cancellationToken);
         await connection.InvokeAsync("SendSystemNotification", message.Trim(), cancellationToken);
+    }
+
+    public async Task<List<SystemNotificationHistoryResponse>> GetRecentAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        var uri = $"/api/SystemNotification ";
+        return await httpService.GetAsync<List<SystemNotificationHistoryResponse>>(
+                uri,
+                cancellationToken: cancellationToken
+            ) ?? [];
+    }
+
+    public async Task<IPagedList<SystemNotificationHistoryResponse>> GetPageAsync(
+        int pageIndex = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await httpService.GetPageAsync<SystemNotificationHistoryResponse>(
+            "/api/SystemNotification/page",
+            pageIndex,
+            pageSize,
+            cancellationToken: cancellationToken
+        );
+    }
+
+    public async Task DeleteAsync(string id, CancellationToken cancellationToken = default)
+    {
+        await httpService.DeleteAsync(
+            $"/api/SystemNotification/{id}",
+            cancellationToken: cancellationToken
+        );
     }
 
     private async Task<HubConnection> GetConnectionAsync(CancellationToken cancellationToken)

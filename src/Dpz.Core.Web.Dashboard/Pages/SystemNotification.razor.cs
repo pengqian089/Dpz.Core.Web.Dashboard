@@ -1,22 +1,35 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
+using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Models.Response;
 using Dpz.Core.Web.Dashboard.Service;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace Dpz.Core.Web.Dashboard.Pages;
 
 public partial class SystemNotification(
     ISystemNotificationService notificationService,
-    IAppDialogService dialogService
+    IAppDialogService dialogService,
+    NavigationManager navigation
 )
 {
     private const int MaxMessageLength = 500;
+    private const int HistoryPageSize = 10;
     private readonly object _formState = new();
     private bool _isSending;
+    private bool _isHistoryLoading = true;
     private string _message = "";
     private DateTime? _lastSentAt;
     private string _lastSentMessage = "";
+    private int _historyPageIndex = 1;
+    private int _historyTotalCount;
+    private int _historyTotalPages;
+    private List<SystemNotificationHistoryResponse> _histories = [];
 
     private int MessageLength => _message.Length;
 
@@ -32,6 +45,31 @@ public partial class SystemNotification(
         string.IsNullOrWhiteSpace(_message)
             ? "这里会实时显示通知内容，发送后前台用户将收到这条消息。"
             : _message.Trim();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReadQueryParameters();
+        await LoadHistoryAsync();
+    }
+
+    private void ReadQueryParameters()
+    {
+        var uri = new Uri(navigation.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query);
+
+        if (int.TryParse(query["page"], out var page) && page > 0)
+        {
+            _historyPageIndex = page;
+        }
+    }
+
+    private void UpdateUrl()
+    {
+        var baseUri = navigation.ToAbsoluteUri("/system-notification").GetLeftPart(UriPartial.Path);
+        var url = _historyPageIndex > 1 ? $"{baseUri}?page={_historyPageIndex}" : baseUri;
+
+        navigation.NavigateTo(url, false);
+    }
 
     private static readonly NotificationTemplate[] Templates =
     [
@@ -56,6 +94,87 @@ public partial class SystemNotification(
     private void ClearMessage()
     {
         _message = "";
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        _isHistoryLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var list = await notificationService.GetPageAsync(_historyPageIndex, HistoryPageSize);
+            _histories = list.ToList();
+            _historyTotalCount = list.TotalItemCount;
+            _historyTotalPages = list.TotalPageCount;
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"加载通知记录失败：{ex.Message}", ToastType.Error);
+        }
+        finally
+        {
+            _isHistoryLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshHistoryAsync()
+    {
+        await LoadHistoryAsync();
+    }
+
+    private async Task HandleHistoryPageChanged(int page)
+    {
+        if (page < 1 || page > _historyTotalPages || page == _historyPageIndex)
+        {
+            return;
+        }
+
+        _historyPageIndex = page;
+        UpdateUrl();
+        await LoadHistoryAsync();
+    }
+
+    private async Task DeleteHistoryAsync(SystemNotificationHistoryResponse item)
+    {
+        if (string.IsNullOrWhiteSpace(item.DisplayId))
+        {
+            dialogService.Toast("记录 ID 为空，无法删除", ToastType.Error);
+            return;
+        }
+
+        var confirmed = await dialogService.ConfirmAsync(
+            "删除后不能恢复，确定删除这条通知记录？",
+            "删除通知记录"
+        );
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            await notificationService.DeleteAsync(item.DisplayId);
+            dialogService.Toast("通知记录已删除", ToastType.Success);
+
+            if (_histories.Count == 1 && _historyPageIndex > 1)
+            {
+                _historyPageIndex--;
+                UpdateUrl();
+            }
+
+            await LoadHistoryAsync();
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"删除失败：{ex.Message}", ToastType.Error);
+        }
+    }
+
+    private static string FormatTime(SystemNotificationHistoryResponse item)
+    {
+        return item.DisplayTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "未知时间";
     }
 
     private async Task SendAsync(EditContext context)
@@ -86,6 +205,9 @@ public partial class SystemNotification(
             _lastSentMessage = message;
             _message = "";
             dialogService.Toast("系统通知已发送", ToastType.Success);
+            _historyPageIndex = 1;
+            UpdateUrl();
+            await LoadHistoryAsync();
         }
         catch (Exception ex)
         {

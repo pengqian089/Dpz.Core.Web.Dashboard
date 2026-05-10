@@ -288,6 +288,139 @@
     word-break: break-word;
 }
 
+.system-notification__history {
+    margin-top: var(--spacing-xl);
+}
+
+.system-notification__history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    border-radius: var(--border-radius);
+    background:
+        radial-gradient(circle at 100% 0, rgba(59, 130, 246, 0.12), transparent 32%),
+        rgba(15, 23, 42, 0.82);
+}
+
+.system-notification__history-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+}
+
+.system-notification__history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.system-notification__history-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 178px;
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.64)),
+        var(--bg-surface);
+    box-shadow: 0 14px 42px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.system-notification__history-card:hover {
+    border-color: rgba(59, 130, 246, 0.34);
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.28);
+    transform: translateY(-2px);
+}
+
+.system-notification__history-card--skeleton {
+    pointer-events: none;
+}
+
+.system-notification__history-card--skeleton:hover {
+    border-color: var(--border-color);
+    box-shadow: 0 14px 42px rgba(0, 0, 0, 0.18);
+    transform: none;
+}
+
+.system-notification__history-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.system-notification__history-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    background: rgba(2, 6, 23, 0.44);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.system-notification__history-meta i {
+    color: var(--primary);
+}
+
+.system-notification__history-message {
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 0.96rem;
+    line-height: 1.7;
+    word-break: break-word;
+}
+
+.system-notification__history-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--spacing-lg);
+}
+
+.system-notification__empty {
+    display: grid;
+    place-items: center;
+    gap: var(--spacing-sm);
+    padding: clamp(2.5rem, 8vw, 4rem) var(--spacing-lg);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    background: rgba(15, 23, 42, 0.56);
+    text-align: center;
+}
+
+.system-notification__empty i {
+    color: var(--text-muted);
+    font-size: 3rem;
+    opacity: 0.62;
+}
+
+.system-notification__empty p {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.system-notification__empty span {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 @media (max-width: 1080px) {
     .system-notification__grid {
         grid-template-columns: 1fr;
@@ -308,12 +441,25 @@
     }
 
     .system-notification__panel-header,
-    .system-notification__actions {
+    .system-notification__actions,
+    .system-notification__history-header {
         flex-direction: column;
+        align-items: stretch;
     }
 
     .system-notification__actions .btn,
-    .system-notification__send {
+    .system-notification__send,
+    .system-notification__history-header .btn,
+    .system-notification__history-actions .btn {
         width: 100%;
+    }
+
+    .system-notification__history-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .system-notification__history-card {
+        padding: var(--spacing-md);
     }
 }

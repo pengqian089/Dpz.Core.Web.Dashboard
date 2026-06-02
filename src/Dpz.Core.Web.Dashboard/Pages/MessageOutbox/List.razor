@@ -1,0 +1,243 @@
+@page "/message-outbox"
+@attribute [Authorize]
+
+<div class="message-outbox">
+    <div class="message-outbox__hero">
+        <div class="message-outbox__hero-icon">
+            <i class="fas fa-route"></i>
+        </div>
+        <div>
+            <p class="message-outbox__eyebrow">RabbitMQ Outbox</p>
+            <h1 class="message-outbox__title">消息队列管理</h1>
+            <p class="message-outbox__description">
+                检索消息投递、消费和重试状态，快速定位发布失败、消费失败和待处理记录。
+            </p>
+        </div>
+    </div>
+
+    <section class="message-outbox__summary">
+        @foreach (var status in Statuses)
+        {
+            <button
+                type="button"
+                class="message-outbox__summary-item @GetSummaryClass(status)"
+                @onclick="() => UseStatusAsync(status)"
+                disabled="@_isLoading">
+                <span class="message-outbox__summary-icon">
+                    <i class="@GetStatusIcon(status)"></i>
+                </span>
+                <span>
+                    <strong>@GetStatusText(status)</strong>
+                    <small>@GetStatusDescription(status)</small>
+                </span>
+            </button>
+        }
+    </section>
+
+    <section class="message-outbox__filters">
+        <div class="message-outbox__filter-grid">
+            <label class="message-outbox__field message-outbox__field--keyword">
+                <span>关键字</span>
+                <input
+                    class="form-control"
+                    placeholder="消息 ID、类型、路由、来源或错误信息"
+                    @bind="_request.Keyword"
+                    @bind:event="oninput"
+                    @onkeydown="HandleSearchKeyDown" />
+            </label>
+
+            <label class="message-outbox__field">
+                <span>状态</span>
+                <select class="form-control" @bind="_request.Status">
+                    <option value="">全部状态</option>
+                    @foreach (var status in Statuses)
+                    {
+                        <option value="@status">@GetStatusText(status)</option>
+                    }
+                </select>
+            </label>
+
+            <label class="message-outbox__field">
+                <span>消息类型</span>
+                <input class="form-control" list="message-outbox-types" @bind="_request.MessageType" />
+            </label>
+
+            <label class="message-outbox__field">
+                <span>Exchange</span>
+                <input class="form-control" list="message-outbox-exchanges" @bind="_request.Exchange" />
+            </label>
+
+            <label class="message-outbox__field">
+                <span>路由键</span>
+                <input class="form-control" list="message-outbox-routing-keys" @bind="_request.RoutingKey" />
+            </label>
+
+            <label class="message-outbox__field">
+                <span>来源</span>
+                <input class="form-control" list="message-outbox-sources" @bind="_request.Source" />
+            </label>
+
+            <label class="message-outbox__field">
+                <span>开始时间</span>
+                <input class="form-control" type="datetime-local" @bind="_request.StartTime" />
+            </label>
+
+            <label class="message-outbox__field">
+                <span>结束时间</span>
+                <input class="form-control" type="datetime-local" @bind="_request.EndTime" />
+            </label>
+        </div>
+
+        <datalist id="message-outbox-types">
+            @foreach (var item in _filterOptions.MessageTypes)
+            {
+                <option value="@item"></option>
+            }
+        </datalist>
+        <datalist id="message-outbox-exchanges">
+            @foreach (var item in _filterOptions.Exchanges)
+            {
+                <option value="@item"></option>
+            }
+        </datalist>
+        <datalist id="message-outbox-routing-keys">
+            @foreach (var item in _filterOptions.RoutingKeys)
+            {
+                <option value="@item"></option>
+            }
+        </datalist>
+        <datalist id="message-outbox-sources">
+            @foreach (var item in _filterOptions.Sources)
+            {
+                <option value="@item"></option>
+            }
+        </datalist>
+
+        <div class="message-outbox__filter-actions">
+            <div class="message-outbox__count">
+                <span>共</span>
+                <strong>@_totalCount.ToString("N0")</strong>
+                <span>条消息</span>
+            </div>
+            <div class="message-outbox__buttons">
+                <button class="btn btn-secondary" type="button" @onclick="ResetAsync" disabled="@_isLoading">
+                    <i class="fas fa-eraser"></i>
+                    重置
+                </button>
+                <button class="btn btn-secondary" type="button" @onclick="ReloadAsync" disabled="@_isLoading">
+                    <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+                    刷新
+                </button>
+                <button class="btn btn-primary" type="button" @onclick="SearchAsync" disabled="@_isLoading">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+        </div>
+    </section>
+
+    @if (_isLoading)
+    {
+        <div class="message-outbox__skeleton">
+            @for (var i = 0; i < 6; i++)
+            {
+                <div class="message-outbox__skeleton-row">
+                    <div class="skeleton skeleton--text-lg"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--button"></div>
+                </div>
+            }
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <div class="message-outbox__empty">
+            <i class="fas fa-inbox"></i>
+            <p>暂无 Outbox 记录</p>
+            <span>调整筛选条件后再试一次。</span>
+        </div>
+    }
+    else
+    {
+        <section class="message-outbox__table">
+            <div class="message-outbox__table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>消息</th>
+                            <th>路由</th>
+                            <th>状态</th>
+                            <th>发布</th>
+                            <th>消费</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _items)
+                        {
+                            <tr>
+                                <td data-label="消息">
+                                    <div class="message-outbox__message">
+                                        <strong title="@item.MessageType">@item.MessageType</strong>
+                                        <span title="@item.MessageId">@item.MessageId</span>
+                                        @if (!string.IsNullOrWhiteSpace(item.Source))
+                                        {
+                                            <small>@item.Source</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td data-label="路由">
+                                    <div class="message-outbox__route">
+                                        <span title="@item.Exchange">@item.Exchange</span>
+                                        <code title="@item.RoutingKey">@item.RoutingKey</code>
+                                    </div>
+                                </td>
+                                <td data-label="状态">
+                                    <span class="message-outbox__status @GetStatusClass(item.Status)">
+                                        <i class="@GetStatusIcon(item.Status)"></i>
+                                        @GetStatusText(item.Status)
+                                    </span>
+                                </td>
+                                <td data-label="发布">
+                                    <div class="message-outbox__attempts">
+                                        <span>@item.PublishAttempts 次</span>
+                                        <small>@FormatTime(item.LastPublishAttemptAt ?? item.SentAt)</small>
+                                    </div>
+                                </td>
+                                <td data-label="消费">
+                                    <div class="message-outbox__attempts">
+                                        <span>@item.ConsumeAttempts 次</span>
+                                        <small>@FormatTime(item.LastConsumeAttemptAt ?? item.ConsumedAt)</small>
+                                    </div>
+                                </td>
+                                <td data-label="创建时间">
+                                    <time>@FormatTime(item.CreateTime)</time>
+                                </td>
+                                <td data-label="操作">
+                                    <div class="message-outbox__actions">
+                                        <button class="btn btn-secondary btn-sm" @onclick="() => ShowDetailsAsync(item)">
+                                            <i class="fas fa-eye"></i>
+                                            详情
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(item)">
+                                            <i class="fas fa-trash"></i>
+                                            删除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination CurrentPage="@_pageIndex"
+                        TotalPages="@_totalPages"
+                        TotalCount="@_totalCount"
+                        PageSize="@PageSize"
+                        OnPageChanged="HandlePageChanged" />
+        </section>
+    }
+</div>

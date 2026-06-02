@@ -1,4 +1,4 @@
-using Dpz.Core.Web.Dashboard.Models.Request;
+namespace Dpz.Core.Web.Dashboard.Models.Request;
 
 public class CodeFlatRequest : PaginationRequest
 {

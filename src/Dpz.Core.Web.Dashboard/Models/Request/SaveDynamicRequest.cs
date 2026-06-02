@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Xml.Serialization;
 
 namespace Dpz.Core.Web.Dashboard.Models.Request;
 

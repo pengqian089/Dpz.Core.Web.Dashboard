@@ -53,4 +53,12 @@ public class MessageOutboxService(IHttpService httpService) : IMessageOutboxServ
             cancellationToken: cancellationToken
         );
     }
+
+    public Task ReconsumeAsync(string id, CancellationToken cancellationToken = default)
+    {
+        return httpService.PostAsync(
+            $"/api/MessageOutbox/{id}/reconsume",
+            cancellationToken: cancellationToken
+        );
+    }
 }

@@ -217,6 +217,17 @@
                                 </td>
                                 <td data-label="操作">
                                     <div class="message-outbox__actions">
+                                        @if (CanReconsume(item))
+                                        {
+                                            <button
+                                                class="btn btn-primary btn-sm"
+                                                title="手动将消息重新入队消费"
+                                                disabled="@(_isLoading || IsReconsuming(item))"
+                                                @onclick="() => ReconsumeAsync(item)">
+                                                <i class="@GetReconsumeIcon(item)"></i>
+                                                @GetReconsumeText(item)
+                                            </button>
+                                        }
                                         <button class="btn btn-secondary btn-sm" @onclick="() => ShowDetailsAsync(item)">
                                             <i class="fas fa-eye"></i>
                                             详情

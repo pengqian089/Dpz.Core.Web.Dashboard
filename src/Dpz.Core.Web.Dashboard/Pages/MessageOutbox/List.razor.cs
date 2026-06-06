@@ -25,6 +25,7 @@ public partial class List(
     private int _totalCount;
     private int _totalPages;
     private bool _isLoading = true;
+    private string? _reconsumingId;
     private MessageOutboxRequest _request = new();
     private MessageOutboxFilterOptionsResponse _filterOptions = new();
     private List<MessageOutboxResponse> _items = [];
@@ -95,7 +96,8 @@ public partial class List(
         try
         {
             _filterOptions =
-                await messageOutboxService.GetFilterOptionsAsync() ?? new MessageOutboxFilterOptionsResponse();
+                await messageOutboxService.GetFilterOptionsAsync()
+                ?? new MessageOutboxFilterOptionsResponse();
         }
         catch (Exception ex)
         {
@@ -202,6 +204,46 @@ public partial class List(
         }
     }
 
+    private async Task ReconsumeAsync(MessageOutboxResponse item)
+    {
+        if (!CanReconsume(item))
+        {
+            dialogService.Toast(
+                $"当前状态 {GetStatusText(item.Status)} 不允许手动重新消费",
+                ToastType.Warning
+            );
+            return;
+        }
+
+        var confirmed = await dialogService.ConfirmAsync(
+            $"确定将消息 {item.MessageId} 重新入队消费吗？",
+            "重新消费 Outbox 消息"
+        );
+        if (!confirmed)
+        {
+            return;
+        }
+
+        _reconsumingId = item.Id;
+        StateHasChanged();
+
+        try
+        {
+            await messageOutboxService.ReconsumeAsync(item.Id);
+            dialogService.Toast("消息已重新入队消费", ToastType.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"重新消费失败：{ex.Message}", ToastType.Error, 5000);
+        }
+        finally
+        {
+            _reconsumingId = null;
+            StateHasChanged();
+        }
+    }
+
     private async Task ShowDetailsAsync(MessageOutboxResponse item)
     {
         await dialogService.ShowComponentAsync("Outbox 详情", BuildDetails(item), "920px");
@@ -253,7 +295,9 @@ public partial class List(
         builder.AddAttribute(
             seq++,
             "class",
-            wide ? "message-outbox-detail__item message-outbox-detail__item--wide" : "message-outbox-detail__item"
+            wide
+                ? "message-outbox-detail__item message-outbox-detail__item--wide"
+                : "message-outbox-detail__item"
         );
         builder.OpenElement(seq++, "span");
         builder.AddAttribute(seq++, "class", "message-outbox-detail__label");
@@ -321,6 +365,26 @@ public partial class List(
             OutboxMessageStatus.ConsumeFailed => "message-outbox__status--consume-failed",
             _ => "",
         };
+    }
+
+    private static bool CanReconsume(MessageOutboxResponse item)
+    {
+        return item.Status is OutboxMessageStatus.Sent or OutboxMessageStatus.ConsumeFailed;
+    }
+
+    private bool IsReconsuming(MessageOutboxResponse item)
+    {
+        return _reconsumingId == item.Id;
+    }
+
+    private string GetReconsumeIcon(MessageOutboxResponse item)
+    {
+        return IsReconsuming(item) ? "fas fa-spinner fa-spin" : "fas fa-sync-alt";
+    }
+
+    private string GetReconsumeText(MessageOutboxResponse item)
+    {
+        return IsReconsuming(item) ? "处理中" : "重新消费";
     }
 
     private string GetSummaryClass(OutboxMessageStatus status)

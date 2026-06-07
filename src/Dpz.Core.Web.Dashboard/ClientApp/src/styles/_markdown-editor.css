@@ -1,7 +1,15 @@
-.markdown-editor-container {
+.markdown-editor-shell {
     position: relative;
     width: 100%;
-    min-height: 500px;
+}
+
+.markdown-editor-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 420px;
+    max-height: calc(100vh - 160px);
     overflow: hidden;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
@@ -11,9 +19,40 @@
 .markdown-editor-container .milkdown,
 .markdown-editor-container .milkdown-crepe {
     height: 100%;
-    min-height: 500px;
+    min-height: 0;
     background: var(--bg-body);
     color: var(--text-primary);
+}
+
+.markdown-editor-container > div,
+.markdown-editor-container .milkdown,
+.markdown-editor-container .milkdown-crepe,
+.markdown-editor-container .milkdown .editor,
+.markdown-editor-container .milkdown .ProseMirror {
+    min-height: 0;
+}
+
+.markdown-editor-container > div,
+.markdown-editor-container .milkdown,
+.markdown-editor-container .milkdown-crepe {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.markdown-editor-container .milkdown .editor {
+    flex: 1 1 auto;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
+.markdown-editor-container .milkdown .ProseMirror {
+    min-height: 100%;
+    padding: clamp(24px, 5vw, 56px) clamp(18px, 7vw, 96px);
+}
+
+.markdown-editor-container .milkdown .milkdown-top-bar {
+    flex: 0 0 auto;
 }
 
 .markdown-editor-container .milkdown {
@@ -53,7 +92,15 @@
 
 .markdown-editor-container--mobile .milkdown,
 .markdown-editor-container--mobile .milkdown-crepe {
-    min-height: 420px;
+    min-height: 0;
+}
+
+.markdown-editor-container--mobile {
+    max-height: calc(100vh - 120px);
+}
+
+.markdown-editor-container--mobile .milkdown .ProseMirror {
+    padding: 24px 18px;
 }
 
 .markdown-editor-container .milkdown-toolbar,
@@ -130,30 +177,6 @@
     color: #93c5fd;
     fill: #93c5fd;
     stroke: #93c5fd;
-}
-
-.markdown-editor-container .milkdown-toolbar .toolbar-item[title] {
-    position: relative;
-}
-
-.markdown-editor-container .milkdown-toolbar .toolbar-item[title]:hover::after,
-.markdown-editor-container .milkdown-top-bar [title]:hover::after {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    z-index: 30;
-    padding: 4px 8px;
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 4px;
-    color: #f8fafc;
-    background: #020617;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-    content: attr(title);
-    font-size: 12px;
-    line-height: 1.4;
-    pointer-events: none;
-    transform: translateX(-50%);
-    white-space: nowrap;
 }
 
 .markdown-editor-container .milkdown-code-block {

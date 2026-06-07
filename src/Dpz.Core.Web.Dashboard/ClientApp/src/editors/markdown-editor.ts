@@ -3,6 +3,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { Crepe } from "@milkdown/crepe";
 import { replaceAll } from "@milkdown/kit/utils";
+import { TooltipController } from "../interactions/tooltip";
 
 type DotNetHelper = {
     invokeMethodAsync<T>(methodName: string, ...args: unknown[]): Promise<T>;
@@ -65,6 +66,7 @@ const codeBlockTheme = EditorView.theme(
 
 class ToolbarHintManager {
     private readonly observer: MutationObserver;
+    private readonly tooltips = new TooltipController();
 
     public constructor(private readonly root: HTMLElement) {
         this.observer = new MutationObserver(() => this.apply());
@@ -80,6 +82,7 @@ class ToolbarHintManager {
 
     public stop(): void {
         this.observer.disconnect();
+        this.tooltips.destroy();
     }
 
     private apply(): void {
@@ -118,8 +121,11 @@ class ToolbarHintManager {
     }
 
     private setTitle(item: HTMLElement, title: string): void {
-        item.setAttribute("title", title);
-        item.setAttribute("aria-label", title);
+        this.tooltips.register(item, title, {
+            placement: "top",
+            showDelay: 220,
+            hideDelay: 80
+        });
     }
 }
 

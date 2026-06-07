@@ -27,10 +27,11 @@
 
   <ItemGroup>
     <Folder Include="Properties\PublishProfiles\" />
-    <Folder Include="wwwroot\css\" />
   </ItemGroup>
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="Pages\Logs\List.razor" />
+    <_ContentIncludedByDefault Remove="wwwroot\js\modules\dialog-interop.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\js\modules\upload-interop.js" />
   </ItemGroup>
 </Project>

@@ -45,3 +45,10 @@
 15. 第三方前端库优先通过 npm 管理，不在 `index.html` 中直接挂脚本或样式 CDN
 16. 支持 Chromium 内核和 Firefox 浏览器
 17. 响应式 UI 需要在手机端、平板端、PC 端都有良好展现
+18. Web Awesome 作为渐进式 Web Component 交互层使用，优先用于 tooltip、popover
+    这类轻量交互；Dialog、Toast、Confirm 等承载 Blazor 组件内容和 Task 返回值的业务交互，
+    在未完成服务层迁移设计前继续使用 `IAppDialogService`
+19. Web Awesome 组件应按需导入具体组件模块，例如
+    `@awesome.me/webawesome/dist/components/tooltip/tooltip.js`，不要为了单个交互导入整包
+20. TypeScript 交互代码按职责拆分到 `ClientApp/src/interactions/`、`editors/`、`interop/`
+    等模块，复杂 DOM 生命周期使用 class 封装，导出给 Blazor 的函数只保留稳定窄接口

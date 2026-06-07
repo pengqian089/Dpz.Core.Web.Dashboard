@@ -35,7 +35,9 @@ public partial class MarkdownEditor(
     [Parameter]
     public EventCallback<string>? OnImageUploaded { get; set; }
 
-    private string HeightStyle => Height == null ? "" : $"height:{Height}{HeightUnit}";
+    private const int DefaultHeight = 600;
+
+    private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
 
     private readonly string _editorId = Guid.NewGuid().ToString("N");
     private IJSObjectReference? _jsModule;

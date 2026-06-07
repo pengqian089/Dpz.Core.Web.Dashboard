@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Danmaku;
 
+/// <summary>
+/// 弹幕管理列表页，支持按关键词和分组搜索、批量删除、导入 AcFun/Bilibili 弹幕
+/// </summary>
 public partial class List(
     IDanmakuService danmakuService,
     IVideoService videoService,
@@ -150,6 +153,9 @@ public partial class List(
         await ShowImportDialogAsync("导入 Bilibili 弹幕", ".xml");
     }
 
+    /// <summary>
+    /// 通过通用导入对话框选择分组并上传弹幕文件
+    /// </summary>
     private async Task ShowImportDialogAsync(string title, string extension)
     {
         if (!_groupDic.Any())

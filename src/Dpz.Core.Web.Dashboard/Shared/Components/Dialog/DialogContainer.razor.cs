@@ -7,6 +7,10 @@ using Dpz.Core.Web.Dashboard.Service;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 
+/// <summary>
+/// 对话框容器组件，订阅 IAppDialogService 的事件并渲染对话框、Toast 和通知列表。
+/// 同时管理 Toast/Notification 的自动关闭定时器生命周期。
+/// </summary>
 public partial class DialogContainer(IAppDialogService dialogService) : IDisposable
 {
     private readonly List<AppDialogModel> _dialogs = [];

@@ -177,8 +177,7 @@ public partial class List(
 
         await dialogService.ShowComponentAsync(
             "评论内容",
-            BuildCommentPreview(model.CommentText),
-            "900px"
+            BuildCommentPreview(model.CommentText)
         );
     }
 

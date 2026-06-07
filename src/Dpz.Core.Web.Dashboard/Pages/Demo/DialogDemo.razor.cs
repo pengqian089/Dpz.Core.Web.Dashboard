@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Demo;
 
+/// <summary>
+/// 对话框 / Toast / 通知功能演示页，展示新版 IAppDialogService API 的完整用法
+/// </summary>
 public partial class DialogDemo(IAppDialogService dialogService)
 {
     private string _lastResult = "";

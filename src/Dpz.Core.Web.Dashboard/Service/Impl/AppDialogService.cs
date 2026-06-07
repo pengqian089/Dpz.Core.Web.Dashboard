@@ -198,6 +198,7 @@ public class AppDialogService : IAppDialogService
         };
     }
 
+    // 将 AppDialogOptions 映射为内部的 AppDialogModel，统一对话框创建逻辑
     private static AppDialogModel CreateDialog<TResult>(AppDialogOptions<TResult> options)
     {
         return new AppDialogModel

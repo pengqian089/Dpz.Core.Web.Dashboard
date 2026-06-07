@@ -8,12 +8,21 @@ using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 
+/// <summary>
+/// 对话框 Popup 组件，使用 Web Awesome 组件库实现动画、焦点管理和键盘交互
+/// </summary>
 public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService assetManifestService)
     : IAsyncDisposable
 {
+    /// <summary>
+    /// 对话框的数据模型，包含类型、标题、内容及等待关闭的 TaskCompletionSource
+    /// </summary>
     [Parameter]
     public AppDialogModel Model { get; set; } = new();
 
+    /// <summary>
+    /// 对话框关闭时的回调事件
+    /// </summary>
     [Parameter]
     public EventCallback<AppDialogModel> OnClose { get; set; }
 
@@ -53,6 +62,9 @@ public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService asset
         }
     }
 
+    /// <summary>
+    /// 由 JS 端在对话框动画隐藏完成后回调，触发内部关闭流程
+    /// </summary>
     [JSInvokable]
     public async Task HandleAfterHideFromDialog()
     {

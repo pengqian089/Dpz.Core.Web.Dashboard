@@ -20,6 +20,8 @@ type MarkdownEditorInstance = {
 
 type MarkdownViewportMode = "desktop" | "mobile";
 
+type MermaidApi = typeof import("mermaid").default;
+
 const toolbarTitles = ["加粗", "斜体", "删除线", "行内代码", "链接", "AI"];
 
 const topBarTitles = [
@@ -36,6 +38,97 @@ const topBarTitles = [
     "图片",
     "表格"
 ];
+
+class MermaidPreviewRenderer {
+    private initialized = false;
+    private mermaidModule: Promise<MermaidApi> | null = null;
+    private nextDiagramId = 0;
+
+    public render(
+        language: string,
+        content: string,
+        applyPreview: (value: null | string | HTMLElement) => void
+    ): void | null {
+        if (!this.isMermaidLanguage(language)) {
+            return null;
+        }
+
+        const diagram = content.trim();
+        if (!diagram) {
+            applyPreview(this.createMessage("请输入 Mermaid 图表内容"));
+            return;
+        }
+
+        this.nextDiagramId += 1;
+        const diagramId = `markdown-mermaid-${this.nextDiagramId}`;
+        void this.renderDiagram(diagramId, diagram, applyPreview);
+    }
+
+    private async renderDiagram(
+        diagramId: string,
+        diagram: string,
+        applyPreview: (value: null | string | HTMLElement) => void
+    ): Promise<void> {
+        try {
+            const mermaid = await this.getMermaid();
+            this.ensureInitialized(mermaid);
+            const { svg } = await mermaid.render(diagramId, diagram);
+            applyPreview(svg);
+        } catch (error: unknown) {
+            applyPreview(this.createMessage(this.getErrorMessage(error)));
+        }
+    }
+
+    private getMermaid(): Promise<MermaidApi> {
+        this.mermaidModule ??= import("mermaid").then((module) => module.default);
+        return this.mermaidModule;
+    }
+
+    private ensureInitialized(mermaid: MermaidApi): void {
+        if (this.initialized) {
+            return;
+        }
+
+        mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "strict",
+            theme: "dark",
+            fontFamily: "JetBrains Mono, Microsoft YaHei UI, sans-serif",
+            themeVariables: {
+                background: "#0f172a",
+                darkMode: true,
+                fontFamily: "JetBrains Mono, Microsoft YaHei UI, sans-serif",
+                primaryColor: "#1e293b",
+                primaryTextColor: "#f8fafc",
+                primaryBorderColor: "#60a5fa",
+                lineColor: "#93c5fd",
+                secondaryColor: "#0f766e",
+                tertiaryColor: "#334155"
+            }
+        });
+        this.initialized = true;
+    }
+
+    private isMermaidLanguage(language: string): boolean {
+        const normalizedLanguage = language.trim().toLowerCase();
+        return normalizedLanguage === "mermaid" || normalizedLanguage === "mmd";
+    }
+
+    private createMessage(message: string): HTMLElement {
+        const element = document.createElement("div");
+        element.className = "markdown-mermaid-message";
+        element.textContent = message;
+        return element;
+    }
+
+    private getErrorMessage(error: unknown): string {
+        if (error instanceof Error) {
+            return `Mermaid 渲染失败：${error.message}`;
+        }
+
+        return "Mermaid 渲染失败，请检查图表语法";
+    }
+}
 
 const codeBlockTheme = EditorView.theme(
     {
@@ -86,10 +179,21 @@ class ToolbarHintManager {
     }
 
     private apply(): void {
+        this.applyButtonTypes();
         this.applyTitles(".milkdown-toolbar .toolbar-item", toolbarTitles);
         this.applyTitles(".milkdown-top-bar .top-bar-item", topBarTitles);
         this.applyStaticTitle(".top-bar-heading-button", "选择标题级别");
         this.applyHeadingOptions();
+    }
+
+    private applyButtonTypes(): void {
+        this.root.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
+            if (button.hasAttribute("type")) {
+                return;
+            }
+
+            button.type = "button";
+        });
     }
 
     private applyTitles(selector: string, titles: string[]): void {
@@ -132,6 +236,7 @@ class ToolbarHintManager {
 class MarkdownEditorRegistry {
     private readonly editors = new Map<string, MarkdownEditorInstance>();
     private readonly toolbarHints = new Map<string, ToolbarHintManager>();
+    private readonly mermaidPreview = new MermaidPreviewRenderer();
 
     public async createEditor(
         elementId: string,
@@ -165,6 +270,11 @@ class MarkdownEditorRegistry {
                 [Crepe.Feature.CodeMirror]: {
                     languages,
                     theme: [oneDark, codeBlockTheme],
+                    renderPreview: (
+                        language: string,
+                        content: string,
+                        applyPreview: (value: null | string | HTMLElement) => void
+                    ) => this.mermaidPreview.render(language, content, applyPreview),
                     searchPlaceholder: "搜索语言",
                     noResultText: "没有匹配的语言",
                     copyText: "复制",
@@ -235,8 +345,8 @@ class MarkdownEditorRegistry {
         root.classList.toggle("markdown-editor-container--desktop", mode === "desktop");
 
         requestAnimationFrame(() => {
-            root.querySelectorAll("button:not([type])").forEach((button) => {
-                button.setAttribute("type", "button");
+            root.querySelectorAll<HTMLButtonElement>("button:not([type])").forEach((button) => {
+                button.type = "button";
             });
         });
     }

@@ -201,6 +201,36 @@
     border-right-color: var(--border-color);
 }
 
+.markdown-editor-container .milkdown-code-block .preview-panel {
+    color: var(--text-primary);
+    background: var(--bg-surface);
+}
+
+.markdown-editor-container .milkdown-code-block .preview {
+    overflow-x: auto;
+    padding: 16px;
+}
+
+.markdown-editor-container .milkdown-code-block .preview svg {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    min-width: min(640px, 100%);
+    height: auto;
+    margin: 0 auto;
+}
+
+.markdown-mermaid-message {
+    padding: 12px 14px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 4px;
+    color: var(--text-muted);
+    background: rgba(15, 23, 42, 0.7);
+    font-family: var(--font-sans, "Microsoft YaHei", "PingFang SC", sans-serif);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
 .markdown-editor-container .cm-editor .cm-cursor {
     border-left-color: #60a5fa;
     border-left-width: 2px;

@@ -2,7 +2,7 @@
 
 ## Scope
 - Single-project repo: Blazor WebAssembly app in `src/Dpz.Core.Web.Dashboard/` (`net10.0`, `Microsoft.NET.Sdk.BlazorWebAssembly`).
-- Solution `src/Dpz.Core.Web.Dashboard.sln` contains only this one project. There are no test projects and no CI workflows; `dotnet build` plus manual UI checks is the verification path.
+- Solution files at `src/Dpz.Core.Web.Dashboard.sln` and `src/Dpz.Core.Web.Dashboard.slnx` (new format) contain only this one project. There are no test projects and no CI workflows; `dotnet build` plus manual UI checks is the verification path.
 
 ## Fast commands (run from repo root)
 - Restore: `dotnet restore src/Dpz.Core.Web.Dashboard.sln`
@@ -34,13 +34,16 @@
   - implementations must be non-abstract concrete classes in namespace `Dpz.Core.Web.Dashboard.Service.Impl`
   - one implementation per interface — it picks the first match via `FirstOrDefault`; multiple impls of the same interface will silently lose all but one
   - types outside those namespaces are not auto-registered. To add a service, place files in `Service/` and `Service/Impl/` accordingly.
-- All API calls should go through `IHttpService` (`Service/Impl/HttpService.cs`); it centralizes auth headers, redirects 401 responses to `/session-expired?returnUrl=...`, and exposes `GetPageAsync<T>` for paged endpoints.
+- All API calls should go through `IHttpService` (`Service/IHttpService.cs`, impl `Service/Impl/HttpService.cs`); it centralizes auth headers, redirects 401 responses to `/session-expired?returnUrl=...`, and exposes `GetPageAsync<T>` for paged endpoints.
+- UI dialogs, toasts, and notifications go through `IAppDialogService` (`Service/IAppDialogService.cs`), not standard Blazor patterns.
+- `Program.BaseAddress`, `Program.CdnBaseAddress`, and `Program.WebHost` are static globals used throughout the app to access configuration.
 - In `App.razor`, only pages with `@attribute [Authorize]` are auth-gated and use `MainLayout`; unannotated pages render with `PublicLayout`.
 
 ## Conventions worth preserving
 - Page modules typically follow `Pages/<Module>/List.razor`, `Publish.razor`, `Edit.razor` with `.razor.cs` code-behind.
 - New modules must be linked from `Shared/NavMenu.razor` to be reachable from the sidebar.
 - `.csproj` excludes `Pages/Logs/List.razor` via `<_ContentIncludedByDefault Remove=...>`; do not assume every `.razor` under `Pages/` is compiled.
+- `.csproj` also excludes `wwwroot/js/modules/*.js` — those are Vite-built ES module outputs from `ClientApp/src/interop/*.ts`. JS interop modules must be registered as Vite entry points in `vite.config.ts` and loaded at runtime via `IAssetManifestService.GetAssetPathAsync("src/interop/xxx.ts")`.
 - `.editorconfig` enforces 4-space indentation, max line length 100, file-scoped namespaces, and `csharp_prefer_braces` (braces required even on single-line control statements).
 - Prefer constructor / primary-constructor DI over `[Inject]`; private fields use `_camelCase` (see `src/EncodingConventions.md`).
 - When docs disagree with `build.ps1`, `Program.cs`, or `.editorconfig`, trust the executable source.

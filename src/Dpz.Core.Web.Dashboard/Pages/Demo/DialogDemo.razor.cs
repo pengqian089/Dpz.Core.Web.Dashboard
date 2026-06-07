@@ -11,29 +11,49 @@ public partial class DialogDemo(IAppDialogService dialogService)
 
     private async Task ShowAlert()
     {
-        await dialogService.AlertAsync("这是一个简单的提示框", "提示");
+        await dialogService.ShowAlertAsync(
+            new AppDialogOptions { Title = "提示", Message = "这是一个简单的提示框" }
+        );
         _lastResult = "Alert: 用户点击了确定";
     }
 
     private async Task ShowConfirm()
     {
-        var confirmed = await dialogService.ConfirmAsync(
-            "确定要执行此操作吗？此操作不可撤销。",
-            "确认操作"
+        var confirmed = await dialogService.ShowConfirmAsync(
+            new AppDialogOptions<bool>
+            {
+                Title = "确认操作",
+                Message = "确定要执行此操作吗？此操作不可撤销。",
+            }
         );
         _lastResult = confirmed ? "Confirm: 用户点击了确定" : "Confirm: 用户点击了取消";
     }
 
     private async Task ShowPrompt()
     {
-        var result = await dialogService.PromptAsync("请输入您的名字：", "输入信息", "张三");
+        var result = await dialogService.ShowPromptAsync(
+            new AppDialogOptions<string?>
+            {
+                Title = "输入信息",
+                Message = "请输入您的名字：",
+                DefaultValue = "张三",
+            }
+        );
         _lastResult = result != null ? $"Prompt: 用户输入了 '{result}'" : "Prompt: 用户取消了输入";
     }
 
     private async Task ShowCustomDialog()
     {
         var content = CreateCustomContent();
-        await dialogService.ShowComponentAsync("自定义内容", content, "600px");
+        await dialogService.ShowAsync<object?>(
+            new AppDialogOptions<object?>
+            {
+                Title = "自定义内容",
+                Content = content,
+                Width = "600px",
+                Type = AppDialogType.Component,
+            }
+        );
         _lastResult = "Custom Dialog: 对话框已关闭";
     }
 
@@ -65,43 +85,43 @@ public partial class DialogDemo(IAppDialogService dialogService)
             builder.CloseElement();
         };
 
-    private void ShowToast(ToastType type)
+    private void ShowToast(AppFeedbackLevel level)
     {
-        var messages = new System.Collections.Generic.Dictionary<ToastType, string>
+        var messages = new System.Collections.Generic.Dictionary<AppFeedbackLevel, string>
         {
-            { ToastType.Success, "操作成功！" },
-            { ToastType.Error, "操作失败，请重试" },
-            { ToastType.Info, "这是一条提示信息" },
-            { ToastType.Warning, "警告：请注意检查" },
+            { AppFeedbackLevel.Success, "操作成功！" },
+            { AppFeedbackLevel.Danger, "操作失败，请重试" },
+            { AppFeedbackLevel.Info, "这是一条提示信息" },
+            { AppFeedbackLevel.Warning, "警告：请注意检查" },
         };
 
-        dialogService.Toast(messages[type], type);
-        _lastResult = $"Toast: 显示了 {type} 类型的提示";
+        dialogService.ShowToast(new AppToastOptions { Message = messages[level], Level = level });
+        _lastResult = $"Toast: 显示了 {level} 类型的提示";
     }
 
-    private void ShowNotification(NotificationType type)
+    private void ShowNotification(AppFeedbackLevel level)
     {
-        var options = new NotificationOptions
+        var options = new AppNotificationOptions
         {
-            Type = type,
-            Title = GetNotificationTitle(type),
-            Content = GetNotificationContent(type),
-            AutoClose = 5000,
+            Level = level,
+            Title = GetNotificationTitle(level),
+            Content = GetNotificationContent(level),
+            AutoClose = true,
+            Duration = 5000,
         };
 
         dialogService.ShowNotification(options);
-        _lastResult = $"Notification: 显示了 {type} 类型的通知";
+        _lastResult = $"Notification: 显示了 {level} 类型的通知";
     }
 
     private void ShowProgressNotification()
     {
-        var options = new NotificationOptions
+        var options = new AppNotificationOptions
         {
-            Type = NotificationType.Info,
+            Level = AppFeedbackLevel.Info,
             Title = "任务进度",
             Content = "正在处理您的请求...",
-            Bars = [65.5, 82.3],
-            AutoClose = 0,
+            Progress = [65.5, 82.3],
         };
 
         dialogService.ShowNotification(options);
@@ -114,23 +134,23 @@ public partial class DialogDemo(IAppDialogService dialogService)
         _lastResult = "Notification: 已清除所有通知";
     }
 
-    private static string GetNotificationTitle(NotificationType type) =>
-        type switch
+    private static string GetNotificationTitle(AppFeedbackLevel level) =>
+        level switch
         {
-            NotificationType.Success => "操作成功",
-            NotificationType.Error => "操作失败",
-            NotificationType.Info => "系统消息",
-            NotificationType.Warning => "警告提示",
+            AppFeedbackLevel.Success => "操作成功",
+            AppFeedbackLevel.Danger => "操作失败",
+            AppFeedbackLevel.Info => "系统消息",
+            AppFeedbackLevel.Warning => "警告提示",
             _ => "通知",
         };
 
-    private static string GetNotificationContent(NotificationType type) =>
-        type switch
+    private static string GetNotificationContent(AppFeedbackLevel level) =>
+        level switch
         {
-            NotificationType.Success => "您的操作已成功完成，数据已保存。",
-            NotificationType.Error => "操作过程中发生错误，请稍后重试。",
-            NotificationType.Info => "系统将在 5 分钟后进行维护，请提前保存工作。",
-            NotificationType.Warning => "检测到异常访问行为，请确认是否为本人操作。",
+            AppFeedbackLevel.Success => "您的操作已成功完成，数据已保存。",
+            AppFeedbackLevel.Danger => "操作过程中发生错误，请稍后重试。",
+            AppFeedbackLevel.Info => "系统将在 5 分钟后进行维护，请提前保存工作。",
+            AppFeedbackLevel.Warning => "检测到异常访问行为，请确认是否为本人操作。",
             _ => "这是一条通知消息",
         };
 }

@@ -36,11 +36,11 @@ export default defineConfig({
             input: {
                 app: resolve(clientAppRoot, "src/app.ts"),
                 "code-editor": resolve(clientAppRoot, "src/editors/code-editor.ts"),
-                "dialog-interop": resolve(clientAppRoot, "src/interop/dialog-interop.ts"),
                 "markdown-editor": resolve(clientAppRoot, "src/editors/markdown-editor.ts"),
                 "markdown-preview": resolve(clientAppRoot, "src/markdown-preview.ts"),
                 "photoswipe-gallery": resolve(clientAppRoot, "src/photoswipe-gallery.ts"),
-                "upload-interop": resolve(clientAppRoot, "src/interop/upload-interop.ts")
+                "upload-interop": resolve(clientAppRoot, "src/interop/upload-interop.ts"),
+                "webawesome-dialog": resolve(clientAppRoot, "src/interop/webawesome-dialog.ts")
             },
 
             output: {

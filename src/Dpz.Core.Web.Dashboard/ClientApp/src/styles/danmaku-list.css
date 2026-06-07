@@ -237,9 +237,6 @@
 }
 
 /* Import Dialog Styles */
-.dialog--medium {
-    max-width: 600px;
-}
 
 .file-input {
     position: absolute;

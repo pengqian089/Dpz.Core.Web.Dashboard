@@ -1,23 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
-using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 
-public partial class DialogContainer(
-    IAppDialogService dialogService,
-    IJSRuntime jsRuntime,
-    IAssetManifestService assetManifestService
-) : IAsyncDisposable
+public partial class DialogContainer(IAppDialogService dialogService) : IDisposable
 {
-    private readonly List<DialogModel> _dialogs = [];
-    private readonly List<ToastModel> _toasts = [];
-    private readonly List<NotificationModel> _notifications = [];
-    private IJSObjectReference? _dialogModule;
+    private readonly List<AppDialogModel> _dialogs = [];
+    private readonly List<AppToastModel> _toasts = [];
+    private readonly List<AppNotificationHandle> _notifications = [];
+    private readonly Dictionary<string, Timer> _toastTimers = [];
+    private readonly Dictionary<string, Timer> _notificationTimers = [];
 
     protected override void OnInitialized()
     {
@@ -27,128 +23,147 @@ public partial class DialogContainer(
         dialogService.OnCloseAllNotifications += CloseAllNotifications;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var modulePath = await assetManifestService.GetAssetPathAsync(
-                "src/interop/dialog-interop.ts"
-            );
-            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
-
-            if (_dialogModule != null)
-            {
-                var dotNetHelper = DotNetObjectReference.Create(this);
-                await _dialogModule.InvokeVoidAsync("initKeyboardListener", dotNetHelper);
-            }
-        }
-    }
-
-    [JSInvokable]
-    public async Task HandleGlobalEsc()
-    {
-        var dialog = _dialogs.LastOrDefault();
-
-        if (dialog != null && dialog.EscToClose)
-        {
-            if (dialog.RequestCloseAction != null)
-            {
-                dialog.RequestCloseAction.Invoke();
-            }
-            else
-            {
-                RemoveDialog(dialog);
-                dialog.TaskSource.TrySetResult(null);
-            }
-        }
-        await Task.CompletedTask;
-    }
-
-    private async void ShowDialog(DialogModel model)
+    private void ShowDialog(AppDialogModel model)
     {
         _dialogs.Add(model);
-        await InvokeAsync(StateHasChanged);
-
-        if (_dialogModule != null)
-        {
-            try
-            {
-                await _dialogModule.InvokeVoidAsync("disableBodyScroll", model.DisableBodyScroll);
-            }
-            catch
-            {
-                Console.WriteLine("Failed to disable body scroll.");
-            }
-        }
+        InvokeAsync(StateHasChanged);
     }
 
-    private async void RemoveDialog(DialogModel model)
+    private void RemoveDialog(AppDialogModel model)
     {
         _dialogs.Remove(model);
-        await InvokeAsync(StateHasChanged);
-
-        if (_dialogs.Count == 0 && _dialogModule != null)
-        {
-            try
-            {
-                await _dialogModule.InvokeVoidAsync("enableBodyScroll");
-            }
-            catch
-            {
-                Console.WriteLine("Failed to enable body scroll.");
-            }
-        }
+        InvokeAsync(StateHasChanged);
     }
 
-    private void ShowToast(ToastModel model)
+    private void ShowToast(AppToastModel model)
     {
         _toasts.Add(model);
+        _toastTimers[model.Id] = new Timer(
+            _ => InvokeAsync(() => RemoveToast(model)),
+            null,
+            Math.Max(0, model.Options.Duration),
+            Timeout.Infinite
+        );
+
         InvokeAsync(StateHasChanged);
     }
 
-    private void RemoveToast(ToastModel model)
+    private void RemoveToast(AppToastModel model)
     {
         _toasts.Remove(model);
+        DisposeTimer(_toastTimers, model.Id);
+        StateHasChanged();
+    }
+
+    private void ShowNotification(AppNotificationHandle handle)
+    {
+        handle.UpdateContent = content =>
+        {
+            handle.Options.Content = content;
+            InvokeAsync(StateHasChanged);
+        };
+        handle.UpdateTitle = title =>
+        {
+            handle.Options.Title = title;
+            InvokeAsync(StateHasChanged);
+        };
+        handle.UpdateProgress = progress =>
+        {
+            handle.Options.Progress = progress;
+            InvokeAsync(StateHasChanged);
+        };
+        handle.UpdateLevel = level =>
+        {
+            handle.Options.Level = level;
+            InvokeAsync(StateHasChanged);
+        };
+        handle.Close = () => InvokeAsync(() => CloseNotification(handle));
+
+        _notifications.Add(handle);
+
+        if (handle.Options.AutoClose)
+        {
+            _notificationTimers[handle.Id] = new Timer(
+                _ => InvokeAsync(() => CloseNotification(handle)),
+                null,
+                Math.Max(0, handle.Options.Duration),
+                Timeout.Infinite
+            );
+        }
+
         InvokeAsync(StateHasChanged);
     }
 
-    private void ShowNotification(NotificationModel model)
+    private void CloseNotification(AppNotificationHandle handle)
     {
-        _notifications.Add(model);
-        InvokeAsync(StateHasChanged);
-    }
-
-    private void RemoveNotification(NotificationModel model)
-    {
-        _notifications.Remove(model);
-        InvokeAsync(StateHasChanged);
+        _notifications.Remove(handle);
+        DisposeTimer(_notificationTimers, handle.Id);
+        ClearNotificationCallbacks(handle);
+        StateHasChanged();
     }
 
     private void CloseAllNotifications()
     {
-        foreach (var n in _notifications.ToList())
+        foreach (var notification in _notifications.ToList())
         {
-            n.Close?.Invoke();
+            CloseNotification(notification);
         }
     }
 
-    public async ValueTask DisposeAsync()
+    private static string GetVariant(AppFeedbackLevel level)
+    {
+        return level switch
+        {
+            AppFeedbackLevel.Success => "success",
+            AppFeedbackLevel.Warning => "warning",
+            AppFeedbackLevel.Danger => "danger",
+            _ => "brand",
+        };
+    }
+
+    private static string GetIconClass(AppFeedbackLevel level)
+    {
+        return level switch
+        {
+            AppFeedbackLevel.Success => "fas fa-check-circle",
+            AppFeedbackLevel.Warning => "fas fa-exclamation-triangle",
+            AppFeedbackLevel.Danger => "fas fa-times-circle",
+            _ => "fas fa-info-circle",
+        };
+    }
+
+    private static void DisposeTimer(Dictionary<string, Timer> timers, string id)
+    {
+        if (timers.Remove(id, out var timer))
+        {
+            timer.Dispose();
+        }
+    }
+
+    private static void ClearNotificationCallbacks(AppNotificationHandle handle)
+    {
+        handle.UpdateContent = null;
+        handle.UpdateTitle = null;
+        handle.UpdateProgress = null;
+        handle.UpdateLevel = null;
+        handle.Close = null;
+    }
+
+    public void Dispose()
     {
         dialogService.OnDialogShow -= ShowDialog;
         dialogService.OnToastShow -= ShowToast;
         dialogService.OnNotificationShow -= ShowNotification;
         dialogService.OnCloseAllNotifications -= CloseAllNotifications;
 
-        if (_dialogModule != null)
+        foreach (var timer in _toastTimers.Values.Concat(_notificationTimers.Values))
         {
-            try
-            {
-                await _dialogModule.DisposeAsync();
-            }
-            catch
-            {
-                Console.WriteLine("Failed to dispose dialog module.");
-            }
+            timer.Dispose();
+        }
+
+        foreach (var notification in _notifications)
+        {
+            ClearNotificationCallbacks(notification);
         }
     }
 }

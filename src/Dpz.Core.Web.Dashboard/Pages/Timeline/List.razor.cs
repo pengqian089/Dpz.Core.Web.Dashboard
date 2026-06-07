@@ -125,8 +125,7 @@ public partial class List(
 
         await dialogService.ShowComponentAsync(
             "时间轴内容",
-            BuildContentPreview(model.Content),
-            "900px"
+            BuildContentPreview(model.Content)
         );
     }
 

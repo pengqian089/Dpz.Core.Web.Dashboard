@@ -3,6 +3,7 @@
 @import "@fontsource/jetbrains-mono/600.css";
 @import "@fontsource/jetbrains-mono/700.css";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
+@import "@awesome.me/webawesome/dist/styles/themes/default.css";
 @import "photoswipe/style.css";
 @import "prismjs/themes/prism-tomorrow.css";
 @import "@milkdown/crepe/theme/common/style.css";
@@ -13,7 +14,7 @@
 @import "./_loading.css";
 @import "./_layout.css";
 @import "./_form.css";
-@import "./_dialog.css";
+@import "./_webawesome-dialog.css";
 @import "./_interactions.css";
 @import "./_skeleton.css";
 @import "./_pagination.css";

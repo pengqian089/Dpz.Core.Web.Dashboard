@@ -128,8 +128,7 @@ public partial class List(
                 builder.OpenComponent<MarkdownPreview>(0);
                 builder.AddAttribute(1, "Markdown", model.Markdown);
                 builder.CloseComponent();
-            },
-            "800px"
+            }
         );
     }
 }

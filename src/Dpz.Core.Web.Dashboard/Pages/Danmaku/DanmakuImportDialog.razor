@@ -1,0 +1,97 @@
+<div class="danmaku-import-dialog">
+    <div class="form-section">
+        <div class="form-group">
+            <label class="form-label form-label--required">
+                <i class="fas fa-layer-group"></i>
+                选择弹幕分组
+            </label>
+            <select class="form-control" @bind="_importGroup" disabled="@_isImporting">
+                <option value="">请选择分组</option>
+                @foreach (var item in Groups)
+                {
+                    <option value="@item.Key">@item.Value</option>
+                }
+            </select>
+            <span class="form-hint">选择弹幕所属的视频分组</span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label form-label--required">
+                <i class="fas fa-file"></i>
+                选择文件
+            </label>
+            <InputFile
+                OnChange="OnInputFileChanged"
+                id="@InputId"
+                class="file-input"
+                accept="@Extension"
+                disabled="@_isImporting" />
+            <label for="@InputId" class="file-upload @(_isImporting ? "file-upload--disabled" : "")">
+                <div class="file-upload__icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="file-upload__content">
+                    <div class="file-upload__text">
+                        @if (_selectedFile != null)
+                        {
+                            <span>已选择文件</span>
+                        }
+                        else
+                        {
+                            <span>点击选择要导入的弹幕文件</span>
+                        }
+                    </div>
+                    <div class="file-upload__hint">
+                        支持格式: @Extension
+                    </div>
+                </div>
+            </label>
+
+            @if (_selectedFile != null)
+            {
+                <div class="file-selected">
+                    <div class="file-selected__info">
+                        <i class="fas fa-file-alt"></i>
+                        <div class="file-selected__details">
+                            <div class="file-selected__name">@_selectedFile.Name</div>
+                            <div class="file-selected__size">@_selectedFile.Size.FileSize()</div>
+                        </div>
+                    </div>
+                    @if (!_isImporting)
+                    {
+                        <button class="file-selected__remove" @onclick="ClearSelectedFile" type="button">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="danmaku-import-dialog__actions">
+        <wa-button appearance="outlined" @onclick="CancelAsync" disabled="@_isImporting">
+            <i class="fas fa-times"></i>
+            取消
+        </wa-button>
+        <wa-button
+            variant="brand"
+            appearance="filled"
+            @onclick="ImportDanmakuAsync"
+            disabled="@(_isImporting || _selectedFile == null)">
+            @if (_isImporting)
+            {
+                <span class="btn__loading">
+                    <span class="spinner"></span>
+                    导入中...
+                </span>
+            }
+            else
+            {
+                <span>
+                    <i class="fas fa-check"></i>
+                    确认导入
+                </span>
+            }
+        </wa-button>
+    </div>
+</div>

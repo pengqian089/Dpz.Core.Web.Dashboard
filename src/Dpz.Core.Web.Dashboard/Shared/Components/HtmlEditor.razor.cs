@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using BlazorMonaco;
-using BlazorMonaco.Editor;
 using Microsoft.AspNetCore.Components;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components;
@@ -10,7 +7,7 @@ namespace Dpz.Core.Web.Dashboard.Shared.Components;
 public partial class HtmlEditor : ComponentBase, IAsyncDisposable
 {
     private readonly string _elementId = Guid.NewGuid().ToString("N");
-    private StandaloneCodeEditor? _editor;
+    private CodeEditor? _editor;
 
     [Parameter]
     public string Html { get; set; } = "";
@@ -22,7 +19,7 @@ public partial class HtmlEditor : ComponentBase, IAsyncDisposable
             return "";
         }
 
-        return await _editor.GetValue();
+        return await _editor.GetValueAsync();
     }
 
     public async Task InsertValueAsync(string value)
@@ -32,38 +29,14 @@ public partial class HtmlEditor : ComponentBase, IAsyncDisposable
             return;
         }
 
-        var selection = await _editor.GetSelection();
-        var distance = selection.EndColumn - selection.StartColumn;
-        
-        var endSelection = new Selection();
-        endSelection.SelectionStartLineNumber = selection.SelectionStartLineNumber;
-        endSelection.SelectionStartColumn = selection.SelectionStartColumn;
-        endSelection.PositionLineNumber = selection.PositionLineNumber;
-        endSelection.PositionColumn = selection.PositionColumn + value.Length - distance;
-        endSelection.StartLineNumber = selection.StartLineNumber;
-        endSelection.StartColumn = selection.StartColumn;
-        endSelection.EndLineNumber = selection.EndLineNumber;
-        endSelection.EndColumn = selection.EndColumn + value.Length - distance;
-        
-        await _editor.ExecuteEdits(
-            Guid.NewGuid().ToString(),
-            new List<IdentifiedSingleEditOperation>
-            {
-                new()
-                {
-                    ForceMoveMarkers = true,
-                    Range = selection,
-                    Text = value
-                }
-            },
-            new List<Selection> { endSelection });
+        await _editor.InsertValueAsync(value);
     }
 
     public async ValueTask DisposeAsync()
     {
         if (_editor != null)
         {
-            await _editor.DisposeEditor();
+            await _editor.DisposeAsync();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 
@@ -44,7 +44,7 @@ public partial class FriendForm(IAppOptionService optionService, IAppDialogServi
     {
         CloseDialog?.Invoke(null);
     }
-    
+
     private async Task SaveAsync()
     {
         if (!ValidateInput())

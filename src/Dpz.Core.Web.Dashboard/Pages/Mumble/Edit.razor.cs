@@ -13,8 +13,8 @@ namespace Dpz.Core.Web.Dashboard.Pages.Mumble;
 public partial class Edit(
     IMumbleService mumbleService,
     IAppDialogService dialogService,
-    NavigationManager navigation)
-    : ComponentBase
+    NavigationManager navigation
+) : ComponentBase
 {
     [Parameter]
     public string Id { get; set; } = "";

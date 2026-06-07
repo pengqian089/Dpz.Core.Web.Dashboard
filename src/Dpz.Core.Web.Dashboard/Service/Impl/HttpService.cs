@@ -29,6 +29,7 @@ public class HttpService(
     IHttpClientFactory httpClientFactory,
     NavigationManager navigation,
     IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService,
     IAccessTokenProvider tokenProvider
 ) : IHttpService
 {
@@ -527,10 +528,13 @@ public class HttpService(
             return _uploadModule;
         }
 
+        var modulePath = await assetManifestService.GetAssetPathAsync(
+            "src/interop/upload-interop.ts"
+        );
         _uploadModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
             "import",
             cancellationToken,
-            "./js/modules/upload-interop.js"
+            modulePath
         );
         return _uploadModule;
     }

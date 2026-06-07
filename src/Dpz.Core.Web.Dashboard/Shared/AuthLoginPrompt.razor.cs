@@ -68,7 +68,8 @@ public partial class AuthLoginPrompt(NavigationManager navigation) : IDisposable
 
     private void LoginNow()
     {
-        var url = $"/authentication/login?returnUrl={Uri.EscapeDataString(ReturnUrl ?? navigation.Uri)}";
+        var url =
+            $"/authentication/login?returnUrl={Uri.EscapeDataString(ReturnUrl ?? navigation.Uri)}";
         navigation.NavigateTo(url, forceLoad: false);
     }
 

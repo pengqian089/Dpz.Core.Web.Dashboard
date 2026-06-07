@@ -26,11 +26,7 @@ public partial class DialogDemo(IAppDialogService dialogService)
 
     private async Task ShowPrompt()
     {
-        var result = await dialogService.PromptAsync(
-            "请输入您的名字：",
-            "输入信息",
-            "张三"
-        );
+        var result = await dialogService.PromptAsync("请输入您的名字：", "输入信息", "张三");
         _lastResult = result != null ? $"Prompt: 用户输入了 '{result}'" : "Prompt: 用户取消了输入";
     }
 
@@ -48,10 +44,7 @@ public partial class DialogDemo(IAppDialogService dialogService)
             builder.AddAttribute(1, "style", "padding: 20px;");
 
             builder.OpenElement(2, "p");
-            builder.AddContent(
-                3,
-                "这是一个自定义对话框，可以包含任意复杂的内容和交互。"
-            );
+            builder.AddContent(3, "这是一个自定义对话框，可以包含任意复杂的内容和交互。");
             builder.CloseElement();
 
             builder.OpenElement(4, "ul");

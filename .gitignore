@@ -284,6 +284,7 @@ FakesAssemblies/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 node_modules/
+src/Dpz.Core.Web.Dashboard/wwwroot/assets/
 
 # Visual Studio 6 build log
 *.plg

@@ -1,0 +1,28 @@
+.code-editor,
+.monaco-editor,
+.code-view-editor {
+    width: 100%;
+    min-height: 420px;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-body);
+}
+
+.code-view-editor {
+    min-height: 620px;
+}
+
+.code-editor .cm-editor,
+.monaco-editor .cm-editor,
+.code-view-editor .cm-editor {
+    height: 100%;
+    min-height: inherit;
+}
+
+.code-editor .cm-scroller,
+.monaco-editor .cm-scroller,
+.code-view-editor .cm-scroller {
+    overflow: auto;
+}

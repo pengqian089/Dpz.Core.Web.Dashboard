@@ -1,4 +1,3 @@
-﻿@using BlazorMonaco.Editor
 @page "/code"
 @attribute [Authorize]
 
@@ -267,8 +266,7 @@
                     }
                     else
                     {
-                        <StandaloneCodeEditor CssClass="code-view-editor" Id="@EditorId"
-                            ConstructionOptions="x => x.EditorConstructionOptions(_treeData.CodeContainer.Language, _treeData.CodeContainer.CodeContent, true)" />
+                        <CodeEditor CssClass="code-view-editor" Value="@_treeData.CodeContainer.CodeContent" Language="@_treeData.CodeContainer.Language" ReadOnly="true" Style="height: 620px" />
                     }
                 </div>
 

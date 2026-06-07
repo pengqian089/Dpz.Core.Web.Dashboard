@@ -277,7 +277,7 @@ public partial class List(
             _ => position.ToString(),
         };
     }
-    
+
     private static string GetSizeText(int size)
     {
         return size switch

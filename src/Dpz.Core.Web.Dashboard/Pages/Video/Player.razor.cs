@@ -7,8 +7,7 @@ using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Player(
-    IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposable
+public partial class Player(IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposable
 {
     [Parameter]
     public required string VideoUrl { get; set; }

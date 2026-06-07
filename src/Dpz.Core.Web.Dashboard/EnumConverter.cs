@@ -30,7 +30,11 @@ public class EnumConverter<T> : JsonConverter<T>
 public class EnumNullableConverter<T> : JsonConverter<T?>
     where T : struct, Enum
 {
-    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override T? Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options
+    )
     {
         if (reader.TokenType == JsonTokenType.Null)
         {
@@ -46,6 +50,6 @@ public class EnumNullableConverter<T> : JsonConverter<T?>
 
     public override void Write(Utf8JsonWriter writer, T? value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value?.ToString()); 
+        writer.WriteStringValue(value?.ToString());
     }
 }

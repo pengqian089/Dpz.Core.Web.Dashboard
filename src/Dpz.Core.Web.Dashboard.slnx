@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/docs/">
+    <File Path="../AGENTS.md" />
     <File Path="../README.md" />
+    <File Path="CSS_MANAGEMENT.md" />
     <File Path="EncodingConventions.md" />
   </Folder>
   <Project Path="Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj" />

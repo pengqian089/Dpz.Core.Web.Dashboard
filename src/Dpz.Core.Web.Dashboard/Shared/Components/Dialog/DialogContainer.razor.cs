@@ -8,8 +8,11 @@ using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 
-public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime jsRuntime)
-    : IAsyncDisposable
+public partial class DialogContainer(
+    IAppDialogService dialogService,
+    IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService
+) : IAsyncDisposable
 {
     private readonly List<DialogModel> _dialogs = [];
     private readonly List<ToastModel> _toasts = [];
@@ -28,12 +31,11 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
     {
         if (firstRender)
         {
-            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./js/modules/dialog-interop.js"
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/interop/dialog-interop.ts"
             );
+            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
 
-            // 初始化全局按键监听
             if (_dialogModule != null)
             {
                 var dotNetHelper = DotNetObjectReference.Create(this);
@@ -45,7 +47,6 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
     [JSInvokable]
     public async Task HandleGlobalEsc()
     {
-        // 查找最后一个（最上层）可被 Esc 关闭的对话框
         var dialog = _dialogs.LastOrDefault();
 
         if (dialog != null && dialog.EscToClose)
@@ -56,7 +57,6 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
             }
             else
             {
-                // 如果没有注册 Action (比如还没渲染完成)，直接移除
                 RemoveDialog(dialog);
                 dialog.TaskSource.TrySetResult(null);
             }
@@ -77,7 +77,7 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
             }
             catch
             {
-                // Fallback if module not loaded
+                Console.WriteLine("Failed to disable body scroll.");
             }
         }
     }
@@ -95,7 +95,7 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
             }
             catch
             {
-                // Ignore if module disposed
+                Console.WriteLine("Failed to enable body scroll.");
             }
         }
     }
@@ -126,8 +126,6 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
 
     private void CloseAllNotifications()
     {
-        // This is tricky because we want animation.
-        // We can call Close on all models.
         foreach (var n in _notifications.ToList())
         {
             n.Close?.Invoke();
@@ -149,7 +147,7 @@ public partial class DialogContainer(IAppDialogService dialogService, IJSRuntime
             }
             catch
             {
-                // Ignore disposal errors
+                Console.WriteLine("Failed to dispose dialog module.");
             }
         }
     }

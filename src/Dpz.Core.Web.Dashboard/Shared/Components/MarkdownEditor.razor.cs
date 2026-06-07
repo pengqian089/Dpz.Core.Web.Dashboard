@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
@@ -12,6 +12,7 @@ namespace Dpz.Core.Web.Dashboard.Shared.Components;
 public partial class MarkdownEditor(
     IHttpService httpService,
     IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService,
     ILocalStorageService localStorageService
 ) : ComponentBase, IAsyncDisposable
 {
@@ -37,17 +38,11 @@ public partial class MarkdownEditor(
     private string HeightStyle => Height == null ? "" : $"height:{Height}{HeightUnit}";
 
     private readonly string _editorId = Guid.NewGuid().ToString("N");
-
     private IJSObjectReference? _jsModule;
-
-    private bool _editOnly;
-
     private DotNetObjectReference<MarkdownEditor>? _objRef;
-
+    private bool _editOnly;
     private bool _isUploading;
-
     private int _uploadProgress;
-
     private bool _editorInitialized;
 
     protected override async Task OnInitializedAsync()
@@ -56,15 +51,14 @@ public partial class MarkdownEditor(
 
         try
         {
-            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./Shared/Components/MarkdownEditor.razor.js"
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/editors/markdown-editor.ts"
             );
-            Console.WriteLine($"MarkdownEditor JS module loaded for {_editorId}");
+            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load JS module: {ex.Message}");
+            Console.WriteLine($"Failed to load MarkdownEditor module: {ex.Message}");
         }
 
         _objRef = DotNetObjectReference.Create(this);
@@ -72,35 +66,36 @@ public partial class MarkdownEditor(
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!_editorInitialized && _jsModule != null)
+        if (_editorInitialized || _jsModule == null || _objRef == null)
         {
-            try
-            {
-                Console.WriteLine($"Calling createEditor for {_editorId}");
-                await _jsModule.InvokeVoidAsync(
-                    "createEditor",
-                    _editorId,
-                    Markdown,
-                    _editOnly,
-                    _objRef
-                );
-                _editorInitialized = true;
-                Console.WriteLine($"createEditor called successfully for {_editorId}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to create editor: {ex.Message}");
-            }
+            return;
+        }
+
+        try
+        {
+            await _jsModule.InvokeVoidAsync(
+                "createEditor",
+                _editorId,
+                Markdown,
+                _editOnly,
+                _objRef
+            );
+            _editorInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to create MarkdownEditor: {ex.Message}");
         }
     }
 
     public async Task<string> GetValueAsync()
     {
-        if (_jsModule == null)
+        if (_jsModule == null || !_editorInitialized)
         {
-            return string.Empty;
+            return Markdown;
         }
-        return await _jsModule.InvokeAsync<string>("getMarkdown");
+
+        return await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
     }
 
     public async Task ToggleEditModeAsync()
@@ -108,17 +103,9 @@ public partial class MarkdownEditor(
         _editOnly = !_editOnly;
         await localStorageService.SetItemAsync("markdown-edit-only", _editOnly);
 
-        if (_jsModule != null)
+        if (_jsModule != null && _editorInitialized)
         {
-            var currentMarkdown = await _jsModule.InvokeAsync<string>("getMarkdown");
-            await _jsModule.InvokeVoidAsync("destroy");
-            await _jsModule.InvokeVoidAsync(
-                "createEditor",
-                _editorId,
-                currentMarkdown,
-                _editOnly,
-                _objRef
-            );
+            await _jsModule.InvokeVoidAsync("setReadonly", _editorId, _editOnly);
         }
     }
 
@@ -183,7 +170,11 @@ public partial class MarkdownEditor(
     {
         if (_jsModule != null)
         {
-            await _jsModule.InvokeVoidAsync("destroy");
+            if (_editorInitialized)
+            {
+                await _jsModule.InvokeVoidAsync("destroy", _editorId);
+            }
+
             await _jsModule.DisposeAsync();
         }
 

@@ -14,7 +14,8 @@ public partial class Edit(
     IAppDialogService appDialogService,
     NavigationManager navigationManager,
     IPictureService pictureService,
-    IJSRuntime jsRuntime
+    IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService
 ) : IAsyncDisposable
 {
     private bool _editPicture;
@@ -29,10 +30,8 @@ public partial class Edit(
     protected override async Task OnInitializedAsync()
     {
         _tags = await pictureService.GetTagsAsync();
-        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-            "import",
-            "./Pages/Picture/Edit.razor.js"
-        );
+        var modulePath = await assetManifestService.GetAssetPathAsync("src/photoswipe-gallery.ts");
+        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
 
         if (!string.IsNullOrWhiteSpace(Id))
         {
@@ -95,6 +94,7 @@ public partial class Edit(
     {
         if (_jsModule != null)
         {
+            await _jsModule.InvokeVoidAsync("destroyPhotoViewer");
             await _jsModule.DisposeAsync();
         }
     }

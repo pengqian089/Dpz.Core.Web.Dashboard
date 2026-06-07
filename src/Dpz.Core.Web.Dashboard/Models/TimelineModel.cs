@@ -40,5 +40,4 @@ public class TimelineModel
     /// 最后修改时间
     /// </summary>
     public DateTime LastUpdateTime { get; set; }
-
 }

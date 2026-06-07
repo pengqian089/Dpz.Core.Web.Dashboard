@@ -1,94 +1,95 @@
-﻿# CSS 管理与维护指南
+# CSS 管理与维护指南
 
-## 概览 (Overview)
+## 概览
 
-本项目采用自定义的 CSS 架构，旨在 Blazor WebAssembly 环境中实现无需预处理器（如 SASS/SCSS）的可维护性和可扩展性。构建系统（`build.ps1`）会将特定的 CSS 文件合并为一个单一的 `global.min.css` 包。
+本项目的前端资产由 `src/Dpz.Core.Web.Dashboard/ClientApp/` 管理，使用 npm、
+Vite 和 TypeScript 构建到 Blazor WebAssembly 的 `wwwroot/assets/`。
 
-## 文件结构 (File Structure)
+CSS 源文件位于 `ClientApp/src/styles/`。Vite 入口 `src/app.ts` 导入
+`src/styles/app.css`，再由 `app.css` 明确控制所有样式的加载顺序。
+构建产物使用 hash 文件名，Blazor 通过 Vite manifest 解析运行时 JS module。
 
+## 文件结构
+
+```text
+ClientApp/src/styles/
+  app.css                  # 全局 CSS 入口，负责 import 顺序
+  _variables.css           # 全局设计变量
+  _layout.css              # 主布局结构
+  _form.css                # 共享表单和按钮
+  _markdown-editor.css     # Markdown 编辑器外壳
+  _code-editor.css         # CodeMirror 编辑器外壳
+  article-list.css         # 页面样式
+  article-form.css
+  ...
 ```
-wwwroot/css/
- _variables.css       # 全局设计变量（颜色、间距等）
- _layout.css          # 主布局结构（侧边栏、顶部导航）
- _form.css            # 共享的表单控件与按钮样式
- _tag-selector.css    # 共享的标签/徽章组件样式
- _pagination.css      # 共享的分页样式
- _skeleton.css        # 加载骨架屏样式
- index.css            # 仪表盘/首页专用样式
- article-list.css     # 文章管理列表页样式
- article-form.css     # 文章发布/编辑页样式
- ... (其他页面专用文件)
-```
 
-## 关键原则 (Key Principles)
+## 关键原则
 
-### 1. "下划线" 约定 (The "Underscore" Convention)
-以 `_` 开头的文件（例如 `_form.css`）是 **抽象/共享组件**。
-- 它们包含在多个页面中使用的样式。
-- 它们通常应优先加载或具有全局通用性。
-- **不要** 将特定页面的逻辑放在这里。
+### 1. 下划线约定
 
-### 2. BEM 命名约定 (BEM Naming Convention)
-我们严格使用 [BEM](http://getbem.com/) (Block Element Modifier) 来防止样式冲突。
+以 `_` 开头的文件是共享样式或基础设施样式，例如 `_form.css`、
+`_layout.css`、`_code-editor.css`。页面专用样式不要写入共享文件。
 
-- **Block (块)**: `.article-card`
-- **Element (元素)**: `.article-card__title` (双下划线)
-- **Modifier (修饰符)**: `.article-card--featured` (双连字符)
+### 2. BEM 命名
 
-**错误示例 (Bad):**
+继续使用 BEM 避免样式冲突：
+
 ```css
-.card { ... }
-.title { ... } /* 太通用，容易产生冲突 */
+.article-card { }
+.article-card__title { }
+.article-card--featured { }
 ```
 
-**正确示例 (Good):**
-```css
-.article-card { ... }
-.article-card__title { ... }
-```
+避免 `.card`、`.title` 这类过宽泛的选择器。
 
-### 3. 关注点分离 (Separation of Concerns)
-- **Layout (布局)**: 定义在 `_layout.css` 中。处理外壳（侧边栏、页头）。
-- **Components (组件)**: 按钮、输入框、标签等位于各自的 `_*.css` 文件中。
-- **Pages (页面)**: 特定功能的样式（例如 `.music-player`）应放在 `music-list.css` 中。
+### 3. 深色模式优先
 
-### 4. 避免重复 (Avoiding Duplication)
-在编写新的 CSS 之前:
-1. 检查 `_variables.css` 获取标准颜色/间距。
-2. 检查 `_form.css` 获取输入框/按钮样式。
-3. 检查 `_tag-selector.css` 获取标签/Chips样式。
+后台管理系统只维护深色视觉。新增颜色应优先复用 `_variables.css` 中的
+CSS 变量，例如 `--bg-surface`、`--text-primary`、`--primary`。
 
-**禁止** 将 `.btn` 或 `.form-control` 的样式复制粘贴到页面特定的 CSS 文件中。
+### 4. 第三方样式
 
-## 工作流 (Workflows)
+FontAwesome、Prism、Milkdown Crepe、PhotoSwipe、JetBrains Mono 等第三方样式通过
+npm 包在 `app.css` 中导入，不再在 `wwwroot/index.html` 中直接挂 CDN。
 
-### 添加新页面
-1. 创建 `mypage.css`。
-2. 尽可能将所有样式包裹在一个唯一的块级类中，或使用 BEM 前缀（例如 `.mypage-container`）。
-3. 使用全局变量：
-   ```css
-   .mypage-header {
-       padding: var(--spacing-md);
-       color: var(--text-primary);
-   }
-   ```
+### 5. 格式化
 
-### 修改共享组件
-1. 编辑 `_form.css`（举例）。
-2. **测试** 所有使用该组件的页面（例如文章编辑页、设置页）。
-3. 不要在共享文件中添加特定页面的覆盖样式。
+CSS 由 `ClientApp` 内的 Prettier 统一格式化，缩进 4 个空格，单行最大长度 100。
+不要使用行尾注释。
 
-### 构建与部署
-运行构建脚本以合并和压缩样式文件：
+## 工作流
+
+开发前端资产：
+
 ```powershell
-.\build.ps1
+cd src/Dpz.Core.Web.Dashboard
+.\build.ps1 dev
 ```
-此操作需要安装 `cleancss`。
 
-## 常用变量参考 (Variable Reference)
-(完整列表请参阅 `_variables.css`)
-- `--primary`: 主品牌色
-- `--bg-surface`: 卡片/容器背景色
-- `--text-primary`: 主要文本颜色
-- `--spacing-md`: 标准内边距 (1rem)
-- `--border-radius`: 标准圆角
+检查 TypeScript 与格式：
+
+```powershell
+cd src/Dpz.Core.Web.Dashboard
+.\build.ps1 typecheck
+.\build.ps1 lint
+.\build.ps1 format-check
+```
+
+格式化前端源码：
+
+```powershell
+cd src/Dpz.Core.Web.Dashboard
+.\build.ps1 format
+```
+
+生产构建和 Blazor 验证：
+
+```powershell
+cd src/Dpz.Core.Web.Dashboard
+.\build.ps1 prod
+```
+
+`build.ps1 prod` 或缺省参数会先清理 `wwwroot/assets/`、`bin/`、`obj/`，再安装缺失的
+npm 依赖、运行 Vite build、根据 manifest 同步 `index.html` 的 hash 资源和版本号，
+最后执行 `dotnet build`。

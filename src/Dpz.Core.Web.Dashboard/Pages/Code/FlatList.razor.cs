@@ -175,7 +175,9 @@ public partial class FlatList(
 
             if (_request.PathSegments is { Length: > 0 })
             {
-                queryParams.Add($"path={HttpUtility.UrlEncode(string.Join("/", _request.PathSegments))}");
+                queryParams.Add(
+                    $"path={HttpUtility.UrlEncode(string.Join("/", _request.PathSegments))}"
+                );
             }
 
             var queryString = "?" + string.Join("&", queryParams);
@@ -305,7 +307,7 @@ public partial class FlatList(
             "update-asc" => ((CodeFileSortField?)CodeFileSortField.LastUpdateTime, false),
             "ai-desc" => ((CodeFileSortField?)CodeFileSortField.AiAnalyzeTime, true),
             "ai-asc" => ((CodeFileSortField?)CodeFileSortField.AiAnalyzeTime, false),
-            _ => ((CodeFileSortField?)null, true)
+            _ => ((CodeFileSortField?)null, true),
         };
         _request.PageIndex = 1;
         await LoadDataAsync();
@@ -325,7 +327,7 @@ public partial class FlatList(
             (CodeFileSortField.LastUpdateTime, false) => "update-asc",
             (CodeFileSortField.AiAnalyzeTime, true) => "ai-desc",
             (CodeFileSortField.AiAnalyzeTime, false) => "ai-asc",
-            _ => ""
+            _ => "",
         };
     }
 
@@ -381,7 +383,7 @@ public partial class FlatList(
             ".png" or ".jpg" or ".jpeg" or ".gif" or ".svg" or ".webp" => "fa-file-image",
             ".pdf" => "fa-file-pdf",
             ".zip" or ".rar" or ".7z" or ".tar" or ".gz" => "fa-file-archive",
-            _ => "fa-file-code"
+            _ => "fa-file-code",
         };
     }
 }

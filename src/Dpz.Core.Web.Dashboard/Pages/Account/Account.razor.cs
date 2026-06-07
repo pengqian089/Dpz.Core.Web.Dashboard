@@ -253,5 +253,4 @@ public partial class Account(
     {
         return account.Enable != false;
     }
-
 }

@@ -32,7 +32,7 @@ public class MumbleModel
     public int CommentCount { get; set; }
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public required UserInfo Author { get; set; }
 

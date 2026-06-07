@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 
-public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
+public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService assetManifestService)
+    : IAsyncDisposable
 {
     [Parameter]
     public DialogModel Model { get; set; } = new();
@@ -28,10 +30,8 @@ public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
     {
         _inputValue = Model.DefaultValue;
 
-        // 注册关闭操作
         Model.RequestCloseAction = () => Close(null);
 
-        // Trigger animation
         await Task.Delay(10);
         _isVisible = true;
     }
@@ -40,10 +40,10 @@ public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
     {
         if (firstRender)
         {
-            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./js/modules/dialog-interop.js"
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/interop/dialog-interop.ts"
             );
+            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
 
             if (Model.Type == DialogType.Prompt)
             {
@@ -54,7 +54,6 @@ public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
                 await _confirmBtnRef.FocusAsync();
             }
 
-            // 对话框打开时 DOM 管理器已暂停，手动触发 LazyLoad 更新以加载图片
             if (_dialogModule != null)
             {
                 await _dialogModule.InvokeVoidAsync("updateLazyLoad");
@@ -86,7 +85,6 @@ public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
         _isVisible = false;
         StateHasChanged();
 
-        // Wait for animation
         await Task.Delay(300);
 
         if (Model.Type == DialogType.Prompt && result is true)
@@ -115,7 +113,7 @@ public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
             }
             catch
             {
-                // Ignore disposal errors
+                Console.WriteLine("Failed to dispose dialog module.");
             }
         }
     }

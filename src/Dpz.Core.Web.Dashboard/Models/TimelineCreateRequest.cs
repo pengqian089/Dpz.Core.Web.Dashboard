@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Dpz.Core.Web.Dashboard.Models;
@@ -14,6 +15,8 @@ public class TimelineCreateRequest
     public required DateTime Date { get; set; }
 
     public string? More { get; set; }
+
+    public List<ImageMetadata> Images { get; set; } = [];
 }
 
 public class TimelineEditRequest : TimelineCreateRequest

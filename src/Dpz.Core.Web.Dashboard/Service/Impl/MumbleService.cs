@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
@@ -22,14 +23,22 @@ public class MumbleService(IHttpService httpService) : IMumbleService
         );
     }
 
-    public async Task CreateAsync(string markdown, string htmlContent)
+    public async Task CreateAsync(
+        string markdown,
+        string htmlContent,
+        IReadOnlyCollection<ImageMetadata> images
+    )
     {
-        await httpService.PostAsync("/api/Mumble", new { markdown, htmlContent });
+        await httpService.PostAsync("/api/Mumble", new { markdown, htmlContent, images });
     }
 
-    public async Task EditAsync(string id, string markdown)
+    public async Task EditAsync(
+        string id,
+        string markdown,
+        IReadOnlyCollection<ImageMetadata> images
+    )
     {
-        await httpService.PatchAsync("/api/Mumble", new { id, markdown });
+        await httpService.PatchAsync("/api/Mumble", new { id, markdown, images });
     }
 
     public async Task<MumbleModel?> GetMumbleAsync(string id)

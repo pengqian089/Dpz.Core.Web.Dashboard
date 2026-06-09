@@ -78,7 +78,7 @@ public partial class Edit(
 
         try
         {
-            await mumbleService.EditAsync(_model.Id, markdown);
+            await mumbleService.EditAsync(_model.Id, markdown, _editor.GetUploadedImages());
             dialogService.Toast("保存成功", ToastType.Success);
             navigation.NavigateTo("/mumble");
         }

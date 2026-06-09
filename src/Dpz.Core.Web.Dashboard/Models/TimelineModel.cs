@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 
 namespace Dpz.Core.Web.Dashboard.Models;
 
@@ -25,6 +26,11 @@ public class TimelineModel
     /// 连接按钮的链接
     /// </summary>
     public string? More { get; set; }
+
+    /// <summary>
+    /// 图片元信息
+    /// </summary>
+    public List<ImageMetadata> Images { get; set; } = [];
 
     /// <summary>
     /// 作者

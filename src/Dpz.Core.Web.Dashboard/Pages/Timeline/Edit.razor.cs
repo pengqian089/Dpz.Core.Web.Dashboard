@@ -48,6 +48,7 @@ public partial class Edit(
                 Id = timelineModel.Id,
                 Content = timelineModel.Content,
                 Date = timelineModel.Date,
+                Images = timelineModel.Images,
                 More = timelineModel.More,
                 Title = timelineModel.Title,
             };
@@ -73,6 +74,7 @@ public partial class Edit(
         }
 
         _timeline.Content = await _editor.GetValueAsync();
+        _timeline.Images = _editor.GetUploadedImages();
         if (string.IsNullOrWhiteSpace(_timeline.Content))
         {
             dialogService.Toast("请输入内容", ToastType.Warning);

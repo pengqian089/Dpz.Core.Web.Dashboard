@@ -45,7 +45,7 @@ public partial class Post(
 
         try
         {
-            await mumbleService.CreateAsync(markdown, content);
+            await mumbleService.CreateAsync(markdown, content, _editor.GetUploadedImages());
             dialogService.Toast("发布成功", ToastType.Success);
             navigation.NavigateTo("/mumble");
         }

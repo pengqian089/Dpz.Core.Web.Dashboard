@@ -58,6 +58,7 @@ else
                 <div class="timeline-form__section timeline-form__section--editor">
                     <div class="timeline-form__section-title">内容编辑</div>
                     <MarkdownEditor @ref="_editor"
+                                    Images="@_timeline.Images"
                                     UploadAction="/api/Timeline/upload"
                                     Markdown="@_timeline.Content" />
                 </div>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
@@ -38,6 +39,9 @@ public partial class MarkdownEditor(
     [Parameter]
     public EventCallback<string>? OnImageUploaded { get; set; }
 
+    [Parameter]
+    public IReadOnlyCollection<ImageMetadata>? Images { get; set; }
+
     private const int DefaultHeight = 600;
 
     private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
@@ -50,6 +54,7 @@ public partial class MarkdownEditor(
     private int _uploadProgress;
     private bool _editorInitialized;
     private string? _uploadError;
+    private readonly List<ImageMetadata> _uploadedImages = [];
 
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
@@ -58,6 +63,7 @@ public partial class MarkdownEditor(
 
     protected override async Task OnInitializedAsync()
     {
+        _uploadedImages.AddRange(Images ?? []);
         _editOnly = await localStorageService.GetItemAsync<bool>("markdown-edit-only");
 
         try
@@ -107,6 +113,11 @@ public partial class MarkdownEditor(
         }
 
         return await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+    }
+
+    public List<ImageMetadata> GetUploadedImages()
+    {
+        return [.. _uploadedImages];
     }
 
     public async Task ToggleEditModeAsync()
@@ -177,7 +188,9 @@ public partial class MarkdownEditor(
                 null,
                 progress
             );
-            var urls = ParseUploadUrls(response);
+            var images = ParseUploadImages(response);
+            _uploadedImages.AddRange(images);
+            var urls = images.Select(image => image.Url).ToArray();
 
             foreach (var url in urls)
             {
@@ -239,7 +252,7 @@ public partial class MarkdownEditor(
             : "application/octet-stream";
     }
 
-    private static string[] ParseUploadUrls(string? response)
+    private static ImageMetadata[] ParseUploadImages(string? response)
     {
         if (string.IsNullOrWhiteSpace(response))
         {
@@ -248,11 +261,11 @@ public partial class MarkdownEditor(
 
         try
         {
-            var images = JsonSerializer.Deserialize<List<UploadImageResult>>(
+            var images = JsonSerializer.Deserialize<List<ImageMetadata>>(
                 response,
                 JsonSerializerOptions
             );
-            return GetUrls(images);
+            return images?.Where(image => !string.IsNullOrWhiteSpace(image.Url)).ToArray() ?? [];
         }
         catch (JsonException)
         {
@@ -260,22 +273,29 @@ public partial class MarkdownEditor(
                 response,
                 JsonSerializerOptions
             );
-            return GetUrls(image == null ? null : [image]);
+            return CreateFallbackImageMetadata(image);
         }
     }
 
-    private static string[] GetUrls(IReadOnlyCollection<UploadImageResult>? images)
+    private static ImageMetadata[] CreateFallbackImageMetadata(UploadImageResult? image)
     {
-        if (images == null || images.Count == 0)
+        if (image == null || string.IsNullOrWhiteSpace(image.Url))
         {
             return [];
         }
 
-        return images
-            .Select(image => image.Url)
-            .Where(url => !string.IsNullOrWhiteSpace(url))
-            .Select(url => url!)
-            .ToArray();
+        return
+        [
+            new ImageMetadata
+            {
+                Url = image.Url,
+                Width = 0,
+                Height = 0,
+                Frames = 0,
+                Size = 0,
+                Format = ImageFormat.Unknown,
+            },
+        ];
     }
 
     private sealed record UploadImageResult(string? Url);

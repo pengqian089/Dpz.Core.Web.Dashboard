@@ -398,3 +398,4 @@ opencode.json
 
 # JetBrains Rider
 *.sln.iml
+src/.idea/*

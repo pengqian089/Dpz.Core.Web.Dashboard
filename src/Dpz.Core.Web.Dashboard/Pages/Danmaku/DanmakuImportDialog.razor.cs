@@ -88,11 +88,7 @@ public partial class DanmakuImportDialog(
             }
 
             dialogService.ShowToast(
-                new AppToastOptions
-                {
-                    Message = "导入成功！",
-                    Level = AppFeedbackLevel.Success,
-                }
+                new AppToastOptions { Message = "导入成功！", Level = AppFeedbackLevel.Success }
             );
             CloseDialog?.Invoke(true);
         }

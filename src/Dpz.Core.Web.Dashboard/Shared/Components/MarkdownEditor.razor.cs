@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models.Upload;
@@ -46,6 +49,12 @@ public partial class MarkdownEditor(
     private bool _isUploading;
     private int _uploadProgress;
     private bool _editorInitialized;
+    private string? _uploadError;
+
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,9 +127,22 @@ public partial class MarkdownEditor(
         string contentType
     )
     {
+        var urls = await UploadImages([streamRef], [fileName], [contentType]);
+        return urls.FirstOrDefault() ?? string.Empty;
+    }
+
+    [JSInvokable]
+    public async Task<string[]> UploadImages(
+        IJSStreamReference[] streamRefs,
+        string[] fileNames,
+        string[] contentTypes
+    )
+    {
         _isUploading = true;
         _uploadProgress = 0;
+        _uploadError = null;
         StateHasChanged();
+        var streams = new List<Stream>();
         try
         {
             if (OnImageUploading != null)
@@ -128,32 +150,48 @@ public partial class MarkdownEditor(
                 await OnImageUploading.Value.InvokeAsync("开始上传图片...");
             }
 
-            using var stream = await streamRef.OpenReadStreamAsync(AppTools.MaxFileSize);
-            var files = new List<UploadFilePart> { new("image", fileName, contentType, stream) };
+            var files = new List<UploadFilePart>(streamRefs.Length);
+            for (var i = 0; i < streamRefs.Length; i++)
+            {
+                var stream = await streamRefs[i].OpenReadStreamAsync(AppTools.MaxFileSize);
+                streams.Add(stream);
+                files.Add(
+                    new UploadFilePart(
+                        "image",
+                        GetUploadFileName(fileNames, i),
+                        GetUploadContentType(contentTypes, i),
+                        stream
+                    )
+                );
+            }
+
             var progress = new Progress<int>(value =>
             {
                 _uploadProgress = value;
                 StateHasChanged();
             });
 
-            var result = await httpService.PostFileWithProgressAsync<UploadImageResult>(
+            var response = await httpService.PostFileWithProgressAsync<string>(
                 UploadAction,
                 files,
                 null,
                 progress
             );
+            var urls = ParseUploadUrls(response);
 
-            if (result != null && !string.IsNullOrWhiteSpace(result.Url))
+            foreach (var url in urls)
             {
                 if (OnImageUploaded != null)
                 {
-                    await OnImageUploaded.Value.InvokeAsync(result.Url);
+                    await OnImageUploaded.Value.InvokeAsync(url);
                 }
-                return result.Url;
             }
+
+            return urls;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _uploadError = ex.Message;
             if (OnImageUploaded != null)
             {
                 await OnImageUploaded.Value.InvokeAsync(string.Empty);
@@ -163,9 +201,13 @@ public partial class MarkdownEditor(
         {
             _isUploading = false;
             StateHasChanged();
+            foreach (var stream in streams)
+            {
+                await stream.DisposeAsync();
+            }
         }
 
-        return string.Empty;
+        return [];
     }
 
     public async ValueTask DisposeAsync()
@@ -183,5 +225,58 @@ public partial class MarkdownEditor(
         _objRef?.Dispose();
     }
 
-    private record UploadImageResult(string? Url);
+    private static string GetUploadFileName(string[] fileNames, int index)
+    {
+        return index < fileNames.Length && !string.IsNullOrWhiteSpace(fileNames[index])
+            ? fileNames[index]
+            : $"image-{index + 1}";
+    }
+
+    private static string GetUploadContentType(string[] contentTypes, int index)
+    {
+        return index < contentTypes.Length && !string.IsNullOrWhiteSpace(contentTypes[index])
+            ? contentTypes[index]
+            : "application/octet-stream";
+    }
+
+    private static string[] ParseUploadUrls(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return [];
+        }
+
+        try
+        {
+            var images = JsonSerializer.Deserialize<List<UploadImageResult>>(
+                response,
+                JsonSerializerOptions
+            );
+            return GetUrls(images);
+        }
+        catch (JsonException)
+        {
+            var image = JsonSerializer.Deserialize<UploadImageResult>(
+                response,
+                JsonSerializerOptions
+            );
+            return GetUrls(image == null ? null : [image]);
+        }
+    }
+
+    private static string[] GetUrls(IReadOnlyCollection<UploadImageResult>? images)
+    {
+        if (images == null || images.Count == 0)
+        {
+            return [];
+        }
+
+        return images
+            .Select(image => image.Url)
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .Select(url => url!)
+            .ToArray();
+    }
+
+    private sealed record UploadImageResult(string? Url);
 }

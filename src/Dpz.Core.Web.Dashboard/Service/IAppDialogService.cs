@@ -12,21 +12,28 @@ public interface IAppDialogService
 {
     /// <summary>显示 Alert 提示框</summary>
     Task ShowAlertAsync(AppDialogOptions options);
+
     /// <summary>显示 Confirm 确认框，返回用户选择（true=确认，false=取消）</summary>
     Task<bool> ShowConfirmAsync(AppDialogOptions<bool> options);
+
     /// <summary>显示 Prompt 输入框，返回用户输入值或 null</summary>
     Task<string?> ShowPromptAsync(AppDialogOptions<string?> options);
+
     /// <summary>显示通用对话框，支持自定义组件和返回值类型</summary>
     Task<TResult?> ShowAsync<TResult>(AppDialogOptions<TResult> options);
+
     /// <summary>显示 Toast 轻量级提示</summary>
     void ShowToast(AppToastOptions options);
+
     /// <summary>显示通知，返回可操作的句柄</summary>
     AppNotificationHandle ShowNotification(AppNotificationOptions options);
+
     /// <summary>关闭所有通知</summary>
     void CloseAllNotifications();
 
     /// <summary>[兼容旧API] 显示 Alert 提示框</summary>
     Task AlertAsync(string message, string title = "提示");
+
     /// <summary>[兼容旧API] 显示 Confirm 确认框</summary>
     Task<bool> ConfirmAsync(string message, string title = "确认");
 
@@ -65,10 +72,13 @@ public interface IAppDialogService
 
     /// <summary>对话框显示事件</summary>
     event Action<AppDialogModel> OnDialogShow;
+
     /// <summary>Toast 显示事件</summary>
     event Action<AppToastModel> OnToastShow;
+
     /// <summary>通知显示事件</summary>
     event Action<AppNotificationHandle> OnNotificationShow;
+
     /// <summary>关闭所有通知事件</summary>
     event Action OnCloseAllNotifications;
 }

@@ -126,10 +126,7 @@ public partial class List(
             return;
         }
 
-        await dialogService.ShowComponentAsync(
-            "时间轴内容",
-            BuildContentPreview(model.Content)
-        );
+        await dialogService.ShowComponentAsync("时间轴内容", BuildContentPreview(model.Content));
     }
 
     private async Task DeleteAsync(string id)

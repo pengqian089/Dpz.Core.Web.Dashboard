@@ -44,6 +44,11 @@ class UploadInterop {
                     return;
                 }
 
+                if (xhr.status === 400) {
+                    reject(xhr.responseText || "上传失败: 400 Bad Request");
+                    return;
+                }
+
                 reject(new Error(`上传失败: ${xhr.status} ${xhr.statusText}`));
             });
 

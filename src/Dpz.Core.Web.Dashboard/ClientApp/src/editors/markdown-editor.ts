@@ -2,6 +2,7 @@ import { languages } from "@codemirror/language-data";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { Crepe } from "@milkdown/crepe";
+import { uploadConfig } from "@milkdown/kit/plugin/upload";
 import { replaceAll } from "@milkdown/kit/utils";
 import { TooltipController } from "../interactions/tooltip";
 
@@ -236,6 +237,7 @@ class ToolbarHintManager {
 class MarkdownEditorRegistry {
     private readonly editors = new Map<string, MarkdownEditorInstance>();
     private readonly toolbarHints = new Map<string, ToolbarHintManager>();
+    private readonly imageInputManagers = new Map<string, MultiImageInputManager>();
     private readonly mermaidPreview = new MermaidPreviewRenderer();
 
     public async createEditor(
@@ -293,12 +295,34 @@ class MarkdownEditorRegistry {
                 [Crepe.Feature.Toolbar]: this.createToolbarConfig()
             }
         });
+        crepe.editor.config((ctx) => {
+            ctx.update(uploadConfig.key, (prev) => ({
+                ...prev,
+                uploader: async (files, schema) => {
+                    const nodeType = schema.nodes["image-block"] ?? schema.nodes.image;
+                    if (!nodeType) {
+                        return [];
+                    }
+
+                    const images = this.getImageFiles(files);
+                    if (images.length === 0) {
+                        return [];
+                    }
+
+                    const urls = await this.uploadImages(dotNetHelper, images);
+                    return urls
+                        .map((src) => nodeType.createAndFill({ src }))
+                        .filter((node) => node !== null);
+                }
+            }));
+        });
 
         await crepe.create();
         crepe.setReadonly(editOnly);
         this.editors.set(elementId, { crepe, dotNetHelper });
         this.configureToolbar(container);
         this.startToolbarHints(elementId, container);
+        this.startImageInputManager(elementId, container);
     }
 
     public getMarkdown(elementId: string): string {
@@ -337,6 +361,7 @@ class MarkdownEditorRegistry {
         await instance.crepe.destroy();
         this.editors.delete(elementId);
         this.destroyToolbarHints(elementId);
+        this.destroyImageInputManager(elementId);
     }
 
     private configureToolbar(root: HTMLElement): void {
@@ -368,6 +393,34 @@ class MarkdownEditorRegistry {
     private destroyToolbarHints(elementId: string): void {
         this.toolbarHints.get(elementId)?.stop();
         this.toolbarHints.delete(elementId);
+    }
+
+    private startImageInputManager(elementId: string, root: HTMLElement): void {
+        const manager = new MultiImageInputManager(root, async (input, files) => {
+            const instance = this.editors.get(elementId);
+            if (!instance) {
+                return;
+            }
+
+            const urls = await this.uploadImages(instance.dotNetHelper, files);
+            if (urls.length === 0) {
+                return;
+            }
+
+            const firstUrlInserted = this.setCurrentImageUrl(input, urls[0]);
+            const remainingUrls = firstUrlInserted ? urls.slice(1) : urls;
+            if (remainingUrls.length > 0) {
+                this.insertValue(elementId, this.createImageMarkdown(files, remainingUrls));
+            }
+        });
+
+        manager.start();
+        this.imageInputManagers.set(elementId, manager);
+    }
+
+    private destroyImageInputManager(elementId: string): void {
+        this.imageInputManagers.get(elementId)?.stop();
+        this.imageInputManagers.delete(elementId);
     }
 
     private createBlockEditConfig(): object {
@@ -426,13 +479,127 @@ class MarkdownEditorRegistry {
     }
 
     private async uploadImage(dotNetHelper: DotNetHelper, file: File): Promise<string> {
-        const streamRef = DotNet.createJSStreamReference(file);
-        return await dotNetHelper.invokeMethodAsync<string>(
-            "UploadImage",
-            streamRef,
-            file.name,
-            file.type
+        const urls = await this.uploadImages(dotNetHelper, [file]);
+        return urls[0] ?? "";
+    }
+
+    private async uploadImages(
+        dotNetHelper: DotNetHelper,
+        files: readonly File[]
+    ): Promise<string[]> {
+        const streamRefs = files.map((file) => DotNet.createJSStreamReference(file));
+        const fileNames = files.map((file) => file.name);
+        const contentTypes = files.map((file) => file.type || "application/octet-stream");
+        return await dotNetHelper.invokeMethodAsync<string[]>(
+            "UploadImages",
+            streamRefs,
+            fileNames,
+            contentTypes
         );
+    }
+
+    private getImageFiles(files: FileList): File[] {
+        return Array.from(files).filter((file) => file.type.includes("image"));
+    }
+
+    private setCurrentImageUrl(input: HTMLInputElement, url: string): boolean {
+        const imageEdit = input.closest(".image-edit");
+        const linkInput = imageEdit?.querySelector<HTMLInputElement>(".link-input-area");
+        if (!linkInput) {
+            return false;
+        }
+
+        linkInput.value = url;
+        linkInput.dispatchEvent(new InputEvent("input", { bubbles: true, data: url }));
+        linkInput.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+        return true;
+    }
+
+    private createImageMarkdown(files: readonly File[], urls: readonly string[]): string {
+        const offset = files.length - urls.length;
+        const markdown = urls
+            .map((url, index) => {
+                const alt = this.getImageAlt(files[index + offset]);
+                return `![${alt}](${url})`;
+            })
+            .join("\n\n");
+
+        return `\n\n${markdown}`;
+    }
+
+    private getImageAlt(file: File | undefined): string {
+        const name = file?.name.replace(/\.[^.]+$/, "").trim() || "image";
+        return name.replace(/[[\]]/g, "");
+    }
+}
+
+class MultiImageInputManager {
+    private readonly observer: MutationObserver;
+    private readonly onChange = (event: Event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement) || input.type !== "file") {
+            return;
+        }
+
+        const files = input.files;
+        if (!this.isImageInput(input) || !files || files.length < 2) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        const images = Array.from(files).filter((file) => file.type.includes("image"));
+        if (images.length === 0) {
+            input.value = "";
+            return;
+        }
+
+        this.onUpload(input, images)
+            .catch((error: unknown) => {
+                console.error("An error occurred while uploading images");
+                console.error(error);
+            })
+            .finally(() => {
+                input.value = "";
+            });
+    };
+
+    public constructor(
+        private readonly root: HTMLElement,
+        private readonly onUpload: (input: HTMLInputElement, files: File[]) => Promise<void>
+    ) {
+        this.observer = new MutationObserver(() => this.apply());
+    }
+
+    public start(): void {
+        this.apply();
+        this.root.addEventListener("change", this.onChange, true);
+        this.observer.observe(this.root, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    public stop(): void {
+        this.root.removeEventListener("change", this.onChange, true);
+        this.observer.disconnect();
+    }
+
+    private apply(): void {
+        this.root.querySelectorAll<HTMLInputElement>('input[type="file"]').forEach((input) => {
+            if (this.isImageInput(input)) {
+                input.multiple = true;
+            }
+        });
+    }
+
+    private isImageInput(input: HTMLInputElement): boolean {
+        return input.accept
+            .split(",")
+            .map((value) => value.trim().toLowerCase())
+            .some((value) => value === "image/*" || value.startsWith("image/"));
     }
 }
 

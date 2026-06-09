@@ -16,5 +16,10 @@
                 <div class="editor-loading-progress-text">@_uploadProgress%</div>
             </div>
         }
+
+        @if (!string.IsNullOrWhiteSpace(_uploadError))
+        {
+            <div class="editor-upload-error">@_uploadError</div>
+        }
     </div>
 }

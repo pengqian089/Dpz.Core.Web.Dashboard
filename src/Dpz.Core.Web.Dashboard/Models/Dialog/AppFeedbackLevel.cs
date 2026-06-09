@@ -7,10 +7,13 @@ public enum AppFeedbackLevel
 {
     /// <summary>信息</summary>
     Info,
+
     /// <summary>成功</summary>
     Success,
+
     /// <summary>警告</summary>
     Warning,
+
     /// <summary>危险/错误</summary>
     Danger,
 }

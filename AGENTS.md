@@ -2,11 +2,11 @@
 
 ## Scope
 - Single-project repo: Blazor WebAssembly app in `src/Dpz.Core.Web.Dashboard/` (`net10.0`, `Microsoft.NET.Sdk.BlazorWebAssembly`).
-- Solution files at `src/Dpz.Core.Web.Dashboard.sln` and `src/Dpz.Core.Web.Dashboard.slnx` (new format) contain only this one project. There are no test projects and no CI workflows; `dotnet build` plus manual UI checks is the verification path.
+- Solution file at `src/Dpz.Core.Web.Dashboard.slnx` (new format) contains only this one project. The legacy `.sln` does not exist. There are no test projects and no CI workflows; `dotnet build` plus manual UI checks is the verification path.
 - `.editorconfig` is at the repo root. C# conventions within: 4-space indent, max line 100, file-scoped namespaces, braces required on all control statements, strict nullable.
 
 ## Fast commands (run from repo root)
-- Restore: `dotnet restore src/Dpz.Core.Web.Dashboard.sln`
+- Restore: `dotnet restore src/Dpz.Core.Web.Dashboard.slnx`
 - Build (primary verification): `dotnet build src/Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj`
 - Run locally: `dotnet run --project src/Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj`
 - Publish: `dotnet publish src/Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj -c Release`

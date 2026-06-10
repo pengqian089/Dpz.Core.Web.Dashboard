@@ -1,6 +1,17 @@
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { markdown as markdownLanguage } from "@codemirror/lang-markdown";
+import { defaultHighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { languages } from "@codemirror/language-data";
+import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView } from "@codemirror/view";
+import {
+    drawSelection,
+    EditorView,
+    highlightActiveLine,
+    highlightSpecialChars,
+    keymap,
+    lineNumbers
+} from "@codemirror/view";
 import { Crepe } from "@milkdown/crepe";
 import { uploadConfig } from "@milkdown/kit/plugin/upload";
 import { replaceAll } from "@milkdown/kit/utils";
@@ -17,9 +28,15 @@ declare const DotNet: {
 type MarkdownEditorInstance = {
     crepe: Crepe;
     dotNetHelper: DotNetHelper;
+    mode: MarkdownEditMode;
+    sourceEditor: SourceMarkdownEditor;
+    sourceHost: HTMLElement;
+    visualHost: HTMLElement;
 };
 
 type MarkdownViewportMode = "desktop" | "mobile";
+
+type MarkdownEditMode = "visual" | "source";
 
 type MermaidApi = typeof import("mermaid").default;
 
@@ -39,6 +56,48 @@ const topBarTitles = [
     "图片",
     "表格"
 ];
+
+const htmlBreakLinePattern = /^[ \t]*<br\s*\/?>[ \t]*$/i;
+
+const sourceEditorTheme = EditorView.theme(
+    {
+        "&": {
+            backgroundColor: "var(--bg-body)",
+            color: "var(--text-primary)",
+            height: "100%"
+        },
+        ".cm-scroller": {
+            fontFamily: "'JetBrains Mono', Consolas, monospace",
+            lineHeight: "1.65"
+        },
+        ".cm-content": {
+            caretColor: "var(--primary)",
+            minHeight: "100%",
+            padding: "24px 0"
+        },
+        ".cm-line": {
+            padding: "0 24px"
+        },
+        ".cm-gutters": {
+            backgroundColor: "var(--bg-surface)",
+            color: "var(--text-muted)",
+            borderRightColor: "var(--border-color)"
+        },
+        ".cm-activeLine": {
+            backgroundColor: "rgba(59, 130, 246, 0.12)"
+        },
+        ".cm-activeLineGutter": {
+            backgroundColor: "rgba(59, 130, 246, 0.16)"
+        },
+        ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
+            backgroundColor: "rgba(59, 130, 246, 0.35)"
+        },
+        "&.cm-focused": {
+            outline: "none"
+        }
+    },
+    { dark: true }
+);
 
 class MermaidPreviewRenderer {
     private initialized = false;
@@ -158,6 +217,76 @@ const codeBlockTheme = EditorView.theme(
     { dark: true }
 );
 
+class SourceMarkdownEditor {
+    private readonly readOnlyCompartment = new Compartment();
+    private readonly editableCompartment = new Compartment();
+    private readonly view: EditorView;
+
+    public constructor(parent: HTMLElement, value: string, readonly: boolean) {
+        const state = EditorState.create({
+            doc: value,
+            extensions: [
+                lineNumbers(),
+                highlightSpecialChars(),
+                history(),
+                drawSelection(),
+                highlightActiveLine(),
+                syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+                markdownLanguage(),
+                EditorView.lineWrapping,
+                this.readOnlyCompartment.of(EditorState.readOnly.of(readonly)),
+                this.editableCompartment.of(EditorView.editable.of(!readonly)),
+                keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
+                sourceEditorTheme
+            ]
+        });
+
+        this.view = new EditorView({ state, parent });
+    }
+
+    public getValue(): string {
+        return this.view.state.doc.toString();
+    }
+
+    public setValue(value: string): void {
+        if (value === this.getValue()) {
+            return;
+        }
+
+        this.view.dispatch({
+            changes: { from: 0, to: this.view.state.doc.length, insert: value }
+        });
+    }
+
+    public insertValue(value: string): void {
+        const changes = this.view.state.changeByRange((range) => ({
+            changes: { from: range.from, to: range.to, insert: value },
+            range: EditorSelection.cursor(range.from + value.length)
+        }));
+
+        this.view.dispatch(changes);
+        this.view.focus();
+    }
+
+    public setReadonly(readonly: boolean): void {
+        this.view.dispatch({
+            effects: [
+                this.readOnlyCompartment.reconfigure(EditorState.readOnly.of(readonly)),
+                this.editableCompartment.reconfigure(EditorView.editable.of(!readonly))
+            ]
+        });
+    }
+
+    public reveal(): void {
+        this.view.requestMeasure();
+        this.view.focus();
+    }
+
+    public destroy(): void {
+        this.view.destroy();
+    }
+}
+
 class ToolbarHintManager {
     private readonly observer: MutationObserver;
     private readonly tooltips = new TooltipController();
@@ -254,12 +383,21 @@ class MarkdownEditorRegistry {
 
         await this.destroy(elementId);
         root.textContent = "";
+        root.classList.add("markdown-editor-workspace");
         this.configureToolbar(container);
         this.destroyToolbarHints(elementId);
 
+        const modeBar = this.createModeBar(elementId);
+        const visualHost = document.createElement("div");
+        const sourceHost = document.createElement("div");
+        visualHost.className = "markdown-editor-visual";
+        sourceHost.className = "markdown-editor-source";
+        sourceHost.hidden = true;
+        root.append(modeBar, visualHost, sourceHost);
+
         const mobile = this.isMobileViewport();
         const crepe = new Crepe({
-            root,
+            root: visualHost,
             defaultValue: markdown ?? "",
             features: {
                 [Crepe.Feature.BlockEdit]: !mobile,
@@ -319,14 +457,32 @@ class MarkdownEditorRegistry {
 
         await crepe.create();
         crepe.setReadonly(editOnly);
-        this.editors.set(elementId, { crepe, dotNetHelper });
+        const sourceEditor = new SourceMarkdownEditor(sourceHost, markdown ?? "", editOnly);
+        this.editors.set(elementId, {
+            crepe,
+            dotNetHelper,
+            mode: "visual",
+            sourceEditor,
+            sourceHost,
+            visualHost
+        });
+        this.applyMode(elementId);
         this.configureToolbar(container);
         this.startToolbarHints(elementId, container);
         this.startImageInputManager(elementId, container);
     }
 
     public getMarkdown(elementId: string): string {
-        return this.editors.get(elementId)?.crepe.getMarkdown() ?? "";
+        const instance = this.editors.get(elementId);
+        if (!instance) {
+            return "";
+        }
+
+        if (instance.mode === "source") {
+            return instance.sourceEditor.getValue();
+        }
+
+        return this.sanitizeVisualMarkdown(instance.crepe.getMarkdown());
     }
 
     public setMarkdown(elementId: string, markdown: string): void {
@@ -336,6 +492,7 @@ class MarkdownEditorRegistry {
         }
 
         instance.crepe.editor.action(replaceAll(markdown ?? "", true));
+        instance.sourceEditor.setValue(markdown ?? "");
     }
 
     public insertValue(elementId: string, value: string): void {
@@ -344,12 +501,23 @@ class MarkdownEditorRegistry {
             return;
         }
 
+        if (instance.mode === "source") {
+            instance.sourceEditor.insertValue(value);
+            return;
+        }
+
         const nextMarkdown = `${instance.crepe.getMarkdown()}${value}`;
         instance.crepe.editor.action(replaceAll(nextMarkdown, true));
     }
 
     public setReadonly(elementId: string, readonly: boolean): void {
-        this.editors.get(elementId)?.crepe.setReadonly(readonly);
+        const instance = this.editors.get(elementId);
+        if (!instance) {
+            return;
+        }
+
+        instance.crepe.setReadonly(readonly);
+        instance.sourceEditor.setReadonly(readonly);
     }
 
     public async destroy(elementId: string): Promise<void> {
@@ -358,10 +526,93 @@ class MarkdownEditorRegistry {
             return;
         }
 
+        instance.sourceEditor.destroy();
         await instance.crepe.destroy();
         this.editors.delete(elementId);
         this.destroyToolbarHints(elementId);
         this.destroyImageInputManager(elementId);
+    }
+
+    private createModeBar(elementId: string): HTMLElement {
+        const bar = document.createElement("div");
+        bar.className = "markdown-editor-modebar";
+
+        bar.append(
+            this.createModeButton(elementId, "visual", "可视化"),
+            this.createModeButton(elementId, "source", "源码")
+        );
+
+        return bar;
+    }
+
+    private createModeButton(
+        elementId: string,
+        mode: MarkdownEditMode,
+        label: string
+    ): HTMLButtonElement {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "markdown-editor-modebar__button";
+        button.dataset.mode = mode;
+        button.textContent = label;
+        button.addEventListener("click", () => this.setEditMode(elementId, mode));
+        return button;
+    }
+
+    private setEditMode(elementId: string, mode: MarkdownEditMode): void {
+        const instance = this.editors.get(elementId);
+        if (!instance || instance.mode === mode) {
+            return;
+        }
+
+        if (mode === "source") {
+            const visualMarkdown = this.sanitizeVisualMarkdown(instance.crepe.getMarkdown());
+            instance.sourceEditor.setValue(visualMarkdown);
+        } else {
+            instance.crepe.editor.action(replaceAll(instance.sourceEditor.getValue(), true));
+        }
+
+        instance.mode = mode;
+        this.applyMode(elementId);
+    }
+
+    private applyMode(elementId: string): void {
+        const instance = this.editors.get(elementId);
+        if (!instance) {
+            return;
+        }
+
+        const sourceMode = instance.mode === "source";
+        const root = instance.visualHost.parentElement;
+        instance.visualHost.hidden = sourceMode;
+        instance.sourceHost.hidden = !sourceMode;
+        root?.classList.toggle("markdown-editor-workspace--source", sourceMode);
+        root?.classList.toggle("markdown-editor-workspace--visual", !sourceMode);
+
+        root?.querySelectorAll<HTMLButtonElement>(".markdown-editor-modebar__button").forEach(
+            (button) => {
+                const active = button.dataset.mode === instance.mode;
+                button.classList.toggle("is-active", active);
+                button.setAttribute("aria-pressed", active ? "true" : "false");
+            }
+        );
+
+        if (sourceMode) {
+            requestAnimationFrame(() => instance.sourceEditor.reveal());
+        }
+    }
+
+    private sanitizeVisualMarkdown(markdown: string): string {
+        const normalizedMarkdown = markdown.replace(/\r\n?/g, "\n");
+        if (!normalizedMarkdown.split("\n").some((line) => htmlBreakLinePattern.test(line))) {
+            return markdown;
+        }
+
+        return normalizedMarkdown
+            .split("\n")
+            .filter((line) => !htmlBreakLinePattern.test(line))
+            .join("\n")
+            .replace(/\n{3,}/g, "\n\n");
     }
 
     private configureToolbar(root: HTMLElement): void {

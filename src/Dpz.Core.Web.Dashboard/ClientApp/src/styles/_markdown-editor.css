@@ -28,6 +28,72 @@
     background: var(--bg-body);
 }
 
+.markdown-editor-workspace {
+    min-height: 0;
+}
+
+.markdown-editor-modebar {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-surface);
+}
+
+.markdown-editor-modebar__button {
+    min-width: 72px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.875rem;
+    transition:
+        background-color 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease;
+}
+
+.markdown-editor-modebar__button:hover {
+    border-color: rgba(96, 165, 250, 0.32);
+    background: rgba(59, 130, 246, 0.16);
+    color: var(--text-primary);
+}
+
+.markdown-editor-modebar__button.is-active {
+    border-color: rgba(96, 165, 250, 0.46);
+    background: rgba(37, 99, 235, 0.28);
+    color: #bfdbfe;
+}
+
+.markdown-editor-visual,
+.markdown-editor-source {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.markdown-editor-visual {
+    display: flex;
+    flex-direction: column;
+}
+
+.markdown-editor-visual[hidden],
+.markdown-editor-source[hidden] {
+    display: none;
+}
+
+.markdown-editor-source .cm-editor {
+    height: 100%;
+}
+
+.markdown-editor-source .cm-scroller {
+    overflow: auto;
+}
+
 .markdown-editor-container .milkdown,
 .markdown-editor-container .milkdown-crepe {
     height: 100%;

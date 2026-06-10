@@ -69,15 +69,17 @@ public partial class Index(
         {
             try
             {
-                // Note: Path is relative to the base href or root, using collocated JS convention
+                var modulePath = await assetManifestService.GetAssetPathAsync(
+                    "src/pages/dashboard.ts"
+                );
                 _module = await jsRuntime.InvokeAsync<IJSObjectReference>(
                     "import",
-                    "./Pages/Index.razor.js"
+                    modulePath
                 );
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to import Index.razor.js: {ex.Message}");
+                Console.WriteLine($"Failed to import dashboard module: {ex.Message}");
             }
         }
 

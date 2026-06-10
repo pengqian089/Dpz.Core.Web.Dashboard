@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -7,7 +8,9 @@ using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Player(IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposable
+public partial class Player(IJSRuntime jsRuntime, IAssetManifestService assetManifestService)
+    : ComponentBase,
+        IAsyncDisposable
 {
     [Parameter]
     public required string VideoUrl { get; set; }
@@ -19,9 +22,12 @@ public partial class Player(IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposa
     {
         if (firstRender)
         {
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/pages/video-player.ts"
+            );
             _module = await jsRuntime.InvokeAsync<IJSObjectReference>(
                 "import",
-                "./Pages/Video/Player.razor.js"
+                modulePath
             );
 
             await _module.InvokeVoidAsync("initVideoPlayer", _videoId, VideoUrl);
@@ -34,6 +40,7 @@ public partial class Player(IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposa
     {
         if (_module != null)
         {
+            await _module.InvokeVoidAsync("disposeVideoPlayer", _videoId);
             await _module.DisposeAsync();
         }
     }

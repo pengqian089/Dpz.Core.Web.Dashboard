@@ -180,16 +180,22 @@ src/Dpz.Core.Web.Dashboard/bin/Release/net10.0/publish/wwwroot/
 
 ### C# 与 Blazor
 
-- 使用文件作用域命名空间。
-- 私有字段使用 `_camelCase`。
-- 4 空格缩进，单行最大长度 100。
-- `if`、`for`、`foreach`、`while` 等代码块必须使用大括号。
+- 4 空格缩进，每行代码最大长度 100。
+- 使用文件作用域命名空间（格式：`项目名.目录(.子目录)`）。
+- 私有字段使用 `_camelCase`；参数、局部变量使用 `camelCase`。
+- 类、结构体、接口、方法、属性、事件等使用 Pascal 命名。
+- 不得存在公开字段。
+- `if`、`for`、`foreach`、`while` 等代码块必须使用大括号，即使只有一行。
+- 一个类型一个 `.cs` 文件，不得在 `.cs` 文件中定义多个类型。
+- 只有一个构造函数时应使用主构造函数。
+- 严格遵循 nullable 语义：返回单个对象需根据语义返回可空或不可空类型；返回集合/数组时，除必要外应返回空集合/数组。
+- 参数类型应尽可能抽象，返回值类型应尽可能具体。
+- 语义冲突时入参和出参应分离，不共用一个类型。
+- `IEnumerable<T>` 类型不应重复枚举。
+- 记录日志时禁止拼接字符串，使用结构化日志。
+- 优先使用构造函数依赖注入，避免在组件中过度使用 `[Inject]`。
+- Blazor 页面和组件使用 `.razor` + `.razor.cs` 代码隔离。
 - 不写行尾注释。
-- 严格遵循 nullable 语义。
-- 优先使用主构造函数或构造函数依赖注入，避免在组件中过度使用 `[Inject]`。
-- Blazor 页面和组件推荐使用 `.razor` + `.razor.cs` 代码隔离。
-
-更完整约定见 `src/EncodingConventions.md`。
 
 ### 服务注册
 
@@ -227,16 +233,38 @@ src/Dpz.Core.Web.Dashboard/bin/Release/net10.0/publish/wwwroot/
 
 ### CSS
 
-- CSS 源文件放在 `ClientApp/src/styles/`。
-- `styles/app.css` 是样式入口，负责明确 import 顺序。
-- 使用 BEM 命名，避免 `.card`、`.title` 这类过宽泛选择器。
-- 共享样式以 `_` 开头，例如 `_layout.css`、`_variables.css`。
-- 页面样式使用页面或模块前缀，例如 `article-list.css`。
-- 后台系统以深色模式视觉为主，新增颜色优先复用 CSS 变量。
-- 不使用 Blazor CSS isolation 承载全局页面样式。
-- FontAwesome、Prism、Milkdown Crepe、PhotoSwipe、JetBrains Mono 等样式由 npm 导入。
+#### 文件结构
 
-更完整样式约定见 `src/CSS_MANAGEMENT.md`。
+```text
+ClientApp/src/styles/
+  app.css                  # 全局 CSS 入口，负责 import 顺序
+  _variables.css           # 全局设计变量
+  _layout.css              # 主布局结构
+  _form.css                # 共享表单和按钮
+  _markdown-editor.css     # Markdown 编辑器外壳
+  _code-editor.css         # CodeMirror 编辑器外壳
+  article-list.css         # 页面样式
+  article-form.css
+  ...
+```
+
+#### 约定
+
+- `styles/app.css` 是样式入口，所有样式由它控制加载顺序。
+- 共享样式以 `_` 开头（如 `_layout.css`、`_variables.css`），页面样式以页面或模块前缀命名（如 `article-list.css`）。
+- 使用 BEM 命名避免样式冲突：
+
+  ```css
+  .article-card { }
+  .article-card__title { }
+  .article-card--featured { }
+  ```
+
+  避免 `.card`、`.title` 这类过宽泛的选择器。
+- 后台系统以深色模式视觉为主，新增颜色优先复用 `_variables.css` 中的 CSS 变量（如 `--bg-surface`、`--text-primary`、`--primary`）。
+- 不使用 Blazor CSS isolation 承载全局页面样式。
+- FontAwesome、Prism、Milkdown Crepe、PhotoSwipe、JetBrains Mono 等第三方样式由 npm 包导入，不在 `index.html` 中直接挂 CDN。
+- CSS 由 Prettier 统一格式化，4 空格缩进，单行最大长度 100，不写行尾注释。
 
 ### 交互组件
 

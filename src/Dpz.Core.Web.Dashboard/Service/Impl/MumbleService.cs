@@ -29,7 +29,15 @@ public class MumbleService(IHttpService httpService) : IMumbleService
         IReadOnlyCollection<ImageMetadata> images
     )
     {
-        await httpService.PostAsync("/api/Mumble", new { markdown, htmlContent, images });
+        await httpService.PostAsync(
+            "/api/Mumble",
+            new
+            {
+                markdown,
+                htmlContent,
+                images,
+            }
+        );
     }
 
     public async Task EditAsync(
@@ -38,7 +46,15 @@ public class MumbleService(IHttpService httpService) : IMumbleService
         IReadOnlyCollection<ImageMetadata> images
     )
     {
-        await httpService.PatchAsync("/api/Mumble", new { id, markdown, images });
+        await httpService.PatchAsync(
+            "/api/Mumble",
+            new
+            {
+                id,
+                markdown,
+                images,
+            }
+        );
     }
 
     public async Task<MumbleModel?> GetMumbleAsync(string id)

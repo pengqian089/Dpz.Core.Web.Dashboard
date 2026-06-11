@@ -19,12 +19,6 @@ public partial class FlatList(
     NavigationManager navigationManager
 ) : IDisposable
 {
-    [Parameter]
-    public EventCallback<List<string>> OnViewFile { get; set; }
-
-    [Parameter]
-    public EventCallback OnQueryChanged { get; set; }
-
     private CodeFlatRequest _request = new CodeFlatRequest
     {
         PageIndex = 1,
@@ -79,6 +73,10 @@ public partial class FlatList(
         {
             _request.SortField = sortField;
         }
+        else
+        {
+            _request.SortField = null;
+        }
 
         var pathParam = query["path"];
         if (!string.IsNullOrWhiteSpace(pathParam))
@@ -121,11 +119,6 @@ public partial class FlatList(
             {
                 UpdateUrl();
             }
-
-            if (OnQueryChanged.HasDelegate)
-            {
-                await OnQueryChanged.InvokeAsync();
-            }
         }
         catch (Exception ex)
         {
@@ -146,7 +139,7 @@ public partial class FlatList(
 
             var uri = navigationManager.ToAbsoluteUri(navigationManager.Uri);
             var basePath = uri.GetLeftPart(UriPartial.Path);
-            var queryParams = new List<string> { "view=list" };
+            var queryParams = new List<string>();
 
             if (_request.PageIndex > 1)
             {
@@ -180,7 +173,7 @@ public partial class FlatList(
                 );
             }
 
-            var queryString = "?" + string.Join("&", queryParams);
+            var queryString = queryParams.Count == 0 ? "" : "?" + string.Join("&", queryParams);
             navigationManager.NavigateTo(basePath + queryString, replace: false);
         }
         finally
@@ -258,12 +251,16 @@ public partial class FlatList(
         }
     }
 
-    private async Task ViewFileAsync(CodeFileSystemEntryListResponse file)
+    private void ViewFile(CodeFileSystemEntryListResponse file)
     {
-        if (OnViewFile.HasDelegate)
+        if (file.PathSegments.Count == 0)
         {
-            await OnViewFile.InvokeAsync(file.PathSegments);
+            navigationManager.NavigateTo("code/tree");
+            return;
         }
+
+        var path = HttpUtility.UrlEncode(string.Join("/", file.PathSegments));
+        navigationManager.NavigateTo($"code/tree?path={path}");
     }
 
     private async Task EditNoteAsync(CodeFileSystemEntryListResponse item)
@@ -366,24 +363,5 @@ public partial class FlatList(
     private static string GetNoteText(string? note)
     {
         return string.IsNullOrWhiteSpace(note) ? "-" : note;
-    }
-
-    private static string GetFileIcon(string? extension)
-    {
-        return extension?.ToLower() switch
-        {
-            ".cs" => "fa-file-code",
-            ".js" or ".ts" or ".jsx" or ".tsx" => "fa-brands fa-js",
-            ".css" or ".scss" or ".sass" or ".less" => "fa-brands fa-css3-alt",
-            ".html" or ".htm" => "fa-brands fa-html5",
-            ".json" => "fa-file-code",
-            ".md" or ".markdown" => "fa-file-alt",
-            ".xml" => "fa-file-code",
-            ".sql" => "fa-database",
-            ".png" or ".jpg" or ".jpeg" or ".gif" or ".svg" or ".webp" => "fa-file-image",
-            ".pdf" => "fa-file-pdf",
-            ".zip" or ".rar" or ".7z" or ".tar" or ".gz" => "fa-file-archive",
-            _ => "fa-file-code",
-        };
     }
 }

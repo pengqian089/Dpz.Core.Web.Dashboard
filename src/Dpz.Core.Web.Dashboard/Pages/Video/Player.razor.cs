@@ -25,10 +25,7 @@ public partial class Player(IJSRuntime jsRuntime, IAssetManifestService assetMan
             var modulePath = await assetManifestService.GetAssetPathAsync(
                 "src/pages/video-player.ts"
             );
-            _module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                modulePath
-            );
+            _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
 
             await _module.InvokeVoidAsync("initVideoPlayer", _videoId, VideoUrl);
         }

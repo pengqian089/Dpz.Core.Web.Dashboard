@@ -33,14 +33,17 @@
     transition: all 0.2s ease;
     font-size: 0.9375rem;
     font-weight: 500;
+    text-decoration: none;
 }
 
 .code-page__tab:hover {
     background: var(--bg-surface-hover);
     color: var(--text-primary);
+    text-decoration: none;
 }
 
-.code-page__tab.active {
+.code-page__tab.active,
+.code-page__tab[aria-current="page"] {
     background: var(--primary);
     color: white;
 }
@@ -269,6 +272,13 @@
     flex-shrink: 0;
 }
 
+.code-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    object-fit: contain;
+}
+
 .code-table__link {
     background: transparent;
     border: none;
@@ -436,6 +446,31 @@
     margin-bottom: var(--spacing-md);
 }
 
+.code-readme .markdown-preview,
+.code-view__analysis .markdown-preview {
+    min-width: 0;
+}
+
+.code-readme .markdown-body,
+.code-view__analysis .markdown-body {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.code-readme .markdown-body pre,
+.code-readme .markdown-body table,
+.code-view__analysis .markdown-body pre,
+.code-view__analysis .markdown-body table {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.code-readme .markdown-body img,
+.code-view__analysis .markdown-body img {
+    max-width: 100%;
+    height: auto;
+}
+
 /* Note Form */
 .code-note {
     display: flex;
@@ -564,6 +599,53 @@
     .code-readme__header {
         margin-bottom: var(--spacing-sm);
         font-size: 0.95rem;
+    }
+
+    .code-view {
+        padding: var(--spacing-md);
+    }
+
+    .code-view__analysis {
+        margin-top: var(--spacing-md);
+        padding: var(--spacing-md);
+    }
+
+    .code-view__analysis-title {
+        margin-bottom: var(--spacing-sm);
+        font-size: 0.95rem;
+    }
+
+    .code-readme .markdown-body,
+    .code-view__analysis .markdown-body {
+        font-size: 0.875rem;
+        line-height: 1.55;
+    }
+
+    .code-readme .markdown-body > :first-child,
+    .code-view__analysis .markdown-body > :first-child {
+        margin-top: 0;
+    }
+
+    .code-readme .markdown-body > :last-child,
+    .code-view__analysis .markdown-body > :last-child {
+        margin-bottom: 0;
+    }
+
+    .code-readme .markdown-body p,
+    .code-readme .markdown-body ul,
+    .code-readme .markdown-body ol,
+    .code-view__analysis .markdown-body p,
+    .code-view__analysis .markdown-body ul,
+    .code-view__analysis .markdown-body ol {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .code-readme .markdown-body pre,
+    .code-view__analysis .markdown-body pre {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: var(--spacing-sm);
     }
 
     .code-table {

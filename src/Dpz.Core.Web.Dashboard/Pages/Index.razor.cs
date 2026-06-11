@@ -72,10 +72,7 @@ public partial class Index(
                 var modulePath = await assetManifestService.GetAssetPathAsync(
                     "src/pages/dashboard.ts"
                 );
-                _module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                    "import",
-                    modulePath
-                );
+                _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
             }
             catch (Exception ex)
             {

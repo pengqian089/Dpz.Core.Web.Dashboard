@@ -19,12 +19,12 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
     private const string GitFolderIcon = "folder-git";
     private const string SymlinkFolderIcon = "folder-symlink";
 
-    private static readonly IReadOnlyDictionary<string, string> ExtensionAliases = new Dictionary<
+    private static readonly IReadOnlyDictionary<string, string> FallbackAliases = new Dictionary<
         string,
         string
     >(StringComparer.OrdinalIgnoreCase)
     {
-        ["slnx"] = "visualstudio"
+        ["slnx"] = "visualstudio",
     };
 
     private readonly HttpClient _httpClient = new()
@@ -32,8 +32,11 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
         BaseAddress = new Uri(navigationManager.BaseUri),
     };
 
-    private IReadOnlyDictionary<string, string>? _iconList;
-    private LanguageMap? _languageMap;
+    private Task<IReadOnlyDictionary<string, string>>? _iconListTask;
+    private Task<IReadOnlyList<FileIconRule>>? _fileIconsTask;
+    private Task<IReadOnlyList<FolderIconRule>>? _folderIconsTask;
+    private Task<LanguageMap>? _languageMapTask;
+    private readonly object _cacheLock = new();
 
     public async Task<string> GetIconUrlAsync(
         string? name,
@@ -92,15 +95,13 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
         CancellationToken cancellationToken
     )
     {
-        var iconList = await GetIconListAsync(cancellationToken);
-        var iconName = $"folder-{fileName}";
-        if (iconList.ContainsKey(iconName))
-        {
-            return iconName;
-        }
+        var folderIcons = await GetFolderIconsAsync(cancellationToken);
 
-        iconName = $"folder-{lowerFileName}";
-        return iconList.ContainsKey(iconName) ? iconName : FolderIcon;
+        var folderIcon =
+            folderIcons.FirstOrDefault(x => x.FolderNames.Contains(fileName))
+            ?? folderIcons.FirstOrDefault(x => x.FolderNames.Contains(lowerFileName));
+
+        return folderIcon?.Name ?? FolderIcon;
     }
 
     private async Task<string> MatchFileIconNameAsync(
@@ -109,9 +110,56 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
         CancellationToken cancellationToken
     )
     {
+        var fileIcons = await GetFileIconsAsync(cancellationToken);
         var languageMap = await GetLanguageMapAsync(cancellationToken);
-        var iconList = await GetIconListAsync(cancellationToken);
 
+        var fileIcon =
+            fileIcons.FirstOrDefault(x => x.FileNames.Contains(fileName))
+            ?? fileIcons.FirstOrDefault(x => x.FileNames.Contains(lowerFileName));
+        if (fileIcon != null)
+        {
+            return fileIcon.Name;
+        }
+
+        var fileExtensions = GetFileExtensions(fileName, lowerFileName);
+        foreach (var extension in fileExtensions)
+        {
+            var extensionIcon = fileIcons.FirstOrDefault(x => x.FileExtensions.Contains(extension));
+            if (extensionIcon != null)
+            {
+                return extensionIcon.Name;
+            }
+        }
+
+        var languageMapIcon = MatchLanguageMapIcon(
+            languageMap,
+            fileName,
+            lowerFileName,
+            fileExtensions
+        );
+        if (languageMapIcon != null)
+        {
+            return languageMapIcon;
+        }
+
+        foreach (var extension in fileExtensions)
+        {
+            if (FallbackAliases.TryGetValue(extension, out var aliasIcon))
+            {
+                return aliasIcon;
+            }
+        }
+
+        return FileIcon;
+    }
+
+    private static string? MatchLanguageMapIcon(
+        LanguageMap languageMap,
+        string fileName,
+        string lowerFileName,
+        IEnumerable<string> fileExtensions
+    )
+    {
         if (languageMap.FileNames.TryGetValue(fileName, out var fileNameIcon))
         {
             return fileNameIcon;
@@ -122,29 +170,15 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
             return lowerFileNameIcon;
         }
 
-        var fileExtensions = GetFileExtensions(fileName, lowerFileName);
         foreach (var extension in fileExtensions)
         {
             if (languageMap.FileExtensions.TryGetValue(extension, out var extensionIcon))
             {
                 return extensionIcon;
             }
-
-            if (iconList.ContainsKey(extension))
-            {
-                return extension;
-            }
-
-            if (
-                ExtensionAliases.TryGetValue(extension, out var aliasIcon)
-                && iconList.ContainsKey(aliasIcon)
-            )
-            {
-                return aliasIcon;
-            }
         }
 
-        return FileIcon;
+        return null;
     }
 
     private async Task<string> GetIconFileNameAsync(
@@ -168,34 +202,84 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
         CancellationToken cancellationToken
     )
     {
-        if (_iconList != null)
+        lock (_cacheLock)
         {
-            return _iconList;
+            _iconListTask ??= LoadIconListAsync(cancellationToken);
         }
 
-        _iconList =
-            await _httpClient.GetFromJsonAsync<Dictionary<string, string>>(
-                "data/icon-list.json",
-                cancellationToken
-            ) ?? new Dictionary<string, string>();
+        return await _iconListTask;
+    }
 
-        return _iconList;
+    private async Task<IReadOnlyList<FileIconRule>> GetFileIconsAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        lock (_cacheLock)
+        {
+            _fileIconsTask ??= LoadFileIconsAsync(cancellationToken);
+        }
+
+        return await _fileIconsTask;
+    }
+
+    private async Task<IReadOnlyList<FolderIconRule>> GetFolderIconsAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        lock (_cacheLock)
+        {
+            _folderIconsTask ??= LoadFolderIconsAsync(cancellationToken);
+        }
+
+        return await _folderIconsTask;
     }
 
     private async Task<LanguageMap> GetLanguageMapAsync(CancellationToken cancellationToken)
     {
-        if (_languageMap != null)
+        lock (_cacheLock)
         {
-            return _languageMap;
+            _languageMapTask ??= LoadLanguageMapAsync(cancellationToken);
         }
 
-        _languageMap =
-            await _httpClient.GetFromJsonAsync<LanguageMap>(
-                "data/language-map.json",
-                cancellationToken
-            ) ?? new LanguageMap();
+        return await _languageMapTask;
+    }
 
-        return _languageMap;
+    private async Task<IReadOnlyDictionary<string, string>> LoadIconListAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        return await _httpClient.GetFromJsonAsync<Dictionary<string, string>>(
+            "data/icon-list.json",
+            cancellationToken
+        ) ?? new Dictionary<string, string>();
+    }
+
+    private async Task<IReadOnlyList<FileIconRule>> LoadFileIconsAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        return await _httpClient.GetFromJsonAsync<List<FileIconRule>>(
+            "data/fileIcons.json",
+            cancellationToken
+        ) ?? [];
+    }
+
+    private async Task<IReadOnlyList<FolderIconRule>> LoadFolderIconsAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        return await _httpClient.GetFromJsonAsync<List<FolderIconRule>>(
+            "data/folderIcons.json",
+            cancellationToken
+        ) ?? [];
+    }
+
+    private async Task<LanguageMap> LoadLanguageMapAsync(CancellationToken cancellationToken)
+    {
+        return await _httpClient.GetFromJsonAsync<LanguageMap>(
+            "data/language-map.json",
+            cancellationToken
+        ) ?? new LanguageMap();
     }
 
     private static string NormalizeName(string name)
@@ -239,5 +323,26 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
 
         [JsonPropertyName("fileNames")]
         public Dictionary<string, string> FileNames { get; set; } = [];
+    }
+
+    private sealed class FileIconRule
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "";
+
+        [JsonPropertyName("fileNames")]
+        public List<string> FileNames { get; set; } = [];
+
+        [JsonPropertyName("fileExtensions")]
+        public List<string> FileExtensions { get; set; } = [];
+    }
+
+    private sealed class FolderIconRule
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "";
+
+        [JsonPropertyName("folderNames")]
+        public List<string> FolderNames { get; set; } = [];
     }
 }

@@ -134,7 +134,7 @@
                                                     @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
                                                 <HighLight SearchWord="@_searchWord" ItemName="@item.Name" />
                                             </button>
-                                            <span class="code-table__tag">目录</span>
+                                            @* <span class="code-table__tag">目录</span> *@
                                         </div>
                                     </td>
                                     <td data-label="说明">
@@ -171,7 +171,7 @@
                                                     @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
                                                 <HighLight SearchWord="@_searchWord" ItemName="@item.Name" />
                                             </button>
-                                            <span class="code-table__tag code-table__tag--file">文件</span>
+                                            @* <span class="code-table__tag code-table__tag--file">文件</span> *@
                                         </div>
                                     </td>
                                     <td data-label="说明">

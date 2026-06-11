@@ -6,7 +6,7 @@ import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { sql } from "@codemirror/lang-sql";
 import { xml } from "@codemirror/lang-xml";
-import { StreamLanguage, defaultHighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { HighlightStyle, StreamLanguage, syntaxHighlighting } from "@codemirror/language";
 import { csharp } from "@codemirror/legacy-modes/mode/clike";
 import { EditorSelection, EditorState, Extension } from "@codemirror/state";
 import {
@@ -17,6 +17,7 @@ import {
     keymap,
     lineNumbers
 } from "@codemirror/view";
+import { tags } from "@lezer/highlight";
 
 type CodeEditorOptions = {
     value?: string;
@@ -27,37 +28,83 @@ type CodeEditorOptions = {
 const darkTheme = EditorView.theme(
     {
         "&": {
-            backgroundColor: "var(--bg-body)",
-            color: "var(--text-primary)",
+            backgroundColor: "#07101f",
+            color: "#dbeafe",
             height: "100%"
         },
         ".cm-scroller": {
-            fontFamily: "'JetBrains Mono', Consolas, monospace"
+            fontFamily: "'JetBrains Mono', Consolas, monospace",
+            fontSize: "0.875rem",
+            lineHeight: "1.65"
         },
         ".cm-content": {
-            caretColor: "var(--primary)",
-            minHeight: "100%"
+            caretColor: "#93c5fd",
+            minHeight: "100%",
+            padding: "12px 0"
+        },
+        ".cm-line": {
+            padding: "0 16px"
         },
         ".cm-gutters": {
-            backgroundColor: "var(--bg-surface)",
-            color: "var(--text-muted)",
-            borderRightColor: "var(--border-color)"
+            backgroundColor: "#0b1424",
+            color: "#7891a8",
+            borderRightColor: "#1d2d44"
+        },
+        ".cm-lineNumbers .cm-gutterElement": {
+            minWidth: "3.1rem",
+            padding: "0 12px 0 16px"
         },
         ".cm-activeLine": {
-            backgroundColor: "rgba(59, 130, 246, 0.12)"
+            backgroundColor: "rgba(59, 130, 246, 0.1)"
         },
         ".cm-activeLineGutter": {
-            backgroundColor: "rgba(59, 130, 246, 0.16)"
+            backgroundColor: "rgba(59, 130, 246, 0.14)",
+            color: "#bfdbfe"
         },
-        ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
-            backgroundColor: "rgba(59, 130, 246, 0.35)"
+        "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
+            {
+                backgroundColor: "rgba(59, 130, 246, 0.34)"
+            },
+        ".cm-cursor, .cm-dropCursor": {
+            borderLeftColor: "#bfdbfe"
+        },
+        ".cm-matchingBracket": {
+            backgroundColor: "rgba(14, 165, 233, 0.2)",
+            outline: "1px solid rgba(125, 211, 252, 0.32)"
+        },
+        ".cm-nonmatchingBracket": {
+            backgroundColor: "rgba(239, 68, 68, 0.2)",
+            outline: "1px solid rgba(248, 113, 113, 0.34)"
         },
         "&.cm-focused": {
-            outline: "1px solid var(--primary)"
+            outline: "1px solid rgba(59, 130, 246, 0.6)"
         }
     },
     { dark: true }
 );
+
+const readableHighlightStyle = HighlightStyle.define([
+    { tag: tags.keyword, color: "#93c5fd", fontWeight: "600" },
+    { tag: [tags.atom, tags.bool, tags.null], color: "#fbbf24" },
+    { tag: [tags.number, tags.integer, tags.float], color: "#fcd34d" },
+    { tag: [tags.string, tags.special(tags.string)], color: "#86efac" },
+    { tag: [tags.character, tags.escape], color: "#5eead4" },
+    { tag: [tags.regexp, tags.url], color: "#67e8f9" },
+    { tag: [tags.comment, tags.docComment], color: "#7891a8", fontStyle: "italic" },
+    { tag: [tags.variableName, tags.name], color: "#dbeafe" },
+    {
+        tag: [tags.definition(tags.variableName), tags.function(tags.variableName)],
+        color: "#bfdbfe"
+    },
+    { tag: [tags.propertyName, tags.attributeName], color: "#7dd3fc" },
+    { tag: [tags.typeName, tags.className, tags.namespace], color: "#c4b5fd" },
+    { tag: [tags.operator, tags.operatorKeyword, tags.punctuation], color: "#cbd5e1" },
+    { tag: [tags.heading, tags.strong], color: "#f8fafc", fontWeight: "700" },
+    { tag: tags.emphasis, color: "#dbeafe", fontStyle: "italic" },
+    { tag: [tags.link, tags.labelName], color: "#60a5fa" },
+    { tag: [tags.deleted, tags.invalid], color: "#fca5a5" },
+    { tag: tags.inserted, color: "#86efac" }
+]);
 
 class CodeLanguageResolver {
     public resolve(language?: string): Extension {
@@ -175,7 +222,7 @@ class CodeEditorRegistry {
             history(),
             drawSelection(),
             highlightActiveLine(),
-            syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+            syntaxHighlighting(readableHighlightStyle, { fallback: true }),
             this.languageResolver.resolve(options.language),
             EditorState.readOnly.of(Boolean(options.readOnly)),
             EditorView.editable.of(!options.readOnly),

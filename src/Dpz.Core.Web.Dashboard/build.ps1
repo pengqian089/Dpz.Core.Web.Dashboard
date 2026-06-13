@@ -10,14 +10,17 @@ $clientAppPath = Join-Path $projectRoot "ClientApp"
 $projectPath = Join-Path $projectRoot "Dpz.Core.Web.Dashboard.csproj"
 $indexHtmlPath = Join-Path $projectRoot "wwwroot/index.html"
 $assetsPath = Join-Path $projectRoot "wwwroot/assets"
-$nodePath = (Get-Command node.exe -ErrorAction SilentlyContinue)?.Source
-if ([string]::IsNullOrWhiteSpace($nodePath)) {
-    $nodePath = (Get-Command node -ErrorAction Stop).Source
+$nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
+if ($null -eq $nodeCommand) {
+    $nodeCommand = Get-Command node -ErrorAction Stop
 }
-$npmPath = (Get-Command npm.cmd -ErrorAction SilentlyContinue)?.Source
-if ([string]::IsNullOrWhiteSpace($npmPath)) {
-    $npmPath = (Get-Command npm -ErrorAction Stop).Source
+$nodePath = $nodeCommand.Source
+
+$npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+if ($null -eq $npmCommand) {
+    $npmCommand = Get-Command npm -ErrorAction Stop
 }
+$npmPath = $npmCommand.Source
 
 function Write-Step($message) {
     Write-Host "--------------------------------" -ForegroundColor Yellow

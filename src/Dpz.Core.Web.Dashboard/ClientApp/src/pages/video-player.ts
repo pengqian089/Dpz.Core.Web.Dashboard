@@ -1,9 +1,8 @@
-import Hls from "hls.js";
-
 class VideoPlayerPage {
-    private readonly players = new Map<string, Hls>();
+    private readonly players = new Map<string, import("hls.js").default>();
+    private hlsModule: Promise<typeof import("hls.js").default> | null = null;
 
-    public initVideoPlayer(videoId: string, url: string): void {
+    public async initVideoPlayer(videoId: string, url: string): Promise<void> {
         const video = document.getElementById(videoId);
         if (!(video instanceof HTMLVideoElement)) {
             console.error(`Video element with id "${videoId}" not found`);
@@ -16,6 +15,12 @@ class VideoPlayerPage {
         video.style.width = "100%";
         video.style.height = "100%";
 
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = url;
+            return;
+        }
+
+        const Hls = await this.getHls();
         if (Hls.isSupported()) {
             const hls = new Hls();
             hls.attachMedia(video);
@@ -23,11 +28,6 @@ class VideoPlayerPage {
                 hls.loadSource(url);
             });
             this.players.set(videoId, hls);
-            return;
-        }
-
-        if (video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = url;
             return;
         }
 
@@ -48,12 +48,17 @@ class VideoPlayerPage {
         this.players.forEach((player) => player.destroy());
         this.players.clear();
     }
+
+    private getHls(): Promise<typeof import("hls.js").default> {
+        this.hlsModule ??= import("hls.js").then((module) => module.default);
+        return this.hlsModule;
+    }
 }
 
 const videoPlayerPage = new VideoPlayerPage();
 
-export function initVideoPlayer(videoId: string, url: string): void {
-    videoPlayerPage.initVideoPlayer(videoId, url);
+export async function initVideoPlayer(videoId: string, url: string): Promise<void> {
+    await videoPlayerPage.initVideoPlayer(videoId, url);
 }
 
 export function disposeVideoPlayer(videoId: string): void {

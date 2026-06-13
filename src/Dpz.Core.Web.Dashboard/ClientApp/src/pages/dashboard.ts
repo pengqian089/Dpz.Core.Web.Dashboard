@@ -1,11 +1,13 @@
-import Chart from "chart.js/auto";
-import type { ChartConfiguration } from "chart.js";
+import type { Chart, ChartConfiguration } from "chart.js";
+
+type ChartApi = typeof import("chart.js");
 
 class DashboardPage {
     private chart: Chart<"line", number[], string> | null = null;
     private carouselInterval: number | null = null;
+    private chartModule: Promise<typeof import("chart.js").Chart> | null = null;
 
-    public initChart(canvasId: string, labels: string[], data: number[]): void {
+    public async initChart(canvasId: string, labels: string[], data: number[]): Promise<void> {
         const canvas = document.getElementById(canvasId);
         if (!(canvas instanceof HTMLCanvasElement)) {
             return;
@@ -62,6 +64,7 @@ class DashboardPage {
             }
         };
 
+        const Chart = await this.getChart();
         this.chart = new Chart(canvas, chartConfig);
     }
 
@@ -102,12 +105,32 @@ class DashboardPage {
         window.clearInterval(this.carouselInterval);
         this.carouselInterval = null;
     }
+
+    private getChart(): Promise<typeof import("chart.js").Chart> {
+        this.chartModule ??= import("chart.js").then((module: ChartApi) => {
+            module.Chart.register(
+                module.CategoryScale,
+                module.Filler,
+                module.Legend,
+                module.LineController,
+                module.LineElement,
+                module.LinearScale,
+                module.PointElement,
+                module.Title,
+                module.Tooltip
+            );
+
+            return module.Chart;
+        });
+
+        return this.chartModule;
+    }
 }
 
 const dashboardPage = new DashboardPage();
 
-export function initChart(canvasId: string, labels: string[], data: number[]): void {
-    dashboardPage.initChart(canvasId, labels, data);
+export async function initChart(canvasId: string, labels: string[], data: number[]): Promise<void> {
+    await dashboardPage.initChart(canvasId, labels, data);
 }
 
 export function initCarousel(containerId: string): void {

@@ -1,12 +1,7 @@
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { markdown as markdownLanguage } from "@codemirror/lang-markdown";
-import {
-    defaultHighlightStyle,
-    LanguageDescription,
-    LanguageSupport,
-    StreamLanguage,
-    syntaxHighlighting
-} from "@codemirror/language";
+import { defaultHighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { languages } from "@codemirror/language-data";
 import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
@@ -20,9 +15,7 @@ import {
 import { Crepe } from "@milkdown/crepe";
 import { uploadConfig } from "@milkdown/kit/plugin/upload";
 import { replaceAll } from "@milkdown/kit/utils";
-import { csharp } from "@codemirror/legacy-modes/mode/clike";
 import { TooltipController } from "../interactions/tooltip";
-import "../styles/feature-markdown-editor.css";
 
 type DotNetHelper = {
     invokeMethodAsync<T>(methodName: string, ...args: unknown[]): Promise<T>;
@@ -46,63 +39,6 @@ type MarkdownViewportMode = "desktop" | "mobile";
 type MarkdownEditMode = "visual" | "source";
 
 type MermaidApi = typeof import("mermaid").default;
-
-const markdownCodeLanguages = [
-    LanguageDescription.of({
-        name: "C#",
-        alias: ["csharp", "cs"],
-        extensions: ["cs"],
-        load: () => Promise.resolve(new LanguageSupport(StreamLanguage.define(csharp)))
-    }),
-    LanguageDescription.of({
-        name: "CSS",
-        extensions: ["css"],
-        load: () => import("@codemirror/lang-css").then((module) => module.css())
-    }),
-    LanguageDescription.of({
-        name: "HTML",
-        alias: ["htm"],
-        extensions: ["html", "htm"],
-        load: () => import("@codemirror/lang-html").then((module) => module.html())
-    }),
-    LanguageDescription.of({
-        name: "JavaScript",
-        alias: ["js"],
-        extensions: ["js", "mjs", "cjs"],
-        load: () => import("@codemirror/lang-javascript").then((module) => module.javascript())
-    }),
-    LanguageDescription.of({
-        name: "JSON",
-        extensions: ["json"],
-        load: () => import("@codemirror/lang-json").then((module) => module.json())
-    }),
-    LanguageDescription.of({
-        name: "Markdown",
-        alias: ["md"],
-        extensions: ["md", "markdown"],
-        load: () => import("@codemirror/lang-markdown").then((module) => module.markdown())
-    }),
-    LanguageDescription.of({
-        name: "SQL",
-        extensions: ["sql"],
-        load: () => import("@codemirror/lang-sql").then((module) => module.sql())
-    }),
-    LanguageDescription.of({
-        name: "TypeScript",
-        alias: ["ts", "tsx"],
-        extensions: ["ts", "tsx"],
-        load: () =>
-            import("@codemirror/lang-javascript").then((module) =>
-                module.javascript({ jsx: true, typescript: true })
-            )
-    }),
-    LanguageDescription.of({
-        name: "XML",
-        alias: ["svg"],
-        extensions: ["xml", "svg"],
-        load: () => import("@codemirror/lang-xml").then((module) => module.xml())
-    })
-];
 
 const toolbarTitles = ["加粗", "斜体", "删除线", "行内代码", "链接", "AI"];
 
@@ -472,7 +408,7 @@ class MarkdownEditorRegistry {
             featureConfigs: {
                 [Crepe.Feature.BlockEdit]: this.createBlockEditConfig(),
                 [Crepe.Feature.CodeMirror]: {
-                    languages: markdownCodeLanguages,
+                    languages,
                     theme: [oneDark, codeBlockTheme],
                     renderPreview: (
                         language: string,

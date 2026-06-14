@@ -249,9 +249,9 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
     )
     {
         return await _httpClient.GetFromJsonAsync<Dictionary<string, string>>(
-            "data/icon-list.json",
-            cancellationToken
-        ) ?? new Dictionary<string, string>();
+                "data/icon-list.json",
+                cancellationToken
+            ) ?? new Dictionary<string, string>();
     }
 
     private async Task<IReadOnlyList<FileIconRule>> LoadFileIconsAsync(
@@ -259,9 +259,9 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
     )
     {
         return await _httpClient.GetFromJsonAsync<List<FileIconRule>>(
-            "data/fileIcons.json",
-            cancellationToken
-        ) ?? [];
+                "data/fileIcons.json",
+                cancellationToken
+            ) ?? [];
     }
 
     private async Task<IReadOnlyList<FolderIconRule>> LoadFolderIconsAsync(
@@ -269,17 +269,17 @@ public class CodeIconService(NavigationManager navigationManager) : ICodeIconSer
     )
     {
         return await _httpClient.GetFromJsonAsync<List<FolderIconRule>>(
-            "data/folderIcons.json",
-            cancellationToken
-        ) ?? [];
+                "data/folderIcons.json",
+                cancellationToken
+            ) ?? [];
     }
 
     private async Task<LanguageMap> LoadLanguageMapAsync(CancellationToken cancellationToken)
     {
         return await _httpClient.GetFromJsonAsync<LanguageMap>(
-            "data/language-map.json",
-            cancellationToken
-        ) ?? new LanguageMap();
+                "data/language-map.json",
+                cancellationToken
+            ) ?? new LanguageMap();
     }
 
     private static string NormalizeName(string name)

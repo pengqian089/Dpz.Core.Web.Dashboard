@@ -8,6 +8,10 @@
 @import "@fontsource/jetbrains-mono/latin-ext-700.css";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "@awesome.me/webawesome/dist/styles/themes/default.css";
+@import "photoswipe/style.css";
+@import "prismjs/themes/prism-tomorrow.css";
+@import "@milkdown/crepe/theme/common/style.css";
+@import "@milkdown/crepe/theme/frame.css";
 
 @import "./_variables.css";
 @import "./_vendors.css";
@@ -21,6 +25,10 @@
 @import "./_tag-selector.css";
 @import "./_tag-selector-component.css";
 @import "./_audio-player.css";
+@import "./_markdown-editor.css";
+@import "./_code-editor.css";
+@import "./markdown-dark.css";
+@import "./markdown-preview.css";
 @import "./tag-input.css";
 
 @import "./authentication.css";

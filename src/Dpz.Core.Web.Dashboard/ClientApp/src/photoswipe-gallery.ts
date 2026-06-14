@@ -1,16 +1,11 @@
-import photoSwipeStylesUrl from "./styles/feature-photoswipe.css?url";
-import { ensureStylesheet } from "./interop/stylesheet";
+import PhotoSwipe from "photoswipe";
 
 type StreamReference = {
     arrayBuffer(): Promise<ArrayBuffer>;
 };
 
-type PhotoSwipeModule = typeof import("photoswipe").default;
-type PhotoSwipeInstance = InstanceType<PhotoSwipeModule>;
-
 class PhotoSwipeGallery {
-    private photoViewer: PhotoSwipeInstance | null = null;
-    private photoSwipeModule: Promise<PhotoSwipeModule> | null = null;
+    private photoViewer: PhotoSwipe | null = null;
 
     public async setImagePreview(
         imageElementId: string,
@@ -31,7 +26,6 @@ class PhotoSwipeGallery {
     }
 
     public initPhotoSwipe(selector?: string): void {
-        ensureStylesheet(photoSwipeStylesUrl);
         const galleries = document.querySelectorAll(selector || ".pswp-gallery");
         galleries.forEach((gallery) => {
             gallery.querySelectorAll("img").forEach((image) => {
@@ -64,16 +58,15 @@ class PhotoSwipeGallery {
         event.preventDefault();
         const image = event.currentTarget;
         if (image instanceof HTMLImageElement) {
-            void this.openPhotoSwipe(image);
+            this.openPhotoSwipe(image);
         }
     };
 
-    private async openPhotoSwipe(image: HTMLImageElement): Promise<PhotoSwipeInstance | null> {
+    private openPhotoSwipe(image: HTMLImageElement): PhotoSwipe | null {
         if (!image.src) {
             return null;
         }
 
-        const PhotoSwipe = await this.getPhotoSwipe();
         this.destroyPhotoViewer();
         this.photoViewer = new PhotoSwipe({
             dataSource: [
@@ -93,11 +86,6 @@ class PhotoSwipeGallery {
 
         this.photoViewer.init();
         return this.photoViewer;
-    }
-
-    private getPhotoSwipe(): Promise<PhotoSwipeModule> {
-        this.photoSwipeModule ??= import("photoswipe").then((module) => module.default);
-        return this.photoSwipeModule;
     }
 }
 

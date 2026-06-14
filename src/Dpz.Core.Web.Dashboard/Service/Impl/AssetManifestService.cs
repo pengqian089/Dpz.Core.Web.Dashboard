@@ -10,6 +10,8 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
 public class AssetManifestService(NavigationManager navigationManager) : IAssetManifestService
 {
+    private readonly string _manifestRequestId = Guid.NewGuid().ToString("N");
+
     private readonly HttpClient _httpClient = new()
     {
         BaseAddress = new Uri(navigationManager.BaseUri),
@@ -39,7 +41,7 @@ public class AssetManifestService(NavigationManager navigationManager) : IAssetM
 
         _manifest =
             await _httpClient.GetFromJsonAsync<Dictionary<string, ManifestEntry>>(
-                "assets/.vite/manifest.json"
+                $"assets/.vite/manifest.json?v={_manifestRequestId}"
             ) ?? new Dictionary<string, ManifestEntry>();
 
         return _manifest;

@@ -8,7 +8,7 @@ import { sql } from "@codemirror/lang-sql";
 import { xml } from "@codemirror/lang-xml";
 import { HighlightStyle, StreamLanguage, syntaxHighlighting } from "@codemirror/language";
 import { csharp } from "@codemirror/legacy-modes/mode/clike";
-import { Compartment, EditorSelection, EditorState, Extension } from "@codemirror/state";
+import { EditorSelection, EditorState, Extension } from "@codemirror/state";
 import {
     EditorView,
     drawSelection,
@@ -18,7 +18,6 @@ import {
     lineNumbers
 } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
-import "../styles/feature-code-editor.css";
 
 type CodeEditorOptions = {
     value?: string;
@@ -153,9 +152,6 @@ class CodeLanguageResolver {
 class CodeEditorRegistry {
     private readonly editors = new Map<string, EditorView>();
     private readonly languageResolver = new CodeLanguageResolver();
-    private readonly languageCompartment = new Compartment();
-    private readonly readOnlyCompartment = new Compartment();
-    private readonly editableCompartment = new Compartment();
 
     public createEditor(elementId: string, options: CodeEditorOptions = {}): void {
         const parent = document.getElementById(elementId);
@@ -188,18 +184,6 @@ class CodeEditorRegistry {
                 changes: { from: 0, to: view.state.doc.length, insert: options.value ?? "" }
             });
         }
-
-        view.dispatch({
-            effects: [
-                this.languageCompartment.reconfigure(
-                    this.languageResolver.resolve(options.language)
-                ),
-                this.readOnlyCompartment.reconfigure(
-                    EditorState.readOnly.of(Boolean(options.readOnly))
-                ),
-                this.editableCompartment.reconfigure(EditorView.editable.of(!options.readOnly))
-            ]
-        });
     }
 
     public getValue(elementId: string): string {
@@ -239,9 +223,9 @@ class CodeEditorRegistry {
             drawSelection(),
             highlightActiveLine(),
             syntaxHighlighting(readableHighlightStyle, { fallback: true }),
-            this.languageCompartment.of(this.languageResolver.resolve(options.language)),
-            this.readOnlyCompartment.of(EditorState.readOnly.of(Boolean(options.readOnly))),
-            this.editableCompartment.of(EditorView.editable.of(!options.readOnly)),
+            this.languageResolver.resolve(options.language),
+            EditorState.readOnly.of(Boolean(options.readOnly)),
+            EditorView.editable.of(!options.readOnly),
             keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
             darkTheme
         ];

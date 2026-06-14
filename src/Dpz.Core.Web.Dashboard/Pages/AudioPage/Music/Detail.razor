@@ -60,7 +60,10 @@
                         }
 
                         <div class="audio-preview">
-                            <AudioPlayer Src="@_musicModel.MusicUrl" />
+                            @if (!string.IsNullOrWhiteSpace(_musicModel.MusicUrl))
+                            {
+                                <AudioPlayer Src="@_musicModel.MusicUrl" />
+                            }
                         </div>
                     </section>
 

@@ -160,7 +160,7 @@ function Get-ManifestEntry {
 
 function Update-IndexHtml {
     $version = Get-ProjectVersion
-    $manifestPath = Join-Path $assetsPath ".vite/manifest.json"
+    $manifestPath = Join-Path $assetsPath "manifest.json"
     if (-not (Test-Path $manifestPath)) {
         throw "Vite manifest was not found: $manifestPath"
     }

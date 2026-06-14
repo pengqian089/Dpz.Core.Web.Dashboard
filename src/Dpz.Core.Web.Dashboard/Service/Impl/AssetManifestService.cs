@@ -41,7 +41,7 @@ public class AssetManifestService(NavigationManager navigationManager) : IAssetM
 
         _manifest =
             await _httpClient.GetFromJsonAsync<Dictionary<string, ManifestEntry>>(
-                $"assets/.vite/manifest.json?v={_manifestRequestId}"
+                $"assets/manifest.json?v={_manifestRequestId}"
             ) ?? new Dictionary<string, ManifestEntry>();
 
         return _manifest;

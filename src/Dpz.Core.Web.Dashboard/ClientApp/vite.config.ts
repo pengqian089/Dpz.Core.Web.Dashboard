@@ -25,7 +25,7 @@ export default defineConfig({
 
         // manifest 是哈希化的 Vite 文件名与 Blazor 互操作导入之间的桥梁。
         // build.ps1 通过它更新 index.html；C# 通过它动态加载 MarkdownEditor、CodeEditor 等模块。
-        manifest: true,
+        manifest: "manifest.json",
 
         rollupOptions: {
             // Blazor 以 ES 模块方式导入这些文件并按名称调用其导出函数，

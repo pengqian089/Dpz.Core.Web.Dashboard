@@ -122,6 +122,7 @@
                         <div class="form-section__body">
                             <MarkdownEditor
                                 @ref="_editor"
+                                Images="@_article.Images"
                                 Markdown="@_article.Markdown"
                                 UploadAction="/api/Article/upload">
                             </MarkdownEditor>

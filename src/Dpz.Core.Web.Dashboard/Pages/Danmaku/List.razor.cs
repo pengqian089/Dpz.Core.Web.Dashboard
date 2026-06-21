@@ -2,19 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Danmaku;
 
+/// <summary>
+/// 弹幕管理列表页，支持按关键词和分组搜索、批量删除、导入 AcFun/Bilibili 弹幕
+/// </summary>
 public partial class List(
     IDanmakuService danmakuService,
     IVideoService videoService,
@@ -35,13 +34,6 @@ public partial class List(
     private readonly HashSet<DanmakuModel> _selectedItems = [];
     private List<string> _groups = [];
     private Dictionary<string, string> _groupDic = new();
-
-    private bool _showImportDialog;
-    private string _importDialogTitle = "";
-    private string _importExtension = "";
-    private string _importGroup = "";
-    private IBrowserFile? _selectedFile;
-    private bool _isImporting;
 
     protected override async Task OnInitializedAsync()
     {
@@ -151,99 +143,45 @@ public partial class List(
         }
     }
 
-    private void OnImportAcfun()
+    private async Task OnImportAcfun()
+    {
+        await ShowImportDialogAsync("导入 AcFun 弹幕", ".json");
+    }
+
+    private async Task OnImportBilibili()
+    {
+        await ShowImportDialogAsync("导入 Bilibili 弹幕", ".xml");
+    }
+
+    /// <summary>
+    /// 通过通用导入对话框选择分组并上传弹幕文件
+    /// </summary>
+    private async Task ShowImportDialogAsync(string title, string extension)
     {
         if (!_groupDic.Any())
         {
             return;
         }
 
-        _importDialogTitle = "导入 AcFun 弹幕";
-        _importExtension = ".json";
-        _importGroup = "";
-        _selectedFile = null;
-        _showImportDialog = true;
-    }
-
-    private void OnImportBilibili()
-    {
-        if (!_groupDic.Any())
-        {
-            return;
-        }
-
-        _importDialogTitle = "导入 Bilibili 弹幕";
-        _importExtension = ".xml";
-        _importGroup = "";
-        _selectedFile = null;
-        _showImportDialog = true;
-    }
-
-    private void CloseImportDialog()
-    {
-        _showImportDialog = false;
-        _selectedFile = null;
-        _importGroup = "";
-    }
-
-    private void OnInputFileChanged(InputFileChangeEventArgs e)
-    {
-        _selectedFile = e.File;
-    }
-
-    private void ClearSelectedFile()
-    {
-        _selectedFile = null;
-    }
-
-    private async Task ImportDanmakuAsync()
-    {
-        if (_selectedFile == null)
-        {
-            await dialogService.AlertAsync("请选择要导入的弹幕文件！");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(_importGroup))
-        {
-            await dialogService.AlertAsync("请选择弹幕分组！");
-            return;
-        }
-
-        _isImporting = true;
-        StateHasChanged();
-
-        try
-        {
-            using var content = new MultipartFormDataContent();
-            var groupContent = new StringContent(_importGroup);
-            content.Add(content: groupContent, name: "\"Group\"");
-
-            var fileContent = new StreamContent(_selectedFile.OpenReadStream(AppTools.MaxFileSize));
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(_selectedFile.ContentType);
-            content.Add(content: fileContent, name: "\"File\"", fileName: _selectedFile.Name);
-
-            if (_importExtension == ".json")
+        var result = await dialogService.ShowAsync(
+            new AppDialogOptions<bool>
             {
-                await danmakuService.ImportAcfunAsync(content);
+                Title = title,
+                Type = AppDialogType.Component,
+                Width = "620px",
+                Content = builder =>
+                {
+                    builder.OpenComponent<DanmakuImportDialog>(0);
+                    builder.AddAttribute(1, "Groups", _groupDic);
+                    builder.AddAttribute(2, "Extension", extension);
+                    builder.CloseComponent();
+                },
             }
-            else if (_importExtension == ".xml")
-            {
-                await danmakuService.ImportBilibiliAsync(content);
-            }
+        );
 
-            CloseImportDialog();
+        if (result)
+        {
             await LoadDataAsync();
-            dialogService.Toast("导入成功！", ToastType.Success);
-        }
-        catch (Exception ex)
-        {
-            dialogService.Toast($"导入失败: {ex.Message}", ToastType.Error);
-        }
-        finally
-        {
-            _isImporting = false;
-            StateHasChanged();
         }
     }
 
@@ -277,7 +215,7 @@ public partial class List(
             _ => position.ToString(),
         };
     }
-    
+
     private static string GetSizeText(int size)
     {
         return size switch

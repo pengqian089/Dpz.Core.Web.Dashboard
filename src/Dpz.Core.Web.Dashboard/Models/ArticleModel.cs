@@ -43,6 +43,11 @@ public class ArticleModel
     public List<string> ImagesAddress { get; set; } = [];
 
     /// <summary>
+    /// 文章相关图片元信息
+    /// </summary>
+    public List<ImageMetadata> Images { get; set; } = [];
+
+    /// <summary>
     /// 标签
     /// </summary>
     public List<string> Tags { get; set; } = [];

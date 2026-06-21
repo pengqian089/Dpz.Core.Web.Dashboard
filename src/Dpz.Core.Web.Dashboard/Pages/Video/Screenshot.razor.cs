@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Components;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Video;
 
-public partial class Screenshot(
-    IVideoService videoService,
-    IAppDialogService dialogService) : ComponentBase
+public partial class Screenshot(IVideoService videoService, IAppDialogService dialogService)
+    : ComponentBase
 {
     [Parameter]
     public required string Id { get; set; }

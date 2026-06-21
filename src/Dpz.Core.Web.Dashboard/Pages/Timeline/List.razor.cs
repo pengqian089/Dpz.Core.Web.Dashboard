@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Timeline;
 
+/// <summary>
+/// 时间轴列表页，支持分页搜索、新增、编辑、删除和 Markdown 内容预览
+/// </summary>
 public partial class List(
     ITimelineService timelineService,
     NavigationManager navigation,
@@ -123,11 +126,7 @@ public partial class List(
             return;
         }
 
-        await dialogService.ShowComponentAsync(
-            "时间轴内容",
-            BuildContentPreview(model.Content),
-            "900px"
-        );
+        await dialogService.ShowComponentAsync("时间轴内容", BuildContentPreview(model.Content));
     }
 
     private async Task DeleteAsync(string id)

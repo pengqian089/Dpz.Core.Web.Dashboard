@@ -1,0 +1,43 @@
+@inject ICodeIconService CodeIconService
+
+@if (!string.IsNullOrWhiteSpace(_iconUrl))
+{
+    <img class="@IconClass" src="@_iconUrl" alt="@Alt" loading="lazy" />
+}
+
+@code {
+    private string? _iconUrl;
+
+    [Parameter]
+    public string? Name { get; set; }
+
+    [Parameter]
+    public bool IsFolder { get; set; }
+
+    [Parameter]
+    public bool IsSubmodule { get; set; }
+
+    [Parameter]
+    public bool IsSymlink { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string IconClass => string.IsNullOrWhiteSpace(Class)
+        ? "code-icon"
+        : $"code-icon {Class}";
+
+    private string Alt => string.IsNullOrWhiteSpace(Name)
+        ? (IsFolder ? "folder" : "file")
+        : Name;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _iconUrl = await CodeIconService.GetIconUrlAsync(
+            Name,
+            IsFolder,
+            IsSubmodule,
+            IsSymlink
+        );
+    }
+}

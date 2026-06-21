@@ -1,8 +1,6 @@
-﻿@using BlazorMonaco.Editor
-
-<StandaloneCodeEditor
-    CssClass="monaco-editor"
+<CodeEditor
     @ref="_editor"
-    Id="@ElementId"
-    ConstructionOptions="x => x.MarkdownEditorOptions(Markdown)"/>
-    
+    CssClass="monaco-editor"
+    Value="@Markdown"
+    Language="markdown"
+    Style="height: 600px" />

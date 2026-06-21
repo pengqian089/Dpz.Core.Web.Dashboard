@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Mumble;
 
+/// <summary>
+/// 碎碎念列表页，支持分页搜索、删除和 Markdown 预览
+/// </summary>
 public partial class List(
     IMumbleService mumbleService,
     NavigationManager navigation,
@@ -128,8 +131,7 @@ public partial class List(
                 builder.OpenComponent<MarkdownPreview>(0);
                 builder.AddAttribute(1, "Markdown", model.Markdown);
                 builder.CloseComponent();
-            },
-            "800px"
+            }
         );
     }
 }

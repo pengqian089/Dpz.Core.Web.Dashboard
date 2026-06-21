@@ -1,4 +1,4 @@
-﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
@@ -14,9 +14,13 @@ public interface IMumbleService
         int pageSize = 10
     );
 
-    Task CreateAsync(string markdown, string htmlContent);
+    Task CreateAsync(
+        string markdown,
+        string htmlContent,
+        IReadOnlyCollection<ImageMetadata> images
+    );
 
-    Task EditAsync(string id, string markdown);
+    Task EditAsync(string id, string markdown, IReadOnlyCollection<ImageMetadata> images);
 
     Task<MumbleModel?> GetMumbleAsync(string id);
 

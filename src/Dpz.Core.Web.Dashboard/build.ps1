@@ -1,134 +1,232 @@
-$location = Get-Location
-$path = $location.Path
+param(
+    [ValidateSet("prod", "dev", "build", "typecheck", "lint", "format", "format-check", "check", "clean")]
+    [string]$Mode = "prod"
+)
 
-$cssSourcePath = [System.IO.Path]::Combine($path,'wwwroot','css')
+$ErrorActionPreference = "Stop"
 
-# 收集 CSS 文件名（使用相对路径）
-$cssFiles = @()
+$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$clientAppPath = Join-Path $projectRoot "ClientApp"
+$projectPath = Join-Path $projectRoot "Dpz.Core.Web.Dashboard.csproj"
+$indexHtmlPath = Join-Path $projectRoot "wwwroot/index.html"
+$assetsPath = Join-Path $projectRoot "wwwroot/assets"
+$nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
+if ($null -eq $nodeCommand) {
+    $nodeCommand = Get-Command node -ErrorAction Stop
+}
+$nodePath = $nodeCommand.Source
 
-foreach($item in Get-ChildItem $cssSourcePath)
-{
-    if($item.Name -match 'global\.min\..+\.css(\.map)?$')
-    {
-        continue;
-    }
-    # 只使用文件名，不使用完整路径
-    $cssFiles += $item.Name
+$npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+if ($null -eq $npmCommand) {
+    $npmCommand = Get-Command npm -ErrorAction Stop
+}
+$npmPath = $npmCommand.Source
+
+function Write-Step($message) {
+    Write-Host "--------------------------------" -ForegroundColor Yellow
+    Write-Host $message -ForegroundColor Yellow
+    Write-Host "--------------------------------" -ForegroundColor Yellow
 }
 
-Write-Host "--------------------------------" -ForegroundColor yellow
-Write-Host "Merge global style" -ForegroundColor yellow
-Write-Host "--------------------------------" -ForegroundColor yellow
-Write-Host "CSS Files: $($cssFiles.Count)" -ForegroundColor cyan
-
-# 切换到 CSS 目录下执行，这样路径就是相对的
-Push-Location $cssSourcePath
-
-try {
-    # 删除旧的 global 文件
-    Write-Host "Cleaning old global files..." -ForegroundColor cyan
-    Get-ChildItem -Filter "global.min.*.css*" | Remove-Item -Force
-    Write-Host "Old files removed." -ForegroundColor green
-    
-    $inputParameters = [System.String]::Join(" ",$cssFiles)
-    $tempOutputFile = "global.min.temp.css"
-    
-    # 使用相对路径，source map 路径会更清晰
-    $execute = "cleancss -o $tempOutputFile $inputParameters --with-rebase --source-map --debug"
-    
-    Write-Host "Executing: $execute" -ForegroundColor gray
-    Invoke-Expression $execute
-    
-    # 计算文件的 hash
-    $fileHash = Get-FileHash -Path $tempOutputFile -Algorithm MD5
-    $hashString = $fileHash.Hash.Substring(0, 8).ToLower()
-    
-    # 重命名文件为带 hash 的文件名
-    $outputFile = "global.min.$hashString.css"
-    $outputMapFile = "global.min.$hashString.css.map"
-    
-    Rename-Item -Path $tempOutputFile -NewName $outputFile -Force
-    
-    # 如果有 source map 文件，也重命名它
-    $tempMapFile = "$tempOutputFile.map"
-    if (Test-Path $tempMapFile) {
-        # 更新 source map 文件内容中的文件名引用
-        $mapContent = Get-Content $tempMapFile -Raw
-        $mapContent = $mapContent -replace [regex]::Escape($tempOutputFile), $outputFile
-        Set-Content -Path $tempMapFile -Value $mapContent -NoNewline
-        
-        Rename-Item -Path $tempMapFile -NewName $outputMapFile -Force
-        
-        # 更新 CSS 文件中的 sourceMappingURL
-        $cssContent = Get-Content $outputFile -Raw
-        $cssContent = $cssContent -replace "sourceMappingURL=$([regex]::Escape($tempOutputFile))\.map", "sourceMappingURL=$outputMapFile"
-        Set-Content -Path $outputFile -Value $cssContent -NoNewline
-    }
-    
-    Write-Host "Build completed successfully!" -ForegroundColor green
-    Write-Host "  Output: wwwroot/css/$outputFile" -ForegroundColor green
-    Write-Host "  Hash: $hashString" -ForegroundColor cyan
-}
-catch {
-    Write-Host "Build failed: $_" -ForegroundColor red
-    exit 1
-}
-finally {
-    # 恢复原来的目录
-    Pop-Location
+function Get-ProjectVersion {
+    [xml]$csproj = Get-Content $projectPath
+    return $csproj.Project.PropertyGroup.Version
 }
 
-# 更新 index.html 中的引用
-$indexHtmlPath = [System.IO.Path]::Combine($path, 'wwwroot', 'index.html')
-if (Test-Path $indexHtmlPath) {
-    Write-Host "Updating index.html..." -ForegroundColor cyan
-    
-    $indexContent = Get-Content $indexHtmlPath -Raw -Encoding UTF8
-    
-    # 1. 更新 CSS 引用
-    $pattern = '<link href="css/global\.min\.[^"]*\.css" rel="stylesheet" />'
-    $replacement = '<link href="css/{0}" rel="stylesheet" />' -f $outputFile
-    
-    if ($indexContent -match $pattern) {
-        $indexContent = $indexContent -replace $pattern, $replacement
-        Write-Host "  CSS reference updated" -ForegroundColor green
+function Invoke-Process {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$WorkingDirectory,
+
+        [string[]]$ArgumentList = @()
+    )
+
+    $process = Start-Process `
+        -FilePath $FilePath `
+        -ArgumentList $ArgumentList `
+        -WorkingDirectory $WorkingDirectory `
+        -NoNewWindow `
+        -Wait `
+        -PassThru
+
+    if ($process.ExitCode -ne 0) {
+        throw "$FilePath $($ArgumentList -join ' ') failed with exit code $($process.ExitCode)"
     }
-    else {
-        # 如果找不到带 hash 的引用，尝试替换原始引用
-        $pattern = '<link href="css/global\.min\.css" rel="stylesheet" />'
-        if ($indexContent -match $pattern) {
-            $indexContent = $indexContent -replace $pattern, $replacement
-            Write-Host "  CSS reference updated" -ForegroundColor green
-        }
-        else {
-            Write-Host "  Warning: Could not find global.min.css reference" -ForegroundColor yellow
-        }
+}
+
+function Remove-DirectoryInsideProject {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $root = (Resolve-Path -LiteralPath $projectRoot).Path
+    if (-not (Test-Path $Path)) {
+        return
     }
-    
-    # 2. 更新版本号
-    $csprojPath = [System.IO.Path]::Combine($path, 'Dpz.Core.Web.Dashboard.csproj')
-    if (Test-Path $csprojPath) {
-        [xml]$csproj = Get-Content $csprojPath
-        $version = $csproj.Project.PropertyGroup.Version
-        
-        if (-not [string]::IsNullOrWhiteSpace($version)) {
-            $versionPattern = '(<div class="app-loading__version">)v[\d\.]+(<\/div>)'
-            $versionReplacement = "`${1}v$version`${2}"
-            
-            if ($indexContent -match $versionPattern) {
-                $indexContent = $indexContent -replace $versionPattern, $versionReplacement
-                Write-Host "  Version updated to v$version" -ForegroundColor green
-            }
-            else {
-                Write-Host "  Warning: Version element not found in HTML" -ForegroundColor yellow
-            }
+
+    $target = (Resolve-Path -LiteralPath $Path).Path
+    if (-not $target.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to delete outside project: $target"
+    }
+
+    Remove-Item -LiteralPath $target -Recurse -Force
+}
+
+function Clear-BuildArtifacts {
+    Write-Step "Clean build artifacts"
+    Remove-DirectoryInsideProject $assetsPath
+    Remove-DirectoryInsideProject (Join-Path $projectRoot "bin")
+    Remove-DirectoryInsideProject (Join-Path $projectRoot "obj")
+}
+
+function Ensure-NpmDependencies {
+    $nodeModulesPath = Join-Path $clientAppPath "node_modules"
+    if (Test-Path $nodeModulesPath) {
+        return
+    }
+
+    Write-Step "Install frontend dependencies"
+    Invoke-Process $npmPath $clientAppPath @("install")
+}
+
+function Invoke-NpmScript {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptName
+    )
+
+    Write-Step "npm run $ScriptName"
+    Invoke-Process $npmPath $clientAppPath @("run", $ScriptName)
+}
+
+function Invoke-ViteBuild {
+    $vitePath = Join-Path $clientAppPath "node_modules/vite/bin/vite.js"
+    if (-not (Test-Path $vitePath)) {
+        throw "Vite entry was not found: $vitePath"
+    }
+
+    Write-Step "vite build"
+    Push-Location $clientAppPath
+    try {
+        & $nodePath $vitePath build
+        if ($LASTEXITCODE -ne 0) {
+            throw "vite build failed with exit code $LASTEXITCODE"
         }
     }
-    
-    # 保存更新后的内容
-    Set-Content -Path $indexHtmlPath -Value $indexContent -NoNewline -Encoding UTF8
-    Write-Host "  index.html updated successfully!" -ForegroundColor green
+    finally {
+        Pop-Location
+    }
 }
-else {
-    Write-Host "  Warning: index.html not found" -ForegroundColor yellow
+
+function Invoke-ViteWatch {
+    $vitePath = Join-Path $clientAppPath "node_modules/vite/bin/vite.js"
+    if (-not (Test-Path $vitePath)) {
+        throw "Vite entry was not found: $vitePath"
+    }
+
+    Write-Step "vite build --watch"
+    Push-Location $clientAppPath
+    try {
+        & $nodePath $vitePath build --watch
+        if ($LASTEXITCODE -ne 0) {
+            throw "vite build --watch failed with exit code $LASTEXITCODE"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function Get-ManifestEntry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Manifest,
+
+        [Parameter(Mandatory = $true)]
+        [string]$EntryName
+    )
+
+    $property = $Manifest.PSObject.Properties[$EntryName]
+    if ($null -eq $property) {
+        throw "Vite manifest entry '$EntryName' was not found."
+    }
+
+    return $property.Value
+}
+
+function Update-IndexHtml {
+    $version = Get-ProjectVersion
+    $manifestPath = Join-Path $assetsPath "manifest.json"
+    if (-not (Test-Path $manifestPath)) {
+        throw "Vite manifest was not found: $manifestPath"
+    }
+
+    $manifest = Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $appEntry = Get-ManifestEntry $manifest "src/app.ts"
+    $appScriptPath = "assets/$($appEntry.file)"
+    $appStylePath = "assets/$($appEntry.css[0])"
+    $content = Get-Content $indexHtmlPath -Raw -Encoding UTF8
+
+    $content = $content -replace `
+        '<link data-vite-entry="app" href="[^"]+" rel="stylesheet" />',
+        "<link data-vite-entry=`"app`" href=`"$appStylePath`" rel=`"stylesheet`" />"
+
+    $content = $content -replace `
+        '<script data-vite-entry="app" type="module" src="[^"]+"></script>',
+        "<script data-vite-entry=`"app`" type=`"module`" src=`"$appScriptPath`"></script>"
+
+    $content = $content -replace `
+        '(<div class="app-loading__version">)v[\d\.]+(</div>)',
+        "`${1}v$version`${2}"
+
+    Set-Content -Path $indexHtmlPath -Value $content -NoNewline -Encoding UTF8
+    Write-Host "index.html synced to v$version and Vite manifest assets" -ForegroundColor Green
+}
+
+Ensure-NpmDependencies
+
+switch ($Mode) {
+    "clean" {
+        Clear-BuildArtifacts
+        exit 0
+    }
+    "dev" {
+        Invoke-ViteWatch
+        exit 0
+    }
+    "typecheck" {
+        Invoke-NpmScript "typecheck"
+        exit 0
+    }
+    "lint" {
+        Invoke-NpmScript "lint"
+        exit 0
+    }
+    "format" {
+        Invoke-NpmScript "format"
+        exit 0
+    }
+    "format-check" {
+        Invoke-NpmScript "format:check"
+        exit 0
+    }
+    "check" {
+        Invoke-NpmScript "check"
+        exit 0
+    }
+    default {
+        Clear-BuildArtifacts
+        Invoke-ViteBuild
+        Update-IndexHtml
+
+        Write-Step "Build Blazor project"
+        dotnet build $projectPath
+        if ($LASTEXITCODE -ne 0) {
+            throw "dotnet build failed with exit code $LASTEXITCODE"
+        }
+    }
 }

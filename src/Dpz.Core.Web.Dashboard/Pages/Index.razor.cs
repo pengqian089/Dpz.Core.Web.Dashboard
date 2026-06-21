@@ -10,8 +10,11 @@ using Microsoft.JSInterop;
 namespace Dpz.Core.Web.Dashboard.Pages;
 
 [Authorize]
-public partial class Index(IJSRuntime jsRuntime, ICommunityService communityService)
-    : IAsyncDisposable
+public partial class Index(
+    IJSRuntime jsRuntime,
+    ICommunityService communityService,
+    IAssetManifestService assetManifestService
+) : IAsyncDisposable
 {
     private bool _isLoading;
     private SummaryInformation? _summary;
@@ -61,29 +64,35 @@ public partial class Index(IJSRuntime jsRuntime, ICommunityService communityServ
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Don't await Prism highlight if it fails, just run it
-        try
-        {
-            await jsRuntime.InvokeVoidAsync("Prism.highlightAll");
-        }
-        catch { }
-
         // Import module if needed
         if (_module == null)
         {
             try
             {
-                // Note: Path is relative to the base href or root, using collocated JS convention
-                _module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                    "import",
-                    "./Pages/Index.razor.js"
+                var modulePath = await assetManifestService.GetAssetPathAsync(
+                    "src/pages/dashboard.ts"
                 );
+                _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to import Index.razor.js: {ex.Message}");
+                Console.WriteLine($"Failed to import dashboard module: {ex.Message}");
             }
         }
+
+        try
+        {
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/markdown-preview.ts"
+            );
+            var markdownPreviewModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+                "import",
+                modulePath
+            );
+            await markdownPreviewModule.InvokeVoidAsync("highlightAll");
+            await markdownPreviewModule.DisposeAsync();
+        }
+        catch { }
 
         if (_summary != null && _module != null)
         {

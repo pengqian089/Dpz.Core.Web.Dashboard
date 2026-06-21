@@ -14,9 +14,8 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 BaseAddress =
-    builder.Configuration.GetSection("BaseAddress").Get<string>() ?? throw new Exception(
-        "BaseAddress is null."
-    );
+    builder.Configuration.GetSection("BaseAddress").Get<string>()
+    ?? throw new Exception("BaseAddress is null.");
 
 builder
     .Services.AddHttpClient("ServerAPI")

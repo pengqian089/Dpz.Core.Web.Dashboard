@@ -1,24 +1,57 @@
-<!-- Dialogs (Modal) -->
 @foreach (var dialog in _dialogs)
 {
     <DialogBox @key="dialog.Id" Model="dialog" OnClose="RemoveDialog" />
 }
 
-<!-- Toasts -->
-<div class="toast-container">
+<div class="app-toast-container" aria-live="polite" aria-relevant="additions">
     @foreach (var toast in _toasts)
     {
-        <ToastBox @key="toast.Id" Model="toast" OnClose="RemoveToast" />
+        <div @key="toast.Id" class="app-toast">
+            <wa-callout variant="@GetVariant(toast.Options.Level)" appearance="filled-outlined" size="medium">
+                <i slot="icon" class="@GetIconClass(toast.Options.Level)"></i>
+                @toast.Options.Message
+            </wa-callout>
+        </div>
     }
 </div>
 
-<!-- Notifications -->
-<div class="notification-container" style="position: fixed; top: 80px; right: 20px; width: 380px; max-width: calc(100vw - 40px); z-index: 1500; pointer-events: none; display: flex; flex-direction: column; gap: 15px;">
-    <style>
-        .notification-box { pointer-events: auto; }
-    </style>
+<div class="app-notification-container" aria-live="polite" aria-relevant="additions">
     @foreach (var notification in _notifications)
     {
-        <NotificationBox @key="notification.Id" Model="notification" OnClose="RemoveNotification" />
+        <div @key="notification.Id" class="app-notification">
+            <wa-callout variant="@GetVariant(notification.Options.Level)" appearance="filled-outlined" size="medium">
+                <i slot="icon" class="@GetIconClass(notification.Options.Level)"></i>
+                <div class="app-notification__content">
+                    <div class="app-notification__header">
+                        @if (!string.IsNullOrWhiteSpace(notification.Options.Title))
+                        {
+                            <strong>@notification.Options.Title</strong>
+                        }
+                        <wa-button
+                            class="app-notification__close"
+                            appearance="plain"
+                            size="small"
+                            title="关闭通知"
+                            @onclick="() => CloseNotification(notification)">
+                            <i class="fas fa-times"></i>
+                        </wa-button>
+                    </div>
+
+                    <div class="app-notification__message">@((MarkupString)notification.Options.Content)</div>
+
+                    @foreach (var progress in notification.Options.Progress)
+                    {
+                        var value = Math.Clamp(progress, 0, 100);
+
+                        <wa-progress-bar
+                            class="app-notification__progress"
+                            value="@value"
+                            label="@($"{value:F1}%")">
+                            @($"{value:F1}%")
+                        </wa-progress-bar>
+                    }
+                </div>
+            </wa-callout>
+        </div>
     }
 </div>

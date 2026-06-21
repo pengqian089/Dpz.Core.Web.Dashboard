@@ -1,0 +1,59 @@
+.code-editor,
+.monaco-editor,
+.code-view-editor {
+    width: 100%;
+    min-height: 420px;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid #1d2d44;
+    border-radius: var(--border-radius-sm);
+    background: #07101f;
+    box-shadow: inset 0 1px 0 rgb(148 163 184 / 0.06);
+}
+
+.code-view-editor {
+    min-height: 620px;
+}
+
+.code-editor .cm-editor,
+.monaco-editor .cm-editor,
+.code-view-editor .cm-editor {
+    height: 100%;
+    min-height: inherit;
+    font-variant-ligatures: none;
+}
+
+.code-editor .cm-scroller,
+.monaco-editor .cm-scroller,
+.code-view-editor .cm-scroller {
+    overflow: auto;
+    scrollbar-color: #334155 #07101f;
+    scrollbar-width: thin;
+}
+
+.code-editor .cm-scroller::-webkit-scrollbar,
+.monaco-editor .cm-scroller::-webkit-scrollbar,
+.code-view-editor .cm-scroller::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.code-editor .cm-scroller::-webkit-scrollbar-track,
+.monaco-editor .cm-scroller::-webkit-scrollbar-track,
+.code-view-editor .cm-scroller::-webkit-scrollbar-track {
+    background: #07101f;
+}
+
+.code-editor .cm-scroller::-webkit-scrollbar-thumb,
+.monaco-editor .cm-scroller::-webkit-scrollbar-thumb,
+.code-view-editor .cm-scroller::-webkit-scrollbar-thumb {
+    background: #334155;
+    border: 2px solid #07101f;
+    border-radius: 999px;
+}
+
+.code-editor .cm-scroller::-webkit-scrollbar-thumb:hover,
+.monaco-editor .cm-scroller::-webkit-scrollbar-thumb:hover,
+.code-view-editor .cm-scroller::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}

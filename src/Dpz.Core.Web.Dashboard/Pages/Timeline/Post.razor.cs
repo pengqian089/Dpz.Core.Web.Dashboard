@@ -28,6 +28,7 @@ public partial class Post(
         }
 
         _timeline.Content = await _editor.GetValueAsync();
+        _timeline.Images = _editor.GetUploadedImages();
         if (string.IsNullOrWhiteSpace(_timeline.Content))
         {
             dialogService.Toast("请输入内容", ToastType.Warning);

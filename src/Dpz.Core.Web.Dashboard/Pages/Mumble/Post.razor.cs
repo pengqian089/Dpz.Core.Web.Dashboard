@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Dpz.Core.Web.Dashboard.Shared.Components;
@@ -12,8 +11,8 @@ namespace Dpz.Core.Web.Dashboard.Pages.Mumble;
 public partial class Post(
     IMumbleService mumbleService,
     IAppDialogService dialogService,
-    NavigationManager navigation)
-    : ComponentBase
+    NavigationManager navigation
+) : ComponentBase
 {
     private readonly object _model = new();
     private bool _isPublishing;
@@ -46,7 +45,7 @@ public partial class Post(
 
         try
         {
-            await mumbleService.CreateAsync(markdown, content);
+            await mumbleService.CreateAsync(markdown, content, _editor.GetUploadedImages());
             dialogService.Toast("发布成功", ToastType.Success);
             navigation.NavigateTo("/mumble");
         }

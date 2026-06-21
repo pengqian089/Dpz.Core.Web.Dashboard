@@ -175,11 +175,7 @@ public partial class Robots(ICommunityService communityService, IAppDialogServic
 
     private void AddUserAgentGroup()
     {
-        _userAgentGroups.Add(new UserAgentGroup
-        {
-            UserAgent = "*",
-            Rules = []
-        });
+        _userAgentGroups.Add(new UserAgentGroup { UserAgent = "*", Rules = [] });
     }
 
     private void RemoveUserAgentGroup(UserAgentGroup group)

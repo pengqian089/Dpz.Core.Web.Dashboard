@@ -1,5 +1,4 @@
-﻿@using BlazorMonaco.Editor
-@page "/code"
+@page "/code/tree"
 @attribute [Authorize]
 
 <div class="code-page">
@@ -12,53 +11,44 @@
     </div>
 
     <div class="code-page__tabs">
-        <button class="code-page__tab @(_viewMode == ViewMode.Tree ? "active" : "")" 
-                @onclick="() => SwitchViewMode(ViewMode.Tree)">
+        <NavLink href="code/tree" Class="code-page__tab" Match="NavLinkMatch.Prefix">
             <i class="fas fa-sitemap"></i>
             树结构
-        </button>
-        <button class="code-page__tab @(_viewMode == ViewMode.List ? "active" : "")" 
-                @onclick="() => SwitchViewMode(ViewMode.List)">
+        </NavLink>
+        <NavLink href="code/list" Class="code-page__tab" Match="NavLinkMatch.Prefix">
             <i class="fas fa-list"></i>
             列表视图
-        </button>
+        </NavLink>
     </div>
 
-    @if (_viewMode == ViewMode.Tree)
-    {
-        <div class="code-page__toolbar">
-            <div class="code-page__toolbar-left">
-                <button class="btn btn-secondary" @onclick="BackToRoot" disabled="@_isLoading">
-                    <i class="fas fa-home"></i>
-                    根目录
-                </button>
-                <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
-                    <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+    <div class="code-page__toolbar">
+        <div class="code-page__toolbar-left">
+            <button class="btn btn-secondary" @onclick="BackToRoot" disabled="@_isLoading">
+                <i class="fas fa-home"></i>
+                根目录
+            </button>
+            <button class="btn-icon" title="刷新" @onclick="Reload" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+        <div class="code-page__toolbar-right">
+            <div class="code-page__search">
+                <input type="text" class="form-control" placeholder="搜索文件或目录" @bind="_searchWord" @bind:event="oninput"
+                    @onkeydown="HandleSearchKeyDown" />
+                <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
+                    <i class="fas fa-search"></i>
+                    搜索
                 </button>
             </div>
-            <div class="code-page__toolbar-right">
-                <div class="code-page__search">
-                    <input type="text" class="form-control" placeholder="搜索文件或目录" @bind="_searchWord" @bind:event="oninput"
-                        @onkeydown="HandleSearchKeyDown" />
-                    <button class="btn btn-primary" @onclick="Search" disabled="@_isLoading">
-                        <i class="fas fa-search"></i>
-                        搜索
-                    </button>
-                </div>
-                <div class="code-page__summary">
-                    <span class="code-page__summary-label">共</span>
-                    <span class="code-page__summary-value">@TotalItems</span>
-                    <span class="code-page__summary-label">项</span>
-                </div>
+            <div class="code-page__summary">
+                <span class="code-page__summary-label">共</span>
+                <span class="code-page__summary-value">@TotalItems</span>
+                <span class="code-page__summary-label">项</span>
             </div>
         </div>
-    }
+    </div>
 
-    @if (_viewMode == ViewMode.List)
-    {
-        <FlatList OnViewFile="HandleViewFile" OnQueryChanged="HandleListQueryChanged" />
-    }
-    else if (_isLoading)
+    @if (_isLoading)
     {
         <div class="code-skeleton">
             <div class="code-skeleton__table">
@@ -138,13 +128,13 @@
                                 <tr>
                                     <td data-label="名称">
                                         <div class="code-table__name">
-                                            <i class="fas fa-folder"></i>
+                                            <CodeIcon Name="@item.Name" IsFolder="true" />
                                             <button class="code-table__link" type="button"
                                                     title="@string.Join('/', item.CurrentPath)"
                                                     @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
                                                 <HighLight SearchWord="@_searchWord" ItemName="@item.Name" />
                                             </button>
-                                            <span class="code-table__tag">目录</span>
+                                            @* <span class="code-table__tag">目录</span> *@
                                         </div>
                                     </td>
                                     <td data-label="说明">
@@ -175,13 +165,13 @@
                                 <tr>
                                     <td data-label="名称">
                                         <div class="code-table__name">
-                                            <i class="fas fa-file-code"></i>
+                                            <CodeIcon Name="@item.Name" IsFolder="false" />
                                             <button class="code-table__link" type="button"
                                                     title="@string.Join('/', item.CurrentPath)"
                                                     @onclick="() => LoadTreeDataAsync(item.CurrentPath)">
                                                 <HighLight SearchWord="@_searchWord" ItemName="@item.Name" />
                                             </button>
-                                            <span class="code-table__tag code-table__tag--file">文件</span>
+                                            @* <span class="code-table__tag code-table__tag--file">文件</span> *@
                                         </div>
                                     </td>
                                     <td data-label="说明">
@@ -267,8 +257,7 @@
                     }
                     else
                     {
-                        <StandaloneCodeEditor CssClass="code-view-editor" Id="@EditorId"
-                            ConstructionOptions="x => x.EditorConstructionOptions(_treeData.CodeContainer.Language, _treeData.CodeContainer.CodeContent, true)" />
+                        <CodeEditor CssClass="code-view-editor" Value="@_treeData.CodeContainer.CodeContent" Language="@_treeData.CodeContainer.Language" ReadOnly="true" Style="height: 620px" />
                     }
                 </div>
 

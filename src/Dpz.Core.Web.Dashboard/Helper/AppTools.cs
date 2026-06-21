@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using BlazorMonaco.Editor;
 using Dpz.Core.EnumLibrary;
 using Microsoft.JSInterop;
 
@@ -133,37 +132,6 @@ public static class AppTools
                 var years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
                 return years <= 1 ? "大约1年前" : $"大约{years}年前";
             }
-        }
-    }
-
-    extension(StandaloneCodeEditor editor)
-    {
-        public StandaloneEditorConstructionOptions EditorConstructionOptions(
-            string language,
-            string value,
-            bool? isReadonly = null
-        )
-        {
-            return new StandaloneEditorConstructionOptions
-            {
-                Theme = "vs-dark",
-                Language = language,
-                GlyphMargin = true,
-                Value = value,
-                AutomaticLayout = true,
-                ReadOnly = isReadonly,
-            };
-        }
-
-        public StandaloneEditorConstructionOptions HtmlEditorOptions(string value)
-        {
-            return editor.EditorConstructionOptions("html", value);
-        }
-
-        public StandaloneEditorConstructionOptions MarkdownEditorOptions(string value)
-        {
-            Console.WriteLine($"MarkdownEditorOptions has value:{!string.IsNullOrEmpty(value)}");
-            return editor.EditorConstructionOptions("markdown", value);
         }
     }
 }

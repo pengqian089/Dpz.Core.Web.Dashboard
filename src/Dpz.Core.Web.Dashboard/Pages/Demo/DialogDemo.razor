@@ -35,19 +35,19 @@
     <div class="demo-section">
         <h2 class="demo-section__title">Toast 提示</h2>
         <div class="demo-grid">
-            <button class="btn btn-success" @onclick="() => ShowToast(ToastType.Success)">
+            <button class="btn btn-success" @onclick="() => ShowToast(AppFeedbackLevel.Success)">
                 <i class="fas fa-check-circle"></i>
                 Success
             </button>
-            <button class="btn btn-danger" @onclick="() => ShowToast(ToastType.Error)">
+            <button class="btn btn-danger" @onclick="() => ShowToast(AppFeedbackLevel.Danger)">
                 <i class="fas fa-times-circle"></i>
                 Error
             </button>
-            <button class="btn btn-primary" @onclick="() => ShowToast(ToastType.Info)">
+            <button class="btn btn-primary" @onclick="() => ShowToast(AppFeedbackLevel.Info)">
                 <i class="fas fa-info-circle"></i>
                 Info
             </button>
-            <button class="btn btn-warning" @onclick="() => ShowToast(ToastType.Warning)">
+            <button class="btn btn-warning" @onclick="() => ShowToast(AppFeedbackLevel.Warning)">
                 <i class="fas fa-exclamation-triangle"></i>
                 Warning
             </button>
@@ -57,19 +57,19 @@
     <div class="demo-section">
         <h2 class="demo-section__title">通知 (Notification)</h2>
         <div class="demo-grid">
-            <button class="btn btn-success" @onclick="() => ShowNotification(NotificationType.Success)">
+            <button class="btn btn-success" @onclick="() => ShowNotification(AppFeedbackLevel.Success)">
                 <i class="fas fa-check-circle"></i>
                 Success 通知
             </button>
-            <button class="btn btn-danger" @onclick="() => ShowNotification(NotificationType.Error)">
+            <button class="btn btn-danger" @onclick="() => ShowNotification(AppFeedbackLevel.Danger)">
                 <i class="fas fa-times-circle"></i>
                 Error 通知
             </button>
-            <button class="btn btn-primary" @onclick="() => ShowNotification(NotificationType.Info)">
+            <button class="btn btn-primary" @onclick="() => ShowNotification(AppFeedbackLevel.Info)">
                 <i class="fas fa-info-circle"></i>
                 Info 通知
             </button>
-            <button class="btn btn-warning" @onclick="() => ShowNotification(NotificationType.Warning)">
+            <button class="btn btn-warning" @onclick="() => ShowNotification(AppFeedbackLevel.Warning)">
                 <i class="fas fa-exclamation-triangle"></i>
                 Warning 通知
             </button>

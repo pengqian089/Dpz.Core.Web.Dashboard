@@ -1,12 +1,16 @@
 using System;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Service;
 using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components;
 
-public partial class MarkdownPreview(IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposable
+public partial class MarkdownPreview(
+    IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService
+) : ComponentBase, IAsyncDisposable
 {
     private ElementReference _contentRef;
     private IJSObjectReference? _module;
@@ -42,10 +46,10 @@ public partial class MarkdownPreview(IJSRuntime jsRuntime) : ComponentBase, IAsy
     {
         if (firstRender)
         {
-            _module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./Shared/Components/MarkdownPreview.razor.js"
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/markdown-preview.ts"
             );
+            _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
         }
 
         if (_module != null)

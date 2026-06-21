@@ -35,6 +35,7 @@ public partial class Publish(
     private async Task PublishArticleAsync(EditContext context)
     {
         _article.Markdown = _editor == null ? null : await _editor.GetValueAsync();
+        _article.Images = _editor?.GetUploadedImages() ?? [];
 
         if (string.IsNullOrEmpty(_article.Title))
         {

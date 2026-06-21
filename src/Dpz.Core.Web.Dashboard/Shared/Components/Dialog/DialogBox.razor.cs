@@ -1,122 +1,155 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 
-public partial class DialogBox(IJSRuntime jsRuntime) : IAsyncDisposable
+/// <summary>
+/// 对话框 Popup 组件，使用 Web Awesome 组件库实现动画、焦点管理和键盘交互
+/// </summary>
+public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService assetManifestService)
+    : IAsyncDisposable
 {
+    /// <summary>
+    /// 对话框的数据模型，包含类型、标题、内容及等待关闭的 TaskCompletionSource
+    /// </summary>
     [Parameter]
-    public DialogModel Model { get; set; } = new();
+    public AppDialogModel Model { get; set; } = new();
 
+    /// <summary>
+    /// 对话框关闭时的回调事件
+    /// </summary>
     [Parameter]
-    public EventCallback<DialogModel> OnClose { get; set; }
+    public EventCallback<AppDialogModel> OnClose { get; set; }
 
-    private bool _isVisible;
     private string _inputValue = "";
-    private ElementReference _inputRef;
-    private ElementReference _confirmBtnRef;
+    private bool _isClosing;
     private ElementReference _dialogRef;
+    private ElementReference _inputRef;
     private IJSObjectReference? _dialogModule;
+    private DotNetObjectReference<DialogBox>? _dotNetRef;
 
     private Action<object?> CloseAction => Close;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _inputValue = Model.DefaultValue;
-
-        // 注册关闭操作
-        Model.RequestCloseAction = () => Close(null);
-
-        // Trigger animation
-        await Task.Delay(10);
-        _isVisible = true;
+        Model.RequestClose = Close;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender)
         {
-            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./js/modules/dialog-interop.js"
-            );
+            return;
+        }
 
-            if (Model.Type == DialogType.Prompt)
-            {
-                await _inputRef.FocusAsync();
-            }
-            else if (Model.Type != DialogType.Component)
-            {
-                await _confirmBtnRef.FocusAsync();
-            }
+        var modulePath = await assetManifestService.GetAssetPathAsync(
+            "src/interop/webawesome-dialog.ts"
+        );
+        _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await _dialogModule.InvokeVoidAsync("bindDialog", _dialogRef, _dotNetRef);
+        await _dialogModule.InvokeVoidAsync("notifyContentReady");
 
-            // 对话框打开时 DOM 管理器已暂停，手动触发 LazyLoad 更新以加载图片
-            if (_dialogModule != null)
-            {
-                await _dialogModule.InvokeVoidAsync("updateLazyLoad");
-            }
+        if (Model.Type == AppDialogType.Prompt)
+        {
+            await _inputRef.FocusAsync();
         }
     }
 
-    private void HandleOverlayClick()
+    /// <summary>
+    /// 由 JS 端在对话框动画隐藏完成后回调，触发内部关闭流程
+    /// </summary>
+    [JSInvokable]
+    public async Task HandleAfterHideFromDialog()
     {
-        if (Model.MaskToClose)
+        if (_isClosing)
         {
-            Close(null);
+            return;
+        }
+
+        await CompleteCloseAsync(null);
+    }
+
+    private void HandleInput(ChangeEventArgs args)
+    {
+        _inputValue = args.Value?.ToString() ?? "";
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && Model.Type != AppDialogType.Component)
+        {
+            Close(true);
         }
     }
 
-    private void HandleKeyDown(KeyboardEventArgs e)
+    private void Close(object? result)
     {
-        if (e.Key == "Enter")
-        {
-            if (Model.Type != DialogType.Component)
-            {
-                Close(true);
-            }
-        }
+        _ = CompleteCloseAsync(result);
     }
 
-    private async void Close(object? result)
+    private async Task CompleteCloseAsync(object? result)
     {
-        _isVisible = false;
-        StateHasChanged();
-
-        // Wait for animation
-        await Task.Delay(300);
-
-        if (Model.Type == DialogType.Prompt && result is true)
+        if (_isClosing)
         {
-            Model.TaskSource.TrySetResult(_inputValue);
+            return;
         }
-        else if (Model.Type == DialogType.Confirm)
+
+        _isClosing = true;
+
+        var finalResult = result;
+        if (Model.Type == AppDialogType.Prompt && result is true)
         {
-            Model.TaskSource.TrySetResult(result is true);
+            finalResult = _inputValue;
         }
-        else
+        else if (Model.Type == AppDialogType.Confirm)
         {
-            Model.TaskSource.TrySetResult(result);
+            finalResult = result is true;
+        }
+
+        Model.TaskSource.TrySetResult(finalResult);
+
+        if (_dialogModule != null)
+        {
+            await _dialogModule.InvokeVoidAsync("hideDialog", _dialogRef);
         }
 
         await OnClose.InvokeAsync(Model);
     }
 
+    private string GetDialogStyle()
+    {
+        if (string.IsNullOrWhiteSpace(Model.Width))
+        {
+            return "";
+        }
+
+        return $"--width: {Model.Width};";
+    }
+
     public async ValueTask DisposeAsync()
     {
+        Model.RequestClose = null;
+
         if (_dialogModule != null)
         {
             try
             {
+                await _dialogModule.InvokeVoidAsync("unbindDialog", _dialogRef);
                 await _dialogModule.DisposeAsync();
             }
             catch
             {
-                // Ignore disposal errors
+                Console.WriteLine("Failed to dispose WebAwesome dialog module.");
             }
         }
+
+        _dotNetRef?.Dispose();
     }
 }

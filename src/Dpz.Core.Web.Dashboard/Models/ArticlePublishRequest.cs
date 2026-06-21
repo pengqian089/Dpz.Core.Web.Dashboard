@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Dpz.Core.Web.Dashboard.Pages.Article;
 
 namespace Dpz.Core.Web.Dashboard.Models;
 
@@ -16,4 +15,6 @@ public class ArticlePublishRequest
     public List<string> Tags { get; set; } = [];
 
     public string? Markdown { get; set; }
+
+    public List<ImageMetadata> Images { get; set; } = [];
 }

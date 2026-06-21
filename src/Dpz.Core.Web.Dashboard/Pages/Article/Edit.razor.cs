@@ -42,6 +42,7 @@ public partial class Edit(
             Id = article.Id,
             Introduction = article.Introduction,
             Markdown = article.Markdown,
+            Images = article.Images,
             Tags = article.Tags,
             Title = article.Title,
         };
@@ -63,6 +64,7 @@ public partial class Edit(
         }
 
         _article.Markdown = _editor == null ? null : await _editor.GetValueAsync();
+        _article.Images = _editor?.GetUploadedImages() ?? [];
 
         if (string.IsNullOrWhiteSpace(_article.Introduction))
         {

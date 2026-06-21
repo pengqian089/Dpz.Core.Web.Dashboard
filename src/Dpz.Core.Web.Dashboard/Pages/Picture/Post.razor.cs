@@ -16,7 +16,8 @@ public partial class Post(
     IPictureService pictureService,
     IAppDialogService dialogService,
     NavigationManager navigation,
-    IJSRuntime jsRuntime
+    IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService
 ) : IAsyncDisposable
 {
     private bool _isPosting;
@@ -31,10 +32,8 @@ public partial class Post(
     protected override async Task OnInitializedAsync()
     {
         _tags = await pictureService.GetTagsAsync();
-        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-            "import",
-            "./Pages/Picture/Post.razor.js"
-        );
+        var modulePath = await assetManifestService.GetAssetPathAsync("src/photoswipe-gallery.ts");
+        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -125,6 +124,7 @@ public partial class Post(
     {
         if (_jsModule != null)
         {
+            await _jsModule.InvokeVoidAsync("destroyPhotoViewer");
             await _jsModule.DisposeAsync();
         }
     }

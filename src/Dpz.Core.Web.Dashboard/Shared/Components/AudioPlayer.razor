@@ -1,5 +1,5 @@
 <div class="custom-audio-player">
-    <audio @ref="_audioElement" src="@Src" preload="metadata"></audio>
+    <audio @ref="_audioElement" src="@Src" preload="none"></audio>
     
     <button type="button" class="custom-audio-player__btn" @onclick="TogglePlay">
         <i class="fas @(_isPlaying ? "fa-pause" : "fa-play")"></i>

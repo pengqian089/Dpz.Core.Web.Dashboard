@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 
 namespace Dpz.Core.Web.Dashboard.Models;
 
@@ -27,6 +28,11 @@ public class TimelineModel
     public string? More { get; set; }
 
     /// <summary>
+    /// 图片元信息
+    /// </summary>
+    public List<ImageMetadata> Images { get; set; } = [];
+
+    /// <summary>
     /// 作者
     /// </summary>
     public required UserInfo Author { get; set; }
@@ -40,5 +46,4 @@ public class TimelineModel
     /// 最后修改时间
     /// </summary>
     public DateTime LastUpdateTime { get; set; }
-
 }

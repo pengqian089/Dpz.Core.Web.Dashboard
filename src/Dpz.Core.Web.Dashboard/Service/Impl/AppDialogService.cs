@@ -7,61 +7,103 @@ namespace Dpz.Core.Web.Dashboard.Service.Impl;
 
 public class AppDialogService : IAppDialogService
 {
-    public event Action<DialogModel>? OnDialogShow;
-    public event Action<ToastModel>? OnToastShow;
-    public event Action<NotificationModel>? OnNotificationShow;
+    public event Action<AppDialogModel>? OnDialogShow;
+    public event Action<AppToastModel>? OnToastShow;
+    public event Action<AppNotificationHandle>? OnNotificationShow;
     public event Action? OnCloseAllNotifications;
 
-    public async Task AlertAsync(string message, string title = "提示")
+    public Task ShowAlertAsync(AppDialogOptions options)
     {
-        var tcs = new TaskCompletionSource<object?>();
-        var model = new DialogModel
-        {
-            Title = title,
-            Message = message,
-            Type = DialogType.Alert,
-            TaskSource = tcs,
-        };
+        var dialog = CreateDialog<object?>(
+            new AppDialogOptions<object?>
+            {
+                Type = AppDialogType.Alert,
+                Title = options.Title,
+                Message = options.Message,
+                Width = options.Width,
+                LightDismiss = options.LightDismiss,
+                EscToClose = options.EscToClose,
+                ConfirmText = options.ConfirmText,
+                CancelText = options.CancelText,
+            }
+        );
 
-        OnDialogShow?.Invoke(model);
-        await tcs.Task;
+        OnDialogShow?.Invoke(dialog);
+        return dialog.TaskSource.Task;
     }
 
-    public async Task<bool> ConfirmAsync(string message, string title = "确认")
+    public Task<bool> ShowConfirmAsync(AppDialogOptions<bool> options)
     {
-        var tcs = new TaskCompletionSource<object?>();
-        var model = new DialogModel
-        {
-            Title = title,
-            Message = message,
-            Type = DialogType.Confirm,
-            TaskSource = tcs,
-        };
-
-        OnDialogShow?.Invoke(model);
-        var result = await tcs.Task;
-        return result is true;
+        options.Type = AppDialogType.Confirm;
+        var dialog = CreateDialog(options);
+        OnDialogShow?.Invoke(dialog);
+        return CompleteTypedAsync<bool>(dialog.TaskSource.Task);
     }
 
-    public async Task<string?> PromptAsync(
+    public Task<string?> ShowPromptAsync(AppDialogOptions<string?> options)
+    {
+        options.Type = AppDialogType.Prompt;
+        var dialog = CreateDialog(options);
+        OnDialogShow?.Invoke(dialog);
+        return CompleteTypedAsync<string?>(dialog.TaskSource.Task);
+    }
+
+    public Task<TResult?> ShowAsync<TResult>(AppDialogOptions<TResult> options)
+    {
+        var dialog = CreateDialog(options);
+        OnDialogShow?.Invoke(dialog);
+        return CompleteTypedAsync<TResult>(dialog.TaskSource.Task);
+    }
+
+    public void ShowToast(AppToastOptions options)
+    {
+        OnToastShow?.Invoke(new AppToastModel { Options = options });
+    }
+
+    public AppNotificationHandle ShowNotification(AppNotificationOptions options)
+    {
+        var handle = new AppNotificationHandle { Options = options };
+        OnNotificationShow?.Invoke(handle);
+        return handle;
+    }
+
+    public void CloseAllNotifications()
+    {
+        OnCloseAllNotifications?.Invoke();
+    }
+
+    public Task AlertAsync(string message, string title = "提示")
+    {
+        return ShowAlertAsync(new AppDialogOptions { Title = title, Message = message });
+    }
+
+    public Task<bool> ConfirmAsync(string message, string title = "确认")
+    {
+        return ShowConfirmAsync(
+            new AppDialogOptions<bool>
+            {
+                Title = title,
+                Message = message,
+                Type = AppDialogType.Confirm,
+            }
+        );
+    }
+
+    public Task<string?> PromptAsync(
         string message,
         string title = "输入",
         string defaultValue = ""
     )
     {
-        var tcs = new TaskCompletionSource<object?>();
-        var model = new DialogModel
-        {
-            Title = title,
-            Message = message,
-            Type = DialogType.Prompt,
-            DefaultValue = defaultValue,
-            TaskSource = tcs,
-        };
-
-        OnDialogShow?.Invoke(model);
-        var result = await tcs.Task;
-        return result as string;
+        return ShowPromptAsync(
+            new AppDialogOptions<string?>
+            {
+                Title = title,
+                Message = message,
+                DefaultValue = defaultValue,
+                Type = AppDialogType.Prompt,
+            }
+        );
     }
 
     public Task<TResult?> ShowComponentAsync<TResult>(
@@ -71,20 +113,15 @@ public class AppDialogService : IAppDialogService
         bool disableBodyScroll = true
     )
     {
-        var tcs = new TaskCompletionSource<object?>();
-        var model = new DialogModel
-        {
-            Title = title,
-            Type = DialogType.Component,
-            Content = childContent,
-            Width = width,
-            DisableBodyScroll = disableBodyScroll,
-            TaskSource = tcs,
-        };
-
-        OnDialogShow?.Invoke(model);
-        // Cast result to TResult
-        return tcs.Task.ContinueWith(t => t.Result is TResult r ? r : default);
+        return ShowAsync(
+            new AppDialogOptions<TResult>
+            {
+                Title = title,
+                Content = childContent,
+                Width = width,
+                Type = AppDialogType.Component,
+            }
+        );
     }
 
     public async Task ShowComponentAsync(
@@ -94,30 +131,27 @@ public class AppDialogService : IAppDialogService
         bool disableBodyScroll = true
     )
     {
-        var tcs = new TaskCompletionSource<object?>();
-        var model = new DialogModel
-        {
-            Title = title,
-            Type = DialogType.Component,
-            Content = childContent,
-            Width = width,
-            DisableBodyScroll = disableBodyScroll,
-            TaskSource = tcs,
-        };
-
-        OnDialogShow?.Invoke(model);
-        await tcs.Task;
+        await ShowAsync<object?>(
+            new AppDialogOptions<object?>
+            {
+                Title = title,
+                Content = childContent,
+                Width = width,
+                Type = AppDialogType.Component,
+            }
+        );
     }
 
     public void Toast(string message, ToastType type = ToastType.Info, int duration = 3000)
     {
-        var model = new ToastModel
-        {
-            Message = message,
-            Type = type,
-            Duration = duration,
-        };
-        OnToastShow?.Invoke(model);
+        ShowToast(
+            new AppToastOptions
+            {
+                Message = message,
+                Level = MapToastType(type),
+                Duration = duration,
+            }
+        );
     }
 
     public NotificationModel ShowNotification(
@@ -140,13 +174,74 @@ public class AppDialogService : IAppDialogService
 
     public NotificationModel ShowNotification(NotificationOptions options)
     {
-        var model = new NotificationModel { Options = options };
-        OnNotificationShow?.Invoke(model);
-        return model;
+        var handle = ShowNotification(
+            new AppNotificationOptions
+            {
+                Title = options.Title,
+                Content = options.Content,
+                Progress = options.Bars,
+                Level = MapNotificationType(options.Type),
+                AutoClose = options.AutoClose > 0,
+                Duration = options.AutoClose > 0 ? options.AutoClose : 5000,
+            }
+        );
+
+        return new NotificationModel
+        {
+            Id = handle.Id,
+            Options = options,
+            UpdateContent = content => handle.UpdateContent?.Invoke(content),
+            UpdateTitle = title => handle.UpdateTitle?.Invoke(title),
+            UpdateProgress = bars => handle.UpdateProgress?.Invoke(bars),
+            UpdateType = type => handle.UpdateLevel?.Invoke(MapNotificationType(type)),
+            Close = () => handle.Close?.Invoke(),
+        };
     }
 
-    public void CloseAllNotifications()
+    // 将 AppDialogOptions 映射为内部的 AppDialogModel，统一对话框创建逻辑
+    private static AppDialogModel CreateDialog<TResult>(AppDialogOptions<TResult> options)
     {
-        OnCloseAllNotifications?.Invoke();
+        return new AppDialogModel
+        {
+            Type = options.Type,
+            Title = options.Title,
+            Message = options.Message,
+            Width = options.Width,
+            LightDismiss = options.LightDismiss,
+            EscToClose = options.EscToClose,
+            ConfirmText = options.ConfirmText,
+            CancelText = options.CancelText,
+            DefaultValue = options.DefaultValue,
+            Content = options.Content,
+            TaskSource = new TaskCompletionSource<object?>(),
+        };
+    }
+
+    private static async Task<TResult?> CompleteTypedAsync<TResult>(Task<object?> task)
+    {
+        var result = await task;
+        return result is TResult typed ? typed : default;
+    }
+
+    private static AppFeedbackLevel MapToastType(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => AppFeedbackLevel.Success,
+            ToastType.Warning => AppFeedbackLevel.Warning,
+            ToastType.Error => AppFeedbackLevel.Danger,
+            _ => AppFeedbackLevel.Info,
+        };
+    }
+
+    private static AppFeedbackLevel MapNotificationType(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.Success => AppFeedbackLevel.Success,
+            NotificationType.Warning => AppFeedbackLevel.Warning,
+            NotificationType.Error => AppFeedbackLevel.Danger,
+            _ => AppFeedbackLevel.Info,
+        };
     }
 }

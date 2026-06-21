@@ -1,7 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
+using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
@@ -12,6 +16,7 @@ namespace Dpz.Core.Web.Dashboard.Shared.Components;
 public partial class MarkdownEditor(
     IHttpService httpService,
     IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService,
     ILocalStorageService localStorageService
 ) : ComponentBase, IAsyncDisposable
 {
@@ -34,37 +39,43 @@ public partial class MarkdownEditor(
     [Parameter]
     public EventCallback<string>? OnImageUploaded { get; set; }
 
-    private string HeightStyle => Height == null ? "" : $"height:{Height}{HeightUnit}";
+    [Parameter]
+    public IReadOnlyCollection<ImageMetadata>? Images { get; set; }
+
+    private const int DefaultHeight = 600;
+
+    private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
 
     private readonly string _editorId = Guid.NewGuid().ToString("N");
-
     private IJSObjectReference? _jsModule;
-
-    private bool _editOnly;
-
     private DotNetObjectReference<MarkdownEditor>? _objRef;
-
+    private bool _editOnly;
     private bool _isUploading;
-
     private int _uploadProgress;
-
     private bool _editorInitialized;
+    private string? _uploadError;
+    private readonly List<ImageMetadata> _uploadedImages = [];
+
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
 
     protected override async Task OnInitializedAsync()
     {
+        _uploadedImages.AddRange(Images ?? []);
         _editOnly = await localStorageService.GetItemAsync<bool>("markdown-edit-only");
 
         try
         {
-            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./Shared/Components/MarkdownEditor.razor.js"
+            var modulePath = await assetManifestService.GetAssetPathAsync(
+                "src/editors/markdown-editor.ts"
             );
-            Console.WriteLine($"MarkdownEditor JS module loaded for {_editorId}");
+            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load JS module: {ex.Message}");
+            Console.WriteLine($"Failed to load MarkdownEditor module: {ex.Message}");
         }
 
         _objRef = DotNetObjectReference.Create(this);
@@ -72,35 +83,41 @@ public partial class MarkdownEditor(
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!_editorInitialized && _jsModule != null)
+        if (_editorInitialized || _jsModule == null || _objRef == null)
         {
-            try
-            {
-                Console.WriteLine($"Calling createEditor for {_editorId}");
-                await _jsModule.InvokeVoidAsync(
-                    "createEditor",
-                    _editorId,
-                    Markdown,
-                    _editOnly,
-                    _objRef
-                );
-                _editorInitialized = true;
-                Console.WriteLine($"createEditor called successfully for {_editorId}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to create editor: {ex.Message}");
-            }
+            return;
+        }
+
+        try
+        {
+            await _jsModule.InvokeVoidAsync(
+                "createEditor",
+                _editorId,
+                Markdown,
+                _editOnly,
+                _objRef
+            );
+            _editorInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to create MarkdownEditor: {ex.Message}");
         }
     }
 
     public async Task<string> GetValueAsync()
     {
-        if (_jsModule == null)
+        if (_jsModule == null || !_editorInitialized)
         {
-            return string.Empty;
+            return Markdown;
         }
-        return await _jsModule.InvokeAsync<string>("getMarkdown");
+
+        return await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+    }
+
+    public List<ImageMetadata> GetUploadedImages()
+    {
+        return [.. _uploadedImages];
     }
 
     public async Task ToggleEditModeAsync()
@@ -108,17 +125,9 @@ public partial class MarkdownEditor(
         _editOnly = !_editOnly;
         await localStorageService.SetItemAsync("markdown-edit-only", _editOnly);
 
-        if (_jsModule != null)
+        if (_jsModule != null && _editorInitialized)
         {
-            var currentMarkdown = await _jsModule.InvokeAsync<string>("getMarkdown");
-            await _jsModule.InvokeVoidAsync("destroy");
-            await _jsModule.InvokeVoidAsync(
-                "createEditor",
-                _editorId,
-                currentMarkdown,
-                _editOnly,
-                _objRef
-            );
+            await _jsModule.InvokeVoidAsync("setReadonly", _editorId, _editOnly);
         }
     }
 
@@ -129,9 +138,22 @@ public partial class MarkdownEditor(
         string contentType
     )
     {
+        var urls = await UploadImages([streamRef], [fileName], [contentType]);
+        return urls.FirstOrDefault() ?? string.Empty;
+    }
+
+    [JSInvokable]
+    public async Task<string[]> UploadImages(
+        IJSStreamReference[] streamRefs,
+        string[] fileNames,
+        string[] contentTypes
+    )
+    {
         _isUploading = true;
         _uploadProgress = 0;
+        _uploadError = null;
         StateHasChanged();
+        var streams = new List<Stream>();
         try
         {
             if (OnImageUploading != null)
@@ -139,32 +161,50 @@ public partial class MarkdownEditor(
                 await OnImageUploading.Value.InvokeAsync("开始上传图片...");
             }
 
-            using var stream = await streamRef.OpenReadStreamAsync(AppTools.MaxFileSize);
-            var files = new List<UploadFilePart> { new("image", fileName, contentType, stream) };
+            var files = new List<UploadFilePart>(streamRefs.Length);
+            for (var i = 0; i < streamRefs.Length; i++)
+            {
+                var stream = await streamRefs[i].OpenReadStreamAsync(AppTools.MaxFileSize);
+                streams.Add(stream);
+                files.Add(
+                    new UploadFilePart(
+                        "image",
+                        GetUploadFileName(fileNames, i),
+                        GetUploadContentType(contentTypes, i),
+                        stream
+                    )
+                );
+            }
+
             var progress = new Progress<int>(value =>
             {
                 _uploadProgress = value;
                 StateHasChanged();
             });
 
-            var result = await httpService.PostFileWithProgressAsync<UploadImageResult>(
+            var response = await httpService.PostFileWithProgressAsync<string>(
                 UploadAction,
                 files,
                 null,
                 progress
             );
+            var images = ParseUploadImages(response);
+            _uploadedImages.AddRange(images);
+            var urls = images.Select(image => image.Url).ToArray();
 
-            if (result != null && !string.IsNullOrWhiteSpace(result.Url))
+            foreach (var url in urls)
             {
                 if (OnImageUploaded != null)
                 {
-                    await OnImageUploaded.Value.InvokeAsync(result.Url);
+                    await OnImageUploaded.Value.InvokeAsync(url);
                 }
-                return result.Url;
             }
+
+            return urls;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _uploadError = ex.Message;
             if (OnImageUploaded != null)
             {
                 await OnImageUploaded.Value.InvokeAsync(string.Empty);
@@ -174,21 +214,89 @@ public partial class MarkdownEditor(
         {
             _isUploading = false;
             StateHasChanged();
+            foreach (var stream in streams)
+            {
+                await stream.DisposeAsync();
+            }
         }
 
-        return string.Empty;
+        return [];
     }
 
     public async ValueTask DisposeAsync()
     {
         if (_jsModule != null)
         {
-            await _jsModule.InvokeVoidAsync("destroy");
+            if (_editorInitialized)
+            {
+                await _jsModule.InvokeVoidAsync("destroy", _editorId);
+            }
+
             await _jsModule.DisposeAsync();
         }
 
         _objRef?.Dispose();
     }
 
-    private record UploadImageResult(string? Url);
+    private static string GetUploadFileName(string[] fileNames, int index)
+    {
+        return index < fileNames.Length && !string.IsNullOrWhiteSpace(fileNames[index])
+            ? fileNames[index]
+            : $"image-{index + 1}";
+    }
+
+    private static string GetUploadContentType(string[] contentTypes, int index)
+    {
+        return index < contentTypes.Length && !string.IsNullOrWhiteSpace(contentTypes[index])
+            ? contentTypes[index]
+            : "application/octet-stream";
+    }
+
+    private static ImageMetadata[] ParseUploadImages(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return [];
+        }
+
+        try
+        {
+            var images = JsonSerializer.Deserialize<List<ImageMetadata>>(
+                response,
+                JsonSerializerOptions
+            );
+            return images?.Where(image => !string.IsNullOrWhiteSpace(image.Url)).ToArray() ?? [];
+        }
+        catch (JsonException)
+        {
+            var image = JsonSerializer.Deserialize<UploadImageResult>(
+                response,
+                JsonSerializerOptions
+            );
+            return CreateFallbackImageMetadata(image);
+        }
+    }
+
+    private static ImageMetadata[] CreateFallbackImageMetadata(UploadImageResult? image)
+    {
+        if (image == null || string.IsNullOrWhiteSpace(image.Url))
+        {
+            return [];
+        }
+
+        return
+        [
+            new ImageMetadata
+            {
+                Url = image.Url,
+                Width = 0,
+                Height = 0,
+                Frames = 0,
+                Size = 0,
+                Format = ImageFormat.Unknown,
+            },
+        ];
+    }
+
+    private sealed record UploadImageResult(string? Url);
 }

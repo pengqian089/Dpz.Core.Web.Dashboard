@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 
 namespace Dpz.Core.Web.Dashboard.Models;
 
@@ -32,7 +33,12 @@ public class MumbleModel
     public int CommentCount { get; set; }
 
     /// <summary>
-    /// 
+    /// 图片元信息
+    /// </summary>
+    public List<ImageMetadata> Images { get; set; } = [];
+
+    /// <summary>
+    ///
     /// </summary>
     public required UserInfo Author { get; set; }
 

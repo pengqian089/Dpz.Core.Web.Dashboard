@@ -175,11 +175,7 @@ public partial class List(
             return;
         }
 
-        await dialogService.ShowComponentAsync(
-            "评论内容",
-            BuildCommentPreview(model.CommentText),
-            "900px"
-        );
+        await dialogService.ShowComponentAsync("评论内容", BuildCommentPreview(model.CommentText));
     }
 
     private async Task DeleteAsync(string id)

@@ -26,7 +26,7 @@ public partial class Detail(
 
     private bool _isPosting;
 
-    private bool _isLoading;
+    private bool _isLoading = true;
 
     private MusicModel _musicModel = new() { Id = "", MusicUrl = "" };
 

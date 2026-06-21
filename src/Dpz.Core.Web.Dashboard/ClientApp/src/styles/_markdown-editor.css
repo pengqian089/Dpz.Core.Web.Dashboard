@@ -1,0 +1,394 @@
+.markdown-editor-shell {
+    position: relative;
+    width: 100%;
+}
+
+.editor-upload-error {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: var(--border-radius-sm);
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.markdown-editor-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 420px;
+    max-height: calc(100vh - 160px);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-body);
+}
+
+.markdown-editor-workspace {
+    min-height: 0;
+}
+
+.markdown-editor-modebar {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-surface);
+}
+
+.markdown-editor-modebar__button {
+    min-width: 72px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.875rem;
+    transition:
+        background-color 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease;
+}
+
+.markdown-editor-modebar__button:hover {
+    border-color: rgba(96, 165, 250, 0.32);
+    background: rgba(59, 130, 246, 0.16);
+    color: var(--text-primary);
+}
+
+.markdown-editor-modebar__button.is-active {
+    border-color: rgba(96, 165, 250, 0.46);
+    background: rgba(37, 99, 235, 0.28);
+    color: #bfdbfe;
+}
+
+.markdown-editor-visual,
+.markdown-editor-source {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.markdown-editor-visual {
+    display: flex;
+    flex-direction: column;
+}
+
+.markdown-editor-visual[hidden],
+.markdown-editor-source[hidden] {
+    display: none;
+}
+
+.markdown-editor-source .cm-editor {
+    height: 100%;
+}
+
+.markdown-editor-source .cm-scroller {
+    overflow: auto;
+}
+
+.markdown-editor-container .milkdown,
+.markdown-editor-container .milkdown-crepe {
+    height: 100%;
+    min-height: 0;
+    background: var(--bg-body);
+    color: var(--text-primary);
+}
+
+.markdown-editor-container > div,
+.markdown-editor-container .milkdown,
+.markdown-editor-container .milkdown-crepe,
+.markdown-editor-container .milkdown .editor,
+.markdown-editor-container .milkdown .ProseMirror {
+    min-height: 0;
+}
+
+.markdown-editor-container > div,
+.markdown-editor-container .milkdown,
+.markdown-editor-container .milkdown-crepe {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.markdown-editor-container .milkdown .editor {
+    flex: 1 1 auto;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
+.markdown-editor-container .milkdown .ProseMirror {
+    min-height: 100%;
+    padding: clamp(24px, 5vw, 56px) clamp(18px, 7vw, 96px);
+}
+
+.markdown-editor-container .milkdown .milkdown-top-bar {
+    flex: 0 0 auto;
+}
+
+.markdown-editor-container .milkdown {
+    --crepe-color-background: var(--bg-body);
+    --crepe-color-on-background: var(--text-primary);
+    --crepe-color-surface: var(--bg-surface);
+    --crepe-color-surface-low: var(--bg-surface);
+    --crepe-color-on-surface: var(--text-primary);
+    --crepe-color-outline: #94a3b8;
+    --crepe-color-primary: var(--primary);
+    --crepe-color-hover: rgba(59, 130, 246, 0.22);
+    --crepe-color-selected: rgba(37, 99, 235, 0.46);
+    --crepe-color-inline-area: rgba(15, 23, 42, 0.82);
+    --crepe-color-inline-code: #f8fafc;
+    --crepe-shadow-1: 0 14px 34px rgba(0, 0, 0, 0.45);
+    --crepe-shadow-2: 0 18px 44px rgba(0, 0, 0, 0.55);
+    --crepe-font-title: var(--font-sans, "Microsoft YaHei", "PingFang SC", sans-serif);
+    --crepe-font-default: var(--font-sans, "Microsoft YaHei", "PingFang SC", sans-serif);
+    --crepe-font-code: "JetBrains Mono", "Microsoft YaHei UI", Consolas, monospace;
+}
+
+.markdown-editor-container .ProseMirror {
+    caret-color: #60a5fa;
+}
+
+.markdown-editor-container .ProseMirror *::selection,
+.markdown-editor-container .ProseMirror::selection,
+.markdown-editor-container .cm-selectionBackground,
+.markdown-editor-container .cm-content ::selection {
+    color: #ffffff;
+    background: rgba(37, 99, 235, 0.58);
+}
+
+.markdown-editor-container button {
+    cursor: pointer;
+}
+
+.markdown-editor-container--mobile .milkdown,
+.markdown-editor-container--mobile .milkdown-crepe {
+    min-height: 0;
+}
+
+.markdown-editor-container--mobile {
+    max-height: calc(100vh - 120px);
+}
+
+.markdown-editor-container--mobile .milkdown .ProseMirror {
+    padding: 24px 18px;
+}
+
+.markdown-editor-container .milkdown-toolbar,
+.markdown-editor-container .milkdown-top-bar,
+.markdown-editor-container .milkdown-slash-menu,
+.markdown-editor-container .milkdown-slash-menu-item,
+.markdown-editor-container .milkdown-topbar {
+    color: var(--text-primary);
+    font-family: var(--font-sans, "Microsoft YaHei", "PingFang SC", sans-serif);
+}
+
+.markdown-editor-container .milkdown-toolbar,
+.markdown-editor-container .milkdown-top-bar,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-dropdown {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.98);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48);
+}
+
+.markdown-editor-container .milkdown-toolbar {
+    overflow: visible;
+}
+
+.markdown-editor-container .milkdown-toolbar .divider,
+.markdown-editor-container .milkdown-top-bar .top-bar-divider {
+    background: rgba(148, 163, 184, 0.28);
+}
+
+.markdown-editor-container .milkdown-toolbar .toolbar-item,
+.markdown-editor-container .milkdown-top-bar .top-bar-item,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-button,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-option {
+    color: #e5e7eb;
+    transition:
+        background-color 0.16s ease,
+        color 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+.markdown-editor-container .milkdown-toolbar .toolbar-item svg,
+.markdown-editor-container .milkdown-top-bar .top-bar-item svg,
+.markdown-editor-container .milkdown-top-bar .top-bar-chevron svg {
+    color: #cbd5e1;
+    fill: #cbd5e1;
+    stroke: #cbd5e1;
+}
+
+.markdown-editor-container .milkdown-toolbar .toolbar-item:hover,
+.markdown-editor-container .milkdown-top-bar .top-bar-item:hover,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-button:hover,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-option:hover {
+    color: #ffffff;
+    background: rgba(59, 130, 246, 0.24);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.28);
+}
+
+.markdown-editor-container .milkdown-toolbar .toolbar-item:hover svg,
+.markdown-editor-container .milkdown-top-bar .top-bar-item:hover svg,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-button:hover svg {
+    color: #ffffff;
+    fill: #ffffff;
+    stroke: #ffffff;
+}
+
+.markdown-editor-container .milkdown-toolbar .toolbar-item.active,
+.markdown-editor-container .milkdown-top-bar .top-bar-item.active,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-option.active {
+    color: #bfdbfe;
+    background: rgba(37, 99, 235, 0.32);
+}
+
+.markdown-editor-container .milkdown-toolbar .toolbar-item.active svg,
+.markdown-editor-container .milkdown-top-bar .top-bar-item.active svg {
+    color: #93c5fd;
+    fill: #93c5fd;
+    stroke: #93c5fd;
+}
+
+.markdown-editor-container .milkdown-code-block {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+}
+
+.markdown-editor-container .milkdown-code-block,
+.markdown-editor-container .milkdown-code-block .cm-editor,
+.markdown-editor-container .milkdown-code-block .cm-scroller {
+    color: var(--text-primary);
+    font-family: "JetBrains Mono", "Microsoft YaHei UI", Consolas, monospace;
+}
+
+.markdown-editor-container .milkdown-code-block .cm-editor,
+.markdown-editor-container .milkdown-code-block .cm-gutters {
+    background: var(--bg-surface);
+}
+
+.markdown-editor-container .milkdown-code-block .cm-gutters {
+    color: var(--text-muted);
+    border-right-color: var(--border-color);
+}
+
+.markdown-editor-container .milkdown-code-block .preview-panel {
+    color: var(--text-primary);
+    background: var(--bg-surface);
+}
+
+.markdown-editor-container .milkdown-code-block .preview {
+    overflow-x: auto;
+    padding: 16px;
+}
+
+.markdown-editor-container .milkdown-code-block .preview svg {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    min-width: min(640px, 100%);
+    height: auto;
+    margin: 0 auto;
+}
+
+.markdown-mermaid-message {
+    padding: 12px 14px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 4px;
+    color: var(--text-muted);
+    background: rgba(15, 23, 42, 0.7);
+    font-family: var(--font-sans, "Microsoft YaHei", "PingFang SC", sans-serif);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.markdown-editor-container .cm-editor .cm-cursor {
+    border-left-color: #60a5fa;
+    border-left-width: 2px;
+}
+
+.markdown-editor-container--mobile [class*="toolbar"],
+.markdown-editor-container--mobile [class*="menu"] {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.markdown-editor-container--mobile .milkdown-toolbar {
+    gap: 4px;
+    padding: 6px;
+}
+
+.markdown-editor-container--mobile .milkdown-toolbar > *:nth-child(n + 9) {
+    display: none;
+}
+
+.markdown-editor-container--mobile .milkdown-slash-menu,
+.markdown-editor-container--mobile .milkdown-block-handle,
+.markdown-editor-container--mobile .milkdown-topbar {
+    display: none;
+}
+
+.editor-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 4px;
+    gap: var(--spacing-sm);
+}
+
+.editor-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: editor-spinner-rotate 1s ease-in-out infinite;
+}
+
+.editor-loading-text {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.editor-loading-progress {
+    width: 220px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.editor-loading-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #06b6d4);
+    transition: width 0.2s ease;
+}
+
+.editor-loading-progress-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+@keyframes editor-spinner-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}

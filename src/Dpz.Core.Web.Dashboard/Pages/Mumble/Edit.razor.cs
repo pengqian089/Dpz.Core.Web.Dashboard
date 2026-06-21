@@ -13,8 +13,8 @@ namespace Dpz.Core.Web.Dashboard.Pages.Mumble;
 public partial class Edit(
     IMumbleService mumbleService,
     IAppDialogService dialogService,
-    NavigationManager navigation)
-    : ComponentBase
+    NavigationManager navigation
+) : ComponentBase
 {
     [Parameter]
     public string Id { get; set; } = "";
@@ -78,7 +78,7 @@ public partial class Edit(
 
         try
         {
-            await mumbleService.EditAsync(_model.Id, markdown);
+            await mumbleService.EditAsync(_model.Id, markdown, _editor.GetUploadedImages());
             dialogService.Toast("保存成功", ToastType.Success);
             navigation.NavigateTo("/mumble");
         }

@@ -5,7 +5,6 @@ using Dpz.Core.EnumLibrary;
 
 #nullable  enable
 
-
 namespace Dpz.Core.Web.Dashboard.Models;
 
 public class DynamicPageModel

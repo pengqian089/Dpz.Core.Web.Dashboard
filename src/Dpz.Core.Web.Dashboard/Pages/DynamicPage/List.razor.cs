@@ -10,10 +10,7 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace Dpz.Core.Web.Dashboard.Pages.DynamicPage;
 
-public partial class List(
-    IDynamicPageService dynamicPageService,
-    IAppDialogService dialogService
-)
+public partial class List(IDynamicPageService dynamicPageService, IAppDialogService dialogService)
 {
     private const int PageSize = 10;
     private int _pageIndex = 1;
@@ -95,10 +92,7 @@ public partial class List(
             return;
         }
 
-        var confirmed = await dialogService.ConfirmAsync(
-            "删除后不能恢复，确定删除？",
-            "确认删除"
-        );
+        var confirmed = await dialogService.ConfirmAsync("删除后不能恢复，确定删除？", "确认删除");
         if (!confirmed)
         {
             return;

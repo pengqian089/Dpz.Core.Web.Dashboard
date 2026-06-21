@@ -1,7 +1,5 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
-using BlazorMonaco.Editor;
-using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 
@@ -16,7 +14,7 @@ public partial class Editor(IAppDialogService dialogService) : ComponentBase, IA
     [EditorRequired]
     public required string ElementId { get; set; }
 
-    private StandaloneCodeEditor? _editor;
+    private CodeEditor? _editor;
 
     public async Task<string> GetValueAsync()
     {
@@ -24,14 +22,15 @@ public partial class Editor(IAppDialogService dialogService) : ComponentBase, IA
         {
             return "";
         }
-        return await _editor.GetValue();
+
+        return await _editor.GetValueAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
         if (_editor != null)
         {
-            await _editor.DisposeEditor();
+            await _editor.DisposeAsync();
         }
     }
 
@@ -42,27 +41,7 @@ public partial class Editor(IAppDialogService dialogService) : ComponentBase, IA
             await dialogService.AlertAsync("请等待编辑器加载完成");
             return;
         }
-        var selection = await _editor.GetSelection();
-        var distance = selection.EndColumn - selection.StartColumn;
-        selection.CopyTo(out var endSelection);
-        if (endSelection == null)
-        {
-            await dialogService.AlertAsync("未获取到选中区域");
-            return;
-        }
-        endSelection.PositionColumn += value.Length - distance;
-        endSelection.EndColumn += value.Length - distance;
-        await _editor.ExecuteEdits(
-            Guid.NewGuid().ToString(),
-            [
-                new IdentifiedSingleEditOperation
-                {
-                    ForceMoveMarkers = true,
-                    Range = selection,
-                    Text = value,
-                },
-            ],
-            [endSelection]
-        );
+
+        await _editor.InsertValueAsync(value);
     }
 }

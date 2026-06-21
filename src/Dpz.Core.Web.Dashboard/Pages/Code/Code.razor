@@ -222,7 +222,9 @@
                         <div class="code-view__meta">
                             <span class="code-view__meta-item">
                                 <i class="fas fa-folder-open"></i>
-                                @string.Join("/", _treeData.CurrentPaths)
+                                <span class="code-view__path">
+                                    @string.Join("/", _treeData.CurrentPaths)
+                                </span>
                             </span>
                             @if (!string.IsNullOrWhiteSpace(_treeData.CodeContainer?.Language))
                             {

@@ -384,6 +384,15 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.code-view__path {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .code-view__badge {
@@ -581,6 +590,26 @@
 }
 
 @media (max-width: 600px) {
+    .code-page__header {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .code-page__tabs {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .code-breadcrumb {
+        gap: 4px;
+        margin-bottom: var(--spacing-md);
+        font-size: 0.8125rem;
+        overflow-wrap: anywhere;
+    }
+
+    .code-page__search {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .code-page__toolbar-right {
         flex-direction: column;
         align-items: stretch;
@@ -592,27 +621,95 @@
 
     /* README 移动端优化 */
     .code-readme {
-        padding: var(--spacing-md);
+        padding: 0;
         margin-bottom: var(--spacing-md);
+        border-radius: var(--border-radius-sm);
     }
 
     .code-readme__header {
-        margin-bottom: var(--spacing-sm);
+        margin-bottom: 0;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color);
         font-size: 0.95rem;
     }
 
     .code-view {
-        padding: var(--spacing-md);
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
     }
 
     .code-view__analysis {
         margin-top: var(--spacing-md);
-        padding: var(--spacing-md);
+        padding: 0;
+        border-radius: var(--border-radius-sm);
     }
 
     .code-view__analysis-title {
-        margin-bottom: var(--spacing-sm);
+        margin-bottom: 0;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color);
         font-size: 0.95rem;
+    }
+
+    .code-view__header {
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .code-view__title {
+        max-width: 100%;
+        font-size: 1rem;
+        overflow-wrap: anywhere;
+    }
+
+    .code-view__meta {
+        width: 100%;
+        gap: var(--spacing-sm);
+    }
+
+    .code-view__meta-item {
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .code-view__meta-item i {
+        flex: 0 0 auto;
+        margin-top: 2px;
+    }
+
+    .code-view__actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--spacing-sm);
+    }
+
+    .code-view__actions .btn {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .code-view__body {
+        border-radius: var(--border-radius-sm);
+    }
+
+    .code-view-editor {
+        min-height: min(520px, calc(100vh - 220px));
+    }
+
+    .code-view-editor .cm-editor {
+        min-height: min(520px, calc(100vh - 220px));
+    }
+
+    .code-readme .markdown-preview,
+    .code-view__analysis .markdown-preview {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .code-readme .markdown-preview__content,
+    .code-view__analysis .markdown-preview__content {
+        padding: 12px;
     }
 
     .code-readme .markdown-body,
@@ -639,6 +736,59 @@
     .code-view__analysis .markdown-body ol {
         margin-top: 0.5rem;
         margin-bottom: 0.5rem;
+    }
+
+    .code-readme .markdown-body h1,
+    .code-view__analysis .markdown-body h1 {
+        font-size: 1.35rem;
+        padding-bottom: 0.35rem;
+    }
+
+    .code-readme .markdown-body h2,
+    .code-view__analysis .markdown-body h2 {
+        font-size: 1.2rem;
+        padding-bottom: 0.3rem;
+    }
+
+    .code-readme .markdown-body h3,
+    .code-readme .markdown-body h4,
+    .code-readme .markdown-body h5,
+    .code-readme .markdown-body h6,
+    .code-view__analysis .markdown-body h3,
+    .code-view__analysis .markdown-body h4,
+    .code-view__analysis .markdown-body h5,
+    .code-view__analysis .markdown-body h6 {
+        font-size: 1.05rem;
+    }
+
+    .code-readme .markdown-body h1,
+    .code-readme .markdown-body h2,
+    .code-readme .markdown-body h3,
+    .code-readme .markdown-body h4,
+    .code-readme .markdown-body h5,
+    .code-readme .markdown-body h6,
+    .code-view__analysis .markdown-body h1,
+    .code-view__analysis .markdown-body h2,
+    .code-view__analysis .markdown-body h3,
+    .code-view__analysis .markdown-body h4,
+    .code-view__analysis .markdown-body h5,
+    .code-view__analysis .markdown-body h6 {
+        margin-top: 0.9rem;
+        margin-bottom: 0.45rem;
+    }
+
+    .code-readme .markdown-body blockquote,
+    .code-view__analysis .markdown-body blockquote {
+        margin: 0.75rem 0;
+        padding: 0.55rem 0.75rem;
+        border-left-width: 3px;
+    }
+
+    .code-readme .markdown-body ul,
+    .code-readme .markdown-body ol,
+    .code-view__analysis .markdown-body ul,
+    .code-view__analysis .markdown-body ol {
+        padding-left: 1.35rem;
     }
 
     .code-readme .markdown-body pre,

@@ -181,6 +181,45 @@
     padding: 24px 18px;
 }
 
+.markdown-editor-container--mobile .milkdown .milkdown-top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    max-width: 100%;
+    min-height: 48px;
+    gap: 4px;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    padding: 6px 8px;
+    border-width: 0 0 1px;
+    border-radius: 0;
+    box-shadow: none;
+    scrollbar-width: thin;
+}
+
+.markdown-editor-container--mobile .milkdown .milkdown-top-bar > * {
+    flex: 0 0 auto;
+}
+
+.markdown-editor-container--mobile .milkdown-top-bar .top-bar-item,
+.markdown-editor-container--mobile .milkdown-top-bar .top-bar-heading-button {
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--border-radius-sm);
+}
+
+.markdown-editor-container--mobile .milkdown-top-bar .top-bar-heading-dropdown {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    overflow-x: auto;
+}
+
 .markdown-editor-container .milkdown-toolbar,
 .markdown-editor-container .milkdown-top-bar,
 .markdown-editor-container .milkdown-slash-menu,

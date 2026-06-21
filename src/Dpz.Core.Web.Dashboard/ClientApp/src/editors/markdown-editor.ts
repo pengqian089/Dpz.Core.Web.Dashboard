@@ -403,7 +403,7 @@ class MarkdownEditorRegistry {
                 [Crepe.Feature.BlockEdit]: !mobile,
                 [Crepe.Feature.Latex]: false,
                 [Crepe.Feature.Table]: !mobile,
-                [Crepe.Feature.TopBar]: !mobile
+                [Crepe.Feature.TopBar]: true
             },
             featureConfigs: {
                 [Crepe.Feature.BlockEdit]: this.createBlockEditConfig(),

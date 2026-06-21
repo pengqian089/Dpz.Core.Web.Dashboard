@@ -1,85 +1,40 @@
-﻿<PersonCard Class="mb-4" />
+<PersonCard Class="mb-4" />
 
 <div class="app-sidebar__nav">
-    <div class="nav-group__title">菜单</div>
-    <NavLink href="" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-gauge"></i> 首页
-    </NavLink>
-    <NavLink href="article" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-file-lines"></i> 文章管理
-    </NavLink>
-    <NavLink href="picture" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-images"></i> 相册管理
-    </NavLink>
-    
-    <div class="nav-group__title">音频管理</div>
-    <NavLink href="music" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-music"></i> 音乐管理
-    </NavLink>
-    <NavLink href="audio" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-microphone"></i> 录音管理
-    </NavLink>
+    <div class="nav-search" role="search">
+        <i class="fas fa-search nav-search__icon" aria-hidden="true"></i>
+        <input
+            class="nav-search__input"
+            type="search"
+            placeholder="搜索菜单 / 拼音"
+            aria-label="搜索菜单"
+            @bind="_searchText"
+            @bind:event="oninput" />
+        @if (!string.IsNullOrWhiteSpace(_searchText))
+        {
+            <button class="nav-search__clear" type="button" title="清空搜索" @onclick="ClearSearch">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
+        }
+    </div>
 
-    <div class="nav-group__title">内容管理</div>
-    <NavLink href="mumble" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-comment-dots"></i> 碎碎念管理
-    </NavLink>
-    <NavLink href="timeline" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-stream"></i> 时间轴管理
-    </NavLink>
-    <NavLink href="danmaku" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-comments"></i> 弹幕管理
-    </NavLink>
-    <NavLink href="dynamic" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-pager"></i> 动态页管理
-    </NavLink>
+    @foreach (var group in FilteredGroups)
+    {
+        <div class="nav-group__title">@group.Title</div>
+        @foreach (var item in group.Items)
+        {
+            <NavLink href="@item.Href" Match="@item.Match" Class="nav-item">
+                <i class="@item.Icon" aria-hidden="true"></i>
+                <span>@item.Label</span>
+            </NavLink>
+        }
+    }
 
-    <div class="nav-group__title">评论管理</div>
-    <NavLink href="comment" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-comments"></i> 所有评论
-    </NavLink>
-    <NavLink href="comment/Article" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-file-alt"></i> 文章评论
-    </NavLink>
-    <NavLink href="comment/Friends" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-link"></i> 友链评论
-    </NavLink>
-    <NavLink href="comment/Code" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-code"></i> 源码评论
-    </NavLink>
-    <NavLink href="comment/Mumble" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-comment-dots"></i> 碎碎念评论
-    </NavLink>
-    <NavLink href="comment/Other" Match="NavLinkMatch.All" Class="nav-item">
-        <i class="fas fa-comment"></i> 其他评论
-    </NavLink>
-
-    <div class="nav-group__title">系统管理</div>
-    <NavLink href="video" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-video"></i> 视频管理
-    </NavLink>
-    <NavLink href="account" Class="nav-item">
-        <i class="fas fa-users"></i> 用户管理
-    </NavLink>
-    <NavLink href="friends" Class="nav-item">
-        <i class="fas fa-link"></i> 友情链接
-    </NavLink>
-    <NavLink href="code/tree" Match="NavLinkMatch.Prefix" Class="nav-item">
-        <i class="fas fa-code-branch"></i> 源码管理
-    </NavLink>
-    <NavLink href="footer" Class="nav-item">
-        <i class="fas fa-info-circle"></i> 页脚内容
-    </NavLink>
-    <NavLink href="system-notification" Class="nav-item">
-        <i class="fas fa-bullhorn"></i> 系统通知
-    </NavLink>
-    <NavLink href="message-outbox" Class="nav-item">
-        <i class="fas fa-route"></i> 消息队列
-    </NavLink>
-    <NavLink href="robots" Class="nav-item">
-        <i class="fas fa-robot"></i> Robots.txt
-    </NavLink>
-    <NavLink href="seo" Class="nav-item">
-        <i class="fas fa-search"></i> SEO 管理
-    </NavLink>
+    @if (!FilteredGroups.Any())
+    {
+        <div class="nav-search__empty">
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <span>没有匹配的菜单</span>
+        </div>
+    }
 </div>

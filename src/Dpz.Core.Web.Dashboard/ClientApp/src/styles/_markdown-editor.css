@@ -186,6 +186,7 @@
     top: 0;
     z-index: 3;
     display: flex;
+    flex-wrap: nowrap;
     max-width: 100%;
     min-height: 48px;
     gap: 4px;
@@ -193,6 +194,8 @@
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
     padding: 6px 8px;
     border-width: 0 0 1px;
     border-radius: 0;
@@ -204,8 +207,17 @@
     flex: 0 0 auto;
 }
 
+.markdown-editor-container--mobile .milkdown .milkdown-top-bar .top-bar-inner {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    width: max-content;
+    min-width: 100%;
+    overflow: visible;
+}
+
 .markdown-editor-container--mobile .milkdown-top-bar .top-bar-item,
 .markdown-editor-container--mobile .milkdown-top-bar .top-bar-heading-button {
+    flex: 0 0 auto;
     min-width: 40px;
     min-height: 40px;
     border-radius: var(--border-radius-sm);
@@ -361,12 +373,19 @@
 }
 
 .markdown-editor-container--mobile .milkdown-toolbar {
+    flex-wrap: nowrap;
     gap: 4px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
     padding: 6px;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
 }
 
-.markdown-editor-container--mobile .milkdown-toolbar > *:nth-child(n + 9) {
-    display: none;
+.markdown-editor-container--mobile .milkdown-toolbar > * {
+    flex: 0 0 auto;
 }
 
 .markdown-editor-container--mobile .milkdown-slash-menu,

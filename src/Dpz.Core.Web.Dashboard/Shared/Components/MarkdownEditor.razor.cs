@@ -42,7 +42,7 @@ public partial class MarkdownEditor(
     [Parameter]
     public IReadOnlyCollection<ImageMetadata>? Images { get; set; }
 
-    private const int DefaultHeight = 600;
+    private const int DefaultHeight = 800;
 
     private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
 

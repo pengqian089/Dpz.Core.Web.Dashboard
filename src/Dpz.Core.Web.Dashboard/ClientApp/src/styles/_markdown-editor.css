@@ -16,6 +16,7 @@
 }
 
 .markdown-editor-container {
+    --markdown-heading-menu-width: 136px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -119,6 +120,7 @@
 }
 
 .markdown-editor-container .milkdown .editor {
+    position: relative;
     flex: 1 1 auto;
     overflow: auto;
     scrollbar-gutter: stable;
@@ -126,10 +128,12 @@
 
 .markdown-editor-container .milkdown .ProseMirror {
     min-height: 100%;
-    padding: clamp(24px, 5vw, 56px) clamp(18px, 7vw, 96px);
+    padding: 28px 40px;
 }
 
 .markdown-editor-container .milkdown .milkdown-top-bar {
+    position: relative;
+    z-index: 20;
     flex: 0 0 auto;
 }
 
@@ -178,7 +182,7 @@
 }
 
 .markdown-editor-container--mobile .milkdown .ProseMirror {
-    padding: 24px 18px;
+    padding: 20px 16px;
 }
 
 .markdown-editor-container--mobile .milkdown .milkdown-top-bar {
@@ -232,6 +236,21 @@
     overflow-x: auto;
 }
 
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-selector,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-button,
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-dropdown {
+    width: var(--markdown-heading-menu-width);
+    min-width: var(--markdown-heading-menu-width);
+}
+
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-button {
+    justify-content: space-between;
+}
+
+.markdown-editor-container .milkdown-top-bar .top-bar-heading-label {
+    min-width: 0;
+}
+
 .markdown-editor-container .milkdown-toolbar,
 .markdown-editor-container .milkdown-top-bar,
 .markdown-editor-container .milkdown-slash-menu,
@@ -250,7 +269,43 @@
 }
 
 .markdown-editor-container .milkdown-toolbar {
+    z-index: 80;
     overflow: visible;
+}
+
+.markdown-editor-container .milkdown-block-handle {
+    z-index: 70;
+}
+
+.markdown-editor-container .milkdown-slash-menu {
+    z-index: 90;
+    max-height: min(420px, calc(100vh - 180px));
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.98);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48);
+}
+
+.markdown-editor-container .milkdown-slash-menu .tab-group {
+    padding: 8px 10px 0;
+}
+
+.markdown-editor-container .milkdown-slash-menu .tab-group ul {
+    padding: 6px 8px;
+}
+
+.markdown-editor-container .milkdown-slash-menu .menu-groups {
+    max-height: min(340px, calc(100vh - 260px));
+    padding: 0 10px 10px;
+    overflow: auto;
+}
+
+.markdown-editor-container .milkdown-slash-menu .menu-groups .menu-group h6 {
+    padding: 10px 10px;
+}
+
+.markdown-editor-container .milkdown-slash-menu .menu-groups .menu-group li {
+    padding: 10px;
 }
 
 .markdown-editor-container .milkdown-toolbar .divider,

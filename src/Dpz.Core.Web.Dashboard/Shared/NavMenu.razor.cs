@@ -62,17 +62,21 @@ public partial class NavMenu
         ),
     ];
 
-    private static readonly IReadOnlyList<NavGroup> SearchableGroups =
-        Groups.Select(group =>
-                group with
-                {
-                    Items = group.Items.Select(item => item with
-                    {
-                        SearchIndex = CreateSearchIndex(group.Title, item),
-                    }).ToArray(),
-                }
-            )
-            .ToArray();
+    private static readonly IReadOnlyList<NavGroup> SearchableGroups = Groups
+        .Select(group =>
+            group with
+            {
+                Items = group
+                    .Items.Select(item =>
+                        item with
+                        {
+                            SearchIndex = CreateSearchIndex(group.Title, item),
+                        }
+                    )
+                    .ToArray(),
+            }
+        )
+        .ToArray();
 
     private string _searchText = "";
 
@@ -87,12 +91,16 @@ public partial class NavMenu
             }
 
             return SearchableGroups
-                .Select(group => group with
-                {
-                    Items = group.Items
-                        .Where(item => item.SearchIndex.Contains(keyword, StringComparison.Ordinal))
-                        .ToArray(),
-                })
+                .Select(group =>
+                    group with
+                    {
+                        Items = group
+                            .Items.Where(item =>
+                                item.SearchIndex.Contains(keyword, StringComparison.Ordinal)
+                            )
+                            .ToArray(),
+                    }
+                )
                 .Where(group => group.Items.Count > 0)
                 .ToArray();
         }

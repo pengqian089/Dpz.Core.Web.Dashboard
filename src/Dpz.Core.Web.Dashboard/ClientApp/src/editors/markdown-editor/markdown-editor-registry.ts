@@ -8,6 +8,7 @@ import { MultiImageInputManager } from "./multi-image-input-manager";
 import { SourceMarkdownEditor } from "./source-markdown-editor";
 import { codeBlockTheme } from "./themes";
 import { ToolbarHintManager } from "./toolbar-hint-manager";
+import { TopBarTouchGuard } from "./top-bar-touch-guard";
 import type {
     CreateJSStreamReference,
     DotNetHelper,
@@ -30,6 +31,7 @@ export class MarkdownEditorRegistry {
     private readonly editors = new Map<string, MarkdownEditorInstance>();
     private readonly toolbarHints = new Map<string, ToolbarHintManager>();
     private readonly imageInputManagers = new Map<string, MultiImageInputManager>();
+    private readonly topBarTouchGuards = new Map<string, TopBarTouchGuard>();
     private readonly mermaidPreview = new MermaidPreviewRenderer();
 
     public constructor(private readonly createJSStreamReference: CreateJSStreamReference) {}
@@ -87,6 +89,7 @@ export class MarkdownEditorRegistry {
         this.configureToolbar(container);
         this.startToolbarHints(elementId, container);
         this.startImageInputManager(elementId, container);
+        this.startTopBarTouchGuard(elementId, container);
     }
 
     /** 获取当前 Markdown，源码模式直接读 CodeMirror，可视化模式读 Crepe 并清理噪声。 */
@@ -153,6 +156,7 @@ export class MarkdownEditorRegistry {
         this.editors.delete(elementId);
         this.destroyToolbarHints(elementId);
         this.destroyImageInputManager(elementId);
+        this.destroyTopBarTouchGuard(elementId);
     }
 
     private createCrepe(
@@ -383,6 +387,17 @@ export class MarkdownEditorRegistry {
     private destroyImageInputManager(elementId: string): void {
         this.imageInputManagers.get(elementId)?.stop();
         this.imageInputManagers.delete(elementId);
+    }
+
+    private startTopBarTouchGuard(elementId: string, root: HTMLElement): void {
+        const guard = new TopBarTouchGuard(root);
+        guard.start();
+        this.topBarTouchGuards.set(elementId, guard);
+    }
+
+    private destroyTopBarTouchGuard(elementId: string): void {
+        this.topBarTouchGuards.get(elementId)?.stop();
+        this.topBarTouchGuards.delete(elementId);
     }
 
     private createBlockEditConfig(): object {

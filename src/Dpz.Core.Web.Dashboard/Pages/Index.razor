@@ -297,7 +297,7 @@
                 </div>
             </article>
 
-            <article class="dashboard-panel dashboard-panel--span-6">
+            <article class="dashboard-panel dashboard-panel--span-6 dashboard-panel--balanced dashboard-panel--popular">
                 <header class="dashboard-panel__header">
                     <div>
                         <h2>热门页面</h2>
@@ -337,7 +337,7 @@
                 </div>
             </article>
 
-            <article class="dashboard-panel dashboard-panel--span-6">
+            <article class="dashboard-panel dashboard-panel--span-6 dashboard-panel--balanced dashboard-panel--slow">
                 <header class="dashboard-panel__header">
                     <div>
                         <h2>慢请求</h2>
@@ -380,7 +380,7 @@
                 </div>
             </article>
 
-            <article class="dashboard-panel dashboard-panel--span-5 dashboard-panel--media">
+            <article class="dashboard-panel dashboard-panel--span-5 dashboard-panel--media dashboard-panel--balanced dashboard-panel--banner">
                 <header class="dashboard-panel__header">
                     <div>
                         <h2>Banner 轮播</h2>
@@ -397,7 +397,10 @@
                                 <div class="dashboard-carousel__slide">
                                     <img src="@banner.AccessUrl" alt="@(banner.Description ?? "Banner")" />
                                     <div class="dashboard-carousel__caption">
-                                        <strong>@(banner.Description ?? "未命名 Banner")</strong>
+                                        @if(!string.IsNullOrWhiteSpace(banner.Description))
+                                        {
+                                            <strong>@(banner.Description)</strong>
+                                        }
                                         <span>@($"{banner.Width} x {banner.Height}")</span>
                                     </div>
                                 </div>
@@ -414,7 +417,7 @@
                 </div>
             </article>
 
-            <article class="dashboard-panel dashboard-panel--span-7">
+            <article class="dashboard-panel dashboard-panel--span-7 dashboard-panel--balanced dashboard-panel--articles">
                 <header class="dashboard-panel__header">
                     <div>
                         <h2>最新文章</h2>

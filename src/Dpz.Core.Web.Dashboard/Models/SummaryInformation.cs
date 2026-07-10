@@ -11,6 +11,11 @@ public class SummaryInformation
     public string? LatestLogs { get; set; }
 
     /// <summary>
+    /// 汇总信息更新时间
+    /// </summary>
+    public DateTime? UpdateTime { get; set; }
+
+    /// <summary>
     /// 文章总数
     /// </summary>
     public int ArticleTotalCount { get; set; }
@@ -28,7 +33,7 @@ public class SummaryInformation
     /// <summary>
     /// 最新文章
     /// </summary>
-    public List<ArticleModel> LatestArticles { get; set; } = [];
+    public List<ArticleMiniResponse> LatestArticles { get; set; } = [];
 
     /// <summary>
     /// 今日访问次数
@@ -39,4 +44,9 @@ public class SummaryInformation
     /// 近7天访问次数
     /// </summary>
     public List<AccessSummary> WeekAccessNumber { get; set; } = [];
+
+    /// <summary>
+    /// 访问日志统计信息
+    /// </summary>
+    public AccessLogStatistics AccessLogStatistics { get; set; } = new();
 }

@@ -1,4 +1,5 @@
 import Prism from "prismjs";
+import "prismjs/components/prism-bash";
 import "prismjs/components/prism-csharp";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-json";
@@ -25,7 +26,13 @@ class MarkdownPreviewHighlighter {
         });
     }
 
-    public highlightAll(): void {
+    public highlightAll(force = false): void {
+        if (force) {
+            document.querySelectorAll<HTMLElement>("pre code").forEach((block) => {
+                block.removeAttribute(highlightedAttribute);
+            });
+        }
+
         Prism.highlightAll();
     }
 }
@@ -36,6 +43,6 @@ export function highlightCodeBlocks(container: HTMLElement | null): void {
     highlighter.highlightCodeBlocks(container);
 }
 
-export function highlightAll(): void {
-    highlighter.highlightAll();
+export function highlightAll(force = false): void {
+    highlighter.highlightAll(force);
 }

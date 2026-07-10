@@ -1,220 +1,497 @@
 @page "/"
 @attribute [Authorize]
 
-@if (_isLoading)
-{
-    <div class="dashboard-hero dashboard-hero--skeleton">
-        <div class="dashboard-hero__content">
-            <div class="skeleton skeleton--title skeleton--half"></div>
-            <div class="skeleton skeleton--text skeleton--full"></div>
-            <div class="skeleton skeleton--text skeleton--third"></div>
-        </div>
-        <div class="dashboard-hero__actions">
-            <div class="skeleton skeleton--button"></div>
-            <div class="skeleton skeleton--button"></div>
-        </div>
-    </div>
-
-    <div class="dashboard-grid">
-        @for (var i = 0; i < 4; i++)
-        {
-            <div class="stat-card stat-card--skeleton">
-                <div class="skeleton skeleton--avatar"></div>
-                <div class="skeleton skeleton--text-lg skeleton--half"></div>
-                <div class="skeleton skeleton--text skeleton--third"></div>
-            </div>
-        }
-    </div>
-
-    <div class="content-grid">
-        <div class="panel panel--skeleton">
-            <div class="panel-header">
-                <div class="skeleton skeleton--text-lg skeleton--half"></div>
-                <div class="skeleton skeleton--text skeleton--quarter"></div>
-            </div>
-            <div class="panel-body">
-                <div class="skeleton skeleton--card dashboard-panel-skeleton"></div>
-            </div>
-        </div>
-        <div class="panel panel--skeleton">
-            <div class="panel-header">
-                <div class="skeleton skeleton--text-lg skeleton--half"></div>
-            </div>
-            <div class="panel-body" style="padding: 0;">
-                <div class="skeleton skeleton--card dashboard-panel-skeleton"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-grid" style="margin-top: var(--spacing-lg);">
-        <div class="panel panel--skeleton">
-            <div class="panel-header">
-                <div class="skeleton skeleton--text-lg skeleton--half"></div>
-            </div>
-            <div class="panel-body">
-                <div class="dashboard-log-skeleton">
+<div class="dashboard-page">
+    @if (_isLoading && _summary == null)
+    {
+        <section class="dashboard-shell dashboard-shell--loading" aria-label="首页数据加载中">
+            <div class="dashboard-hero dashboard-hero--skeleton">
+                <div class="dashboard-hero__main">
+                    <div class="skeleton skeleton--text skeleton--quarter"></div>
+                    <div class="skeleton skeleton--title skeleton--half"></div>
                     <div class="skeleton skeleton--text skeleton--full"></div>
-                    <div class="skeleton skeleton--text skeleton--full"></div>
-                    <div class="skeleton skeleton--text skeleton--full"></div>
-                    <div class="skeleton skeleton--text skeleton--full"></div>
+                    <div class="skeleton skeleton--text skeleton--third"></div>
+                </div>
+                <div class="dashboard-hero__side">
+                    <div class="skeleton skeleton--button"></div>
+                    <div class="skeleton skeleton--text skeleton--half"></div>
                 </div>
             </div>
-        </div>
-        <div class="panel panel--skeleton">
-            <div class="panel-header">
-                <div class="skeleton skeleton--text-lg skeleton--half"></div>
+
+            <div class="dashboard-metrics">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="dashboard-metric dashboard-metric--skeleton">
+                        <div class="skeleton skeleton--avatar"></div>
+                        <div class="skeleton skeleton--text-lg skeleton--half"></div>
+                        <div class="skeleton skeleton--text skeleton--third"></div>
+                    </div>
+                }
             </div>
-            <div class="panel-body">
-                <div class="dashboard-article-skeleton">
-                    @for (var i = 0; i < 4; i++)
+
+            <div class="dashboard-board">
+                @for (var i = 0; i < 4; i++)
+                {
+                    <article class="dashboard-panel dashboard-panel--span-6">
+                        <div class="dashboard-panel__header">
+                            <div>
+                                <div class="skeleton skeleton--text-lg skeleton--half"></div>
+                                <div class="skeleton skeleton--text skeleton--third"></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-panel__body">
+                            <div class="skeleton skeleton--card dashboard-skeleton-block"></div>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+    else if (_loadFailed && _summary == null)
+    {
+        <section class="dashboard-error">
+            <div class="dashboard-error__icon">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+            </div>
+            <div>
+                <h1>首页数据加载失败</h1>
+                <p>@(_errorMessage ?? "请稍后重试。")</p>
+            </div>
+            <button class="btn btn-primary" @onclick="RetryLoadAsync" disabled="@_isLoading">
+                <i class="fas fa-rotate-right" aria-hidden="true"></i>
+                重新加载
+            </button>
+        </section>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div class="dashboard-inline-alert" role="status">
+                <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                <span>@_errorMessage</span>
+            </div>
+        }
+
+        <section class="dashboard-hero">
+            <div class="dashboard-hero__main">
+                <div class="dashboard-kicker">
+                    <span></span>
+                    运营工作台
+                </div>
+                <h1>内容与访问健康度</h1>
+                <p>汇总文章产出、访问流量、热门路径和慢请求表现，快速判断站点运营状态。</p>
+                <div class="dashboard-hero__meta">
+                    <span>
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        @LastUpdatedText
+                    </span>
+                    <span>
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        @FormatNumber(ArticleTotalCount) 篇文章
+                    </span>
+                    <span>
+                        <i class="fas fa-image" aria-hidden="true"></i>
+                        @FormatNumber(BannerCount) 张 Banner
+                    </span>
+                </div>
+            </div>
+            <div class="dashboard-hero__side">
+                <button
+                    class="btn btn-primary dashboard-refresh"
+                    @onclick="RefreshSummaryAsync"
+                    disabled="@_isRefreshing">
+                    @if (_isRefreshing)
                     {
-                        <div class="dashboard-article-skeleton__item">
-                            <div class="skeleton skeleton--text skeleton--full"></div>
-                            <div class="skeleton skeleton--text skeleton--half"></div>
+                        <span class="btn-loading__spinner" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-rotate" aria-hidden="true"></i>
+                    }
+                    <span>@(_isRefreshing ? "刷新中" : "刷新缓存")</span>
+                </button>
+                <span class="dashboard-hero__hint">缓存刷新会重新计算汇总信息</span>
+            </div>
+        </section>
+
+        <section class="dashboard-metrics" aria-label="核心指标">
+            <article class="dashboard-metric dashboard-metric--traffic">
+                <div class="dashboard-metric__icon">
+                    <i class="fas fa-bolt" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>@FormatNumber(TodayAccessTotal)</strong>
+                    <span>今日访问</span>
+                </div>
+            </article>
+            <article class="dashboard-metric dashboard-metric--trend">
+                <div class="dashboard-metric__icon">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>@FormatNumber(WeekAverage)</strong>
+                    <span>七日平均</span>
+                </div>
+            </article>
+            <article class="dashboard-metric dashboard-metric--content">
+                <div class="dashboard-metric__icon">
+                    <i class="fas fa-file-lines" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>@FormatNumber(TodayArticleCount)</strong>
+                    <span>今日文章</span>
+                </div>
+            </article>
+            <article class="dashboard-metric dashboard-metric--library">
+                <div class="dashboard-metric__icon">
+                    <i class="fas fa-box-archive" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>@FormatNumber(ArticleTotalCount)</strong>
+                    <span>文章总量</span>
+                </div>
+            </article>
+            <article class="dashboard-metric dashboard-metric--route">
+                <div class="dashboard-metric__icon">
+                    <i class="fas fa-route" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>@FormatNumber(PopularPageTotal)</strong>
+                    <span>热门路径访问</span>
+                </div>
+            </article>
+            <article class="dashboard-metric dashboard-metric--latency">
+                <div class="dashboard-metric__icon">
+                    <i class="fas fa-gauge-high" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <strong>@FormatElapsed(SlowestRequestElapsed)</strong>
+                    <span>最慢请求</span>
+                </div>
+            </article>
+        </section>
+
+        <section class="dashboard-board">
+            <article class="dashboard-panel dashboard-panel--span-8">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>七日访问趋势</h2>
+                        <p>近 7 天访问量走势</p>
+                    </div>
+                    <span class="dashboard-chip">@FormatNumber(WeekAccessTotal)</span>
+                </header>
+                <div class="dashboard-panel__body">
+                    @if (_summary?.WeekAccessNumber.Count > 0)
+                    {
+                        <div class="dashboard-chart dashboard-chart--large">
+                            <canvas id="visitorTrendChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-chart-simple" aria-hidden="true"></i>
+                            <span>暂无访问趋势数据</span>
                         </div>
                     }
                 </div>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    <div class="dashboard-hero">
-        <div>
-            <h1>内容运营总览</h1>
-            <p>这里显示网站的核心数据指标和运营状态。</p>
-        </div>
-        <div class="flex gap-4 items-center">
-            <span class="badge badge-secondary">数据最后更新: @_lastUpdated.ToString("yyyy-MM-dd HH:mm:ss")</span>
-            <button class="btn btn-primary" @onclick="RefreshSummaryAsync">
-                <i class="fas fa-sync-alt"></i> 刷新数据
-            </button>
-        </div>
-    </div>
+            </article>
 
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <div class="stat-card__icon stat-card__icon--primary">
-                <i class="fas fa-bolt"></i>
-            </div>
-            <div class="stat-card__value">@FormatNumber(TodayAccessTotal)</div>
-            <div class="stat-card__label">今日访问总量</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card__icon stat-card__icon--warning">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="stat-card__value">@FormatNumber(WeekAverage)</div>
-            <div class="stat-card__label">七日平均访问</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card__icon stat-card__icon--success">
-                <i class="fas fa-file-alt"></i>
-            </div>
-            <div class="stat-card__value">@FormatNumber(_summary?.TodayArticleCount ?? 0)</div>
-            <div class="stat-card__label">今日发布文章</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card__icon stat-card__icon--info">
-                <i class="fas fa-images"></i>
-            </div>
-            <div class="stat-card__value">@FormatNumber(BannerCount)</div>
-            <div class="stat-card__label">轮播图数量</div>
-        </div>
-    </div>
-
-    <div class="content-grid">
-         <div class="panel">
-            <div class="panel-header">
-                 <div class="flex justify-between items-center w-100">
-                    <h3 class="panel-title">七日访问趋势</h3>
-                    <span class="badge badge-secondary">近7天</span>
-                </div>
-            </div>
-            <div class="panel-body">
-                 <div style="height: 300px; width: 100%;">
-                    <canvas id="visitorChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-         <div class="panel">
-            <div class="panel-header">
-                <h3 class="panel-title">Banner 轮播</h3>
-            </div>
-            <div class="panel-body" style="padding: 0;">
-                 @if (_summary?.Banner != null && _summary.Banner.Count > 0)
-                {
-                    <div id="bannerCarousel" class="carousel">
-                        @foreach (var item in _summary.Banner)
-                        {
-                            <div class="carousel-slide">
-                                <img src="@item.AccessUrl" alt="@item.Description" />
-                                @if (!string.IsNullOrEmpty(item.Description))
-                                {
-                                    <div class="carousel-caption">
-                                        <h4>@item.Description</h4>
-                                    </div>
-                                }
-                            </div>
-                        }
+            <article class="dashboard-panel dashboard-panel--span-4">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>浏览器占比</h2>
+                        <p>访问客户端分布</p>
                     </div>
-                }
-                else
-                {
-                    <div class="flex items-center justify-center" style="height: 320px; background-color: rgba(0,0,0,0.2);">
-                        <span class="text-muted">暂无 Banner 数据</span>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <div class="content-grid" style="margin-top: var(--spacing-lg);">
-        <div class="panel">
-            <div class="panel-header">
-                <h3 class="panel-title">系统日志</h3>
-            </div>
-            <div class="panel-body" style="max-height: 300px;overflow-y: auto;">
-                @if (!string.IsNullOrEmpty(_summary?.LatestLogs))
-                {
-                     <pre class="log-scroll log-content"><code class="language-bash">@_summary.LatestLogs</code></pre>
-                }
-                else
-                {
-                    <div class="log-empty flex items-center justify-center">
-                        暂无日志数据
-                    </div>
-                }
-            </div>
-        </div>
-        <div class="panel">
-            <div class="panel-header">
-                 <div class="flex justify-between items-center w-100">
-                    <h3 class="panel-title">最新文章</h3>
-                </div>
-            </div>
-            <div class="panel-body">
-                @if (_summary?.LatestArticles != null)
-                {
-                    <div class="list-group">
-                    @foreach (var item in _summary.LatestArticles)
+                </header>
+                <div class="dashboard-panel__body">
+                    @if (BrowserUsage.Count > 0)
                     {
-                        <a href="/article/edit/@item.Id" class="list-group-item">
-                            <span class="text-truncate" style="max-width: 70%;">@item.Title</span>
-                            <div class="flex items-center gap-2">
-                                 @if(item.ImagesAddress.Count > 0)
-                                {
-                                     <span class="badge badge-secondary"><i class="fas fa-image"></i> @item.ImagesAddress.Count</span>
-                                }
-                                <span class="text-sm text-muted">@item.CreateTime.ToString("MM-dd")</span>
-                            </div>
-                        </a>
+                        <div class="dashboard-chart dashboard-chart--donut">
+                            <canvas id="browserUsageChart"></canvas>
+                        </div>
+                        <div class="dashboard-browser-list">
+                            @for (var i = 0; i < BrowserUsage.Count; i++)
+                            {
+                                var browser = BrowserUsage[i];
+                                <div
+                                    class="dashboard-browser-item"
+                                    style="@($"--dashboard-browser-color: {GetBrowserColor(i)}")">
+                                    <span></span>
+                                    <strong>@(string.IsNullOrWhiteSpace(browser.Browser) ? "未知" : browser.Browser)</strong>
+                                    <em>@FormatPercentage(browser, BrowserTotal)</em>
+                                </div>
+                            }
+                        </div>
                     }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-compass" aria-hidden="true"></i>
+                            <span>暂无浏览器统计</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-7">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>每小时流量</h2>
+                        <p>最近 24 个小时点</p>
                     </div>
-                }
-            </div>
-        </div>
-    </div>
-}
+                </header>
+                <div class="dashboard-panel__body">
+                    @if (HourlyTraffic.Count > 0)
+                    {
+                        <div class="dashboard-chart">
+                            <canvas id="hourlyTrafficChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+                            <span>暂无小时流量数据</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-5">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>访问来源</h2>
+                        <p>来源域名排行</p>
+                    </div>
+                    <span class="dashboard-chip">@FormatNumber(RefererTotal)</span>
+                </header>
+                <div class="dashboard-panel__body dashboard-panel__body--list">
+                    @if (Referers.Count > 0)
+                    {
+                        <div class="dashboard-rank-list">
+                            @foreach (var referer in Referers)
+                            {
+                                <div class="dashboard-rank-item">
+                                    <div class="dashboard-rank-item__content">
+                                        <strong>@FormatReferer(referer.Referer)</strong>
+                                        <span>@FormatRefererAddress(referer.Referer)</span>
+                                    </div>
+                                    <em>@FormatNumber(referer.Count)</em>
+                                    <div
+                                        class="dashboard-rank-item__bar"
+                                        style="@($"--dashboard-bar-value: {FormatCssPercent(referer.Count, RefererTotal)}")">
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-share-nodes" aria-hidden="true"></i>
+                            <span>暂无来源数据</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-6">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>热门页面</h2>
+                        <p>请求路径访问排行</p>
+                    </div>
+                </header>
+                <div class="dashboard-panel__body dashboard-panel__body--list">
+                    @if (PopularPages.Count > 0)
+                    {
+                        <div class="dashboard-route-list">
+                            @for (var i = 0; i < PopularPages.Count; i++)
+                            {
+                                var page = PopularPages[i];
+                                <div class="dashboard-route-item">
+                                    <span class="dashboard-route-item__index">@(i + 1)</span>
+                                    <div class="dashboard-route-item__main">
+                                        <strong title="@FormatPath(page.RequestPath)">
+                                            @FormatPath(page.RequestPath)
+                                        </strong>
+                                        <div
+                                            class="dashboard-route-item__bar"
+                                            style="@($"--dashboard-bar-value: {FormatCssPercent(page.Count, PopularPagePeak)}")">
+                                        </div>
+                                    </div>
+                                    <em>@FormatNumber(page.Count)</em>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-route" aria-hidden="true"></i>
+                            <span>暂无热门页面数据</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-6">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>慢请求</h2>
+                        <p>响应耗时排行</p>
+                    </div>
+                </header>
+                <div class="dashboard-panel__body dashboard-panel__body--list">
+                    @if (SlowRequests.Count > 0)
+                    {
+                        <div class="dashboard-slow-list">
+                            @foreach (var request in SlowRequests)
+                            {
+                                <div class="dashboard-slow-item">
+                                    <div class="dashboard-slow-item__top">
+                                        <span class="dashboard-method">@request.RequestMethod</span>
+                                        <strong title="@FormatPath(request.RequestPath)">
+                                            @FormatPath(request.RequestPath)
+                                        </strong>
+                                        <em>@FormatElapsed(request.Elapsed)</em>
+                                    </div>
+                                    <div class="dashboard-slow-item__meta">
+                                        <span>@FormatSlowRequestTime(request.Time)</span>
+                                        <span class="@GetStatusClass(request.StatusCode)">
+                                            @request.StatusCode
+                                        </span>
+                                        <span>@(request.Browser ?? "未知浏览器")</span>
+                                        <span>@(request.Device ?? "未知设备")</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-gauge" aria-hidden="true"></i>
+                            <span>暂无慢请求数据</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-5 dashboard-panel--media">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>Banner 轮播</h2>
+                        <p>首页视觉资源</p>
+                    </div>
+                    <span class="dashboard-chip">@FormatNumber(VisibleBanners.Count)</span>
+                </header>
+                <div class="dashboard-panel__body dashboard-panel__body--flush">
+                    @if (VisibleBanners.Count > 0)
+                    {
+                        <div id="dashboardBannerCarousel" class="dashboard-carousel">
+                            @foreach (var banner in VisibleBanners)
+                            {
+                                <div class="dashboard-carousel__slide">
+                                    <img src="@banner.AccessUrl" alt="@(banner.Description ?? "Banner")" />
+                                    <div class="dashboard-carousel__caption">
+                                        <strong>@(banner.Description ?? "未命名 Banner")</strong>
+                                        <span>@($"{banner.Width} x {banner.Height}")</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty dashboard-empty--media">
+                            <i class="fas fa-image" aria-hidden="true"></i>
+                            <span>暂无可展示 Banner</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-7">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>最新文章</h2>
+                        <p>最近发布内容</p>
+                    </div>
+                    <a class="dashboard-link" href="/article">
+                        全部文章
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </header>
+                <div class="dashboard-panel__body dashboard-panel__body--list">
+                    @if (LatestArticles.Count > 0)
+                    {
+                        <div class="dashboard-article-list">
+                            @foreach (var article in LatestArticles)
+                            {
+                                var articleImage = GetArticleImage(article);
+                                <a
+                                    class="dashboard-article-item"
+                                    href="@($"/article/edit/{article.Id}")">
+                                    @if (!string.IsNullOrWhiteSpace(articleImage))
+                                    {
+                                        <img src="@articleImage" alt="@article.Title" />
+                                    }
+                                    else
+                                    {
+                                        <span class="dashboard-article-item__placeholder">
+                                            <i class="fas fa-file-lines" aria-hidden="true"></i>
+                                        </span>
+                                    }
+                                    <span class="dashboard-article-item__content">
+                                        <strong>@article.Title</strong>
+                                        <span>@(article.Introduction ?? "暂无简介")</span>
+                                    </span>
+                                    <span class="dashboard-article-item__meta">
+                                        <span>@GetArticleAuthor(article)</span>
+                                        <span>@FormatArticleDate(article.CreateTime)</span>
+                                        <span>
+                                            <i class="fas fa-eye" aria-hidden="true"></i>
+                                            @FormatNumber(article.ViewCount)
+                                        </span>
+                                    </span>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-newspaper" aria-hidden="true"></i>
+                            <span>暂无最新文章</span>
+                        </div>
+                    }
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--span-12 dashboard-panel--logs">
+                <header class="dashboard-panel__header">
+                    <div>
+                        <h2>系统日志</h2>
+                        <p>最近 100 条日志摘要</p>
+                    </div>
+                </header>
+                <div class="dashboard-panel__body dashboard-panel__body--logs">
+                    @if (!string.IsNullOrWhiteSpace(_summary?.LatestLogs))
+                    {
+                        <pre class="dashboard-log"><code class="language-bash">@_summary.LatestLogs</code></pre>
+                    }
+                    else
+                    {
+                        <div class="dashboard-empty">
+                            <i class="fas fa-terminal" aria-hidden="true"></i>
+                            <span>暂无日志数据</span>
+                        </div>
+                    }
+                </div>
+            </article>
+        </section>
+    }
+</div>

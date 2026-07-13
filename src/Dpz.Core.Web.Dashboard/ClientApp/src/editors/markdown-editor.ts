@@ -1,5 +1,5 @@
 import { MarkdownEditorRegistry } from "./markdown-editor/markdown-editor-registry";
-import type { DotNetHelper } from "./markdown-editor/types";
+import type { DotNetHelper, MarkdownImageMode } from "./markdown-editor/types";
 
 /** Blazor 全局 JS 互操作入口，由 Blazor 运行时注入。 */
 declare const DotNet: {
@@ -19,9 +19,10 @@ export async function createEditor(
     elementId: string,
     markdown: string,
     editOnly: boolean,
-    dotNetHelper: DotNetHelper
+    dotNetHelper: DotNetHelper,
+    imageMode: MarkdownImageMode = "inline"
 ): Promise<void> {
-    await registry.createEditor(elementId, markdown, editOnly, dotNetHelper);
+    await registry.createEditor(elementId, markdown, editOnly, dotNetHelper, imageMode);
 }
 
 /** 获取当前编辑器 Markdown 内容。 */

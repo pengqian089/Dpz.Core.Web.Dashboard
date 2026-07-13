@@ -32,13 +32,14 @@
                         <label class="form-label form-label--required">碎碎念内容</label>
                         <MarkdownEditor
                             @ref="_editor"
+                            ImageMode="MarkdownImageMode.Gallery"
                             Markdown=""
                             UploadAction="/api/Mumble/upload">
                         </MarkdownEditor>
                         <ValidationMessage For="@(() => _model)" />
                         <div class="form-helper">
                             <i class="fas fa-info-circle"></i>
-                            支持 Markdown 语法，可上传图片和链接
+                            支持 Markdown 语法，上传图片后会在下方画廊显示
                         </div>
                     </div>
                 </div>

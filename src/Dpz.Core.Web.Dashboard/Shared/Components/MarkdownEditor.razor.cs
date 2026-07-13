@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
@@ -42,6 +43,9 @@ public partial class MarkdownEditor(
     [Parameter]
     public IReadOnlyCollection<ImageMetadata>? Images { get; set; }
 
+    [Parameter]
+    public MarkdownImageMode ImageMode { get; set; } = MarkdownImageMode.Inline;
+
     private const int DefaultHeight = 800;
 
     private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
@@ -55,6 +59,7 @@ public partial class MarkdownEditor(
     private bool _editorInitialized;
     private string? _uploadError;
     private readonly List<ImageMetadata> _uploadedImages = [];
+    private readonly List<GalleryImage> _galleryImages = [];
 
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
@@ -63,7 +68,15 @@ public partial class MarkdownEditor(
 
     protected override async Task OnInitializedAsync()
     {
-        _uploadedImages.AddRange(Images ?? []);
+        if (ImageMode == MarkdownImageMode.Gallery)
+        {
+            InitializeGalleryImages();
+        }
+        else
+        {
+            _uploadedImages.AddRange(Images ?? []);
+        }
+
         _editOnly = await localStorageService.GetItemAsync<bool>("markdown-edit-only");
 
         try
@@ -95,7 +108,8 @@ public partial class MarkdownEditor(
                 _editorId,
                 Markdown,
                 _editOnly,
-                _objRef
+                _objRef,
+                ImageMode.ToString().ToLowerInvariant()
             );
             _editorInitialized = true;
         }
@@ -109,14 +123,24 @@ public partial class MarkdownEditor(
     {
         if (_jsModule == null || !_editorInitialized)
         {
-            return Markdown;
+            return ImageMode == MarkdownImageMode.Gallery
+                ? NormalizeGalleryMarkdown(Markdown, _galleryImages)
+                : Markdown;
         }
 
-        return await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+        var markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+        return ImageMode == MarkdownImageMode.Gallery
+            ? NormalizeGalleryMarkdown(markdown, _galleryImages)
+            : markdown;
     }
 
     public List<ImageMetadata> GetUploadedImages()
     {
+        if (ImageMode == MarkdownImageMode.Gallery)
+        {
+            return _galleryImages.Select(image => image.Metadata).ToList();
+        }
+
         return [.. _uploadedImages];
     }
 
@@ -190,6 +214,8 @@ public partial class MarkdownEditor(
             );
             var images = ParseUploadImages(response);
             _uploadedImages.AddRange(images);
+            AddUploadedGalleryImages(images, fileNames);
+            StateHasChanged();
             var urls = images.Select(image => image.Url).ToArray();
 
             foreach (var url in urls)
@@ -223,6 +249,26 @@ public partial class MarkdownEditor(
         return [];
     }
 
+    private async Task RemoveGalleryImageAsync(string url)
+    {
+        if (ImageMode != MarkdownImageMode.Gallery)
+        {
+            return;
+        }
+
+        _galleryImages.RemoveAll(image =>
+            string.Equals(image.Metadata.Url, url, StringComparison.Ordinal)
+        );
+        _uploadedImages.RemoveAll(image => string.Equals(image.Url, url, StringComparison.Ordinal));
+
+        if (_jsModule != null && _editorInitialized)
+        {
+            var markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+            var normalizedMarkdown = NormalizeGalleryMarkdown(markdown, _galleryImages);
+            await _jsModule.InvokeVoidAsync("setMarkdown", _editorId, normalizedMarkdown);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_jsModule != null)
@@ -250,6 +296,288 @@ public partial class MarkdownEditor(
         return index < contentTypes.Length && !string.IsNullOrWhiteSpace(contentTypes[index])
             ? contentTypes[index]
             : "application/octet-stream";
+    }
+
+    private void InitializeGalleryImages()
+    {
+        var imageLookup = (Images ?? [])
+            .GroupBy(image => image.Url)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var markdownImages = ExtractMarkdownImages(Markdown);
+
+        foreach (var markdownImage in markdownImages)
+        {
+            var metadata = imageLookup.TryGetValue(markdownImage.Url, out var image)
+                ? image
+                : CreateFallbackImageMetadata(markdownImage.Url);
+            AddGalleryImage(metadata, markdownImage.Alt);
+        }
+
+        foreach (var image in Images ?? [])
+        {
+            AddGalleryImage(image, CreateImageAlt(image.Url));
+        }
+
+        _uploadedImages.AddRange(_galleryImages.Select(image => image.Metadata));
+    }
+
+    private void AddUploadedGalleryImages(ImageMetadata[] images, string[] fileNames)
+    {
+        if (ImageMode != MarkdownImageMode.Gallery)
+        {
+            return;
+        }
+
+        for (var i = 0; i < images.Length; i++)
+        {
+            AddGalleryImage(images[i], GetUploadImageAlt(fileNames, i));
+        }
+    }
+
+    private void AddGalleryImage(ImageMetadata image, string alt)
+    {
+        if (string.IsNullOrWhiteSpace(image.Url))
+        {
+            return;
+        }
+
+        if (
+            _galleryImages.Any(item =>
+                string.Equals(item.Metadata.Url, image.Url, StringComparison.Ordinal)
+            )
+        )
+        {
+            return;
+        }
+
+        _galleryImages.Add(new GalleryImage(image, string.IsNullOrWhiteSpace(alt) ? "image" : alt));
+    }
+
+    private static string NormalizeGalleryMarkdown(
+        string markdown,
+        IReadOnlyCollection<GalleryImage> galleryImages
+    )
+    {
+        var body = RemoveMarkdownImages(markdown).Trim();
+        if (galleryImages.Count == 0)
+        {
+            return body;
+        }
+
+        var imagesMarkdown = string.Join(
+            "\n\n",
+            galleryImages.Select(image => CreateImageMarkdown(image.Alt, image.Metadata.Url))
+        );
+
+        return string.IsNullOrWhiteSpace(body) ? imagesMarkdown : $"{body}\n\n{imagesMarkdown}";
+    }
+
+    private static string RemoveMarkdownImages(string markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+        {
+            return "";
+        }
+
+        var images = ExtractMarkdownImages(markdown);
+        if (images.Count == 0)
+        {
+            return markdown;
+        }
+
+        var builder = new StringBuilder(markdown);
+        foreach (var image in images.OrderByDescending(image => image.Start))
+        {
+            builder.Remove(image.Start, image.End - image.Start);
+        }
+
+        return builder
+            .ToString()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\r", "\n", StringComparison.Ordinal)
+            .Split('\n')
+            .Select(line => line.TrimEnd())
+            .Aggregate(new StringBuilder(), AppendNormalizedLine)
+            .ToString()
+            .Trim();
+    }
+
+    private static StringBuilder AppendNormalizedLine(StringBuilder builder, string line)
+    {
+        if (builder.Length == 0)
+        {
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                builder.Append(line);
+            }
+
+            return builder;
+        }
+
+        var lastLineEmpty =
+            builder.Length >= 2
+            && builder[builder.Length - 1] == '\n'
+            && builder[builder.Length - 2] == '\n';
+        if (string.IsNullOrWhiteSpace(line) && lastLineEmpty)
+        {
+            return builder;
+        }
+
+        builder.Append('\n').Append(line);
+        return builder;
+    }
+
+    private static List<MarkdownImage> ExtractMarkdownImages(string markdown)
+    {
+        var images = new List<MarkdownImage>();
+        if (string.IsNullOrWhiteSpace(markdown))
+        {
+            return images;
+        }
+
+        var index = 0;
+        while (index < markdown.Length - 3)
+        {
+            if (markdown[index] != '!' || markdown[index + 1] != '[')
+            {
+                index++;
+                continue;
+            }
+
+            if (!TryReadMarkdownImage(markdown, index, out var image))
+            {
+                index++;
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(image.Url))
+            {
+                images.Add(image);
+            }
+
+            index = image.End;
+        }
+
+        return images;
+    }
+
+    private static bool TryReadMarkdownImage(
+        string markdown,
+        int start,
+        out MarkdownImage image
+    )
+    {
+        image = default;
+        var labelEnd = FindClosingBracket(markdown, start + 1, '[', ']');
+        if (labelEnd < 0 || labelEnd + 1 >= markdown.Length || markdown[labelEnd + 1] != '(')
+        {
+            return false;
+        }
+
+        var linkEnd = FindClosingBracket(markdown, labelEnd + 1, '(', ')');
+        if (linkEnd < 0)
+        {
+            return false;
+        }
+
+        var alt = markdown.Substring(start + 2, labelEnd - start - 2);
+        var linkContent = markdown.Substring(labelEnd + 2, linkEnd - labelEnd - 2);
+        var url = ExtractMarkdownImageUrl(linkContent);
+        image = new MarkdownImage(start, linkEnd + 1, alt, url);
+        return true;
+    }
+
+    private static int FindClosingBracket(
+        string value,
+        int openIndex,
+        char openChar,
+        char closeChar
+    )
+    {
+        var depth = 0;
+        var escaped = false;
+        for (var i = openIndex; i < value.Length; i++)
+        {
+            var current = value[i];
+            if (escaped)
+            {
+                escaped = false;
+                continue;
+            }
+
+            if (current == '\\')
+            {
+                escaped = true;
+                continue;
+            }
+
+            if (current == openChar)
+            {
+                depth++;
+                continue;
+            }
+
+            if (current != closeChar)
+            {
+                continue;
+            }
+
+            depth--;
+            if (depth == 0)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static string ExtractMarkdownImageUrl(string linkContent)
+    {
+        var trimmed = linkContent.Trim();
+        if (trimmed.Length == 0)
+        {
+            return "";
+        }
+
+        if (trimmed[0] == '<')
+        {
+            var end = trimmed.IndexOf('>');
+            return end > 0 ? trimmed[1..end] : "";
+        }
+
+        var whitespaceIndex = trimmed.IndexOfAny([' ', '\t', '\r', '\n']);
+        return whitespaceIndex > 0 ? trimmed[..whitespaceIndex] : trimmed;
+    }
+
+    private static string CreateImageMarkdown(string alt, string url)
+    {
+        return $"![{EscapeImageAlt(alt)}]({url})";
+    }
+
+    private static string EscapeImageAlt(string alt)
+    {
+        return (string.IsNullOrWhiteSpace(alt) ? "image" : alt)
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("[", "\\[", StringComparison.Ordinal)
+            .Replace("]", "\\]", StringComparison.Ordinal);
+    }
+
+    private static string GetUploadImageAlt(string[] fileNames, int index)
+    {
+        var fileName = GetUploadFileName(fileNames, index);
+        return Path.GetFileNameWithoutExtension(fileName).Trim();
+    }
+
+    private static string CreateImageAlt(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return "image";
+        }
+
+        var fileName = Path.GetFileNameWithoutExtension(uri.LocalPath);
+        return string.IsNullOrWhiteSpace(fileName) ? "image" : fileName;
     }
 
     private static ImageMetadata[] ParseUploadImages(string? response)
@@ -286,17 +614,26 @@ public partial class MarkdownEditor(
 
         return
         [
-            new ImageMetadata
-            {
-                Url = image.Url,
-                Width = 0,
-                Height = 0,
-                Frames = 0,
-                Size = 0,
-                Format = ImageFormat.Unknown,
-            },
+            CreateFallbackImageMetadata(image.Url),
         ];
     }
+
+    private static ImageMetadata CreateFallbackImageMetadata(string url)
+    {
+        return new ImageMetadata
+        {
+            Url = url,
+            Width = 0,
+            Height = 0,
+            Frames = 0,
+            Size = 0,
+            Format = ImageFormat.Unknown,
+        };
+    }
+
+    private sealed record GalleryImage(ImageMetadata Metadata, string Alt);
+
+    private readonly record struct MarkdownImage(int Start, int End, string Alt, string Url);
 
     private sealed record UploadImageResult(string? Url);
 }

@@ -21,5 +21,29 @@
         {
             <div class="editor-upload-error">@_uploadError</div>
         }
+
+        @if (ImageMode == MarkdownImageMode.Gallery && _galleryImages.Count > 0)
+        {
+            <div class="markdown-image-gallery" aria-label="图片画廊">
+                @foreach (var image in _galleryImages)
+                {
+                    var currentImage = image;
+                    <figure class="markdown-image-gallery__item">
+                        <img
+                            src="@currentImage.Metadata.Url"
+                            alt="@currentImage.Alt"
+                            class="markdown-image-gallery__image" />
+                        <button
+                            type="button"
+                            class="markdown-image-gallery__remove"
+                            title="删除图片"
+                            aria-label="删除图片"
+                            @onclick="() => RemoveGalleryImageAsync(currentImage.Metadata.Url)">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </figure>
+                }
+            </div>
+        }
     </div>
 }

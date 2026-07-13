@@ -15,6 +15,59 @@
     white-space: pre-wrap;
 }
 
+.markdown-image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.markdown-image-gallery__item {
+    position: relative;
+    aspect-ratio: 1;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-surface);
+}
+
+.markdown-image-gallery__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.markdown-image-gallery__remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid rgba(248, 250, 252, 0.28);
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.78);
+    color: #ffffff;
+    font-size: 0.875rem;
+    line-height: 1;
+    transition:
+        background-color 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease;
+}
+
+.markdown-image-gallery__remove:hover,
+.markdown-image-gallery__remove:focus-visible {
+    border-color: rgba(239, 68, 68, 0.62);
+    background: rgba(220, 38, 38, 0.9);
+    color: #ffffff;
+}
+
 .markdown-editor-container {
     --markdown-heading-menu-width: 136px;
     position: relative;
@@ -128,6 +181,11 @@
 .markdown-editor-container .milkdown .ProseMirror {
     min-height: 100%;
     padding: clamp(24px, 5vw, 56px) clamp(18px, 7vw, 96px);
+}
+
+.markdown-editor-container--gallery .markdown-editor-visual .milkdown-image-block,
+.markdown-editor-container--gallery .markdown-editor-visual .milkdown-image-inline {
+    display: none;
 }
 
 .markdown-editor-container .milkdown .milkdown-top-bar {

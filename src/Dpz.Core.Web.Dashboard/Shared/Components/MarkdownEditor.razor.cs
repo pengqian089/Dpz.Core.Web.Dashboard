@@ -49,14 +49,18 @@ public partial class MarkdownEditor(
     private const int DefaultHeight = 800;
 
     private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
+    private string GalleryId => $"markdown-gallery-{_editorId}";
 
     private readonly string _editorId = Guid.NewGuid().ToString("N");
     private IJSObjectReference? _jsModule;
+    private IJSObjectReference? _photoSwipeModule;
     private DotNetObjectReference<MarkdownEditor>? _objRef;
     private bool _editOnly;
     private bool _isUploading;
     private int _uploadProgress;
     private bool _editorInitialized;
+    private bool _photoSwipeInitialized;
+    private bool _shouldRefreshPhotoSwipe;
     private string? _uploadError;
     private readonly List<ImageMetadata> _uploadedImages = [];
     private readonly List<GalleryImage> _galleryImages = [];
@@ -85,6 +89,17 @@ public partial class MarkdownEditor(
                 "src/editors/markdown-editor.ts"
             );
             _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+
+            if (ImageMode == MarkdownImageMode.Gallery)
+            {
+                var photoSwipeModulePath = await assetManifestService.GetAssetPathAsync(
+                    "src/photoswipe-gallery.ts"
+                );
+                _photoSwipeModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    photoSwipeModulePath
+                );
+            }
         }
         catch (Exception ex)
         {
@@ -96,26 +111,29 @@ public partial class MarkdownEditor(
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_editorInitialized || _jsModule == null || _objRef == null)
+        if (!_editorInitialized && _jsModule != null && _objRef != null)
         {
-            return;
+            try
+            {
+                await _jsModule.InvokeVoidAsync(
+                    "createEditor",
+                    _editorId,
+                    Markdown,
+                    _editOnly,
+                    _objRef,
+                    ImageMode.ToString().ToLowerInvariant()
+                );
+                _editorInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to create MarkdownEditor: {ex.Message}");
+            }
         }
 
-        try
+        if (ImageMode == MarkdownImageMode.Gallery && _galleryImages.Count > 0)
         {
-            await _jsModule.InvokeVoidAsync(
-                "createEditor",
-                _editorId,
-                Markdown,
-                _editOnly,
-                _objRef,
-                ImageMode.ToString().ToLowerInvariant()
-            );
-            _editorInitialized = true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to create MarkdownEditor: {ex.Message}");
+            await EnsurePhotoSwipeAsync();
         }
     }
 
@@ -260,6 +278,7 @@ public partial class MarkdownEditor(
             string.Equals(image.Metadata.Url, url, StringComparison.Ordinal)
         );
         _uploadedImages.RemoveAll(image => string.Equals(image.Url, url, StringComparison.Ordinal));
+        _shouldRefreshPhotoSwipe = true;
 
         if (_jsModule != null && _editorInitialized)
         {
@@ -271,6 +290,12 @@ public partial class MarkdownEditor(
 
     public async ValueTask DisposeAsync()
     {
+        if (_photoSwipeModule != null)
+        {
+            await _photoSwipeModule.InvokeVoidAsync("destroyPhotoViewer");
+            await _photoSwipeModule.DisposeAsync();
+        }
+
         if (_jsModule != null)
         {
             if (_editorInitialized)
@@ -282,6 +307,23 @@ public partial class MarkdownEditor(
         }
 
         _objRef?.Dispose();
+    }
+
+    private async Task EnsurePhotoSwipeAsync()
+    {
+        if (_photoSwipeModule == null)
+        {
+            return;
+        }
+
+        if (_photoSwipeInitialized && !_shouldRefreshPhotoSwipe)
+        {
+            return;
+        }
+
+        await _photoSwipeModule.InvokeVoidAsync("initPhotoSwipe", $"#{GalleryId}");
+        _photoSwipeInitialized = true;
+        _shouldRefreshPhotoSwipe = false;
     }
 
     private static string GetUploadFileName(string[] fileNames, int index)
@@ -332,6 +374,8 @@ public partial class MarkdownEditor(
         {
             AddGalleryImage(images[i], GetUploadImageAlt(fileNames, i));
         }
+
+        _shouldRefreshPhotoSwipe = true;
     }
 
     private void AddGalleryImage(ImageMetadata image, string alt)
@@ -461,11 +505,7 @@ public partial class MarkdownEditor(
         return images;
     }
 
-    private static bool TryReadMarkdownImage(
-        string markdown,
-        int start,
-        out MarkdownImage image
-    )
+    private static bool TryReadMarkdownImage(string markdown, int start, out MarkdownImage image)
     {
         image = default;
         var labelEnd = FindClosingBracket(markdown, start + 1, '[', ']');
@@ -612,10 +652,7 @@ public partial class MarkdownEditor(
             return [];
         }
 
-        return
-        [
-            CreateFallbackImageMetadata(image.Url),
-        ];
+        return [CreateFallbackImageMetadata(image.Url)];
     }
 
     private static ImageMetadata CreateFallbackImageMetadata(string url)

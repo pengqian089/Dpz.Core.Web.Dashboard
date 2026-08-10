@@ -2,97 +2,264 @@
     <div class="seo-form__header">
         <div>
             <div class="seo-form__title">@FormTitle</div>
-            <div class="seo-form__subtitle">配置页面在搜索引擎中的展示效果</div>
+            <div class="seo-form__subtitle">@FormSubtitle</div>
         </div>
         <div class="seo-form__icon">
-            <i class="fas fa-search"></i>
+            <i class="fas fa-route"></i>
         </div>
     </div>
 
-    <div class="seo-form__body">
-        <div class="form-group">
-            <label class="form-label form-label--required">关联关系</label>
-            <p class="form-hint">至少需要 Controller 和 Action，如：Article, List, 123</p>
-            <TagInput @bind-Tags="_relations" HelperText="按 Enter 或逗号添加，点击 X 可删除" />
-            @if (_relations.Count < 2)
-            {
-                <p class="form-error">至少需要两个关联项（Controller + Action）</p>
-            }
-        </div>
+    <div class="seo-form__body seo-form__body--workbench">
+        @if (!IsPublicMetadata)
+        {
+            <section class="seo-form-section">
+                <div class="seo-form-section__heading">
+                    <div>
+                        <h3>目标路由</h3>
+                        <p>从启动扫描得到的 MVC 路由中选择页面</p>
+                    </div>
+                    @if (_selectedRoute != null)
+                    {
+                        <span class="seo-status seo-status--info">
+                            @string.Join(", ", _selectedRoute.HttpMethods)
+                        </span>
+                    }
+                </div>
 
-        <div class="form-group">
-            <label class="form-label">页面标题 (Title)</label>
-            <input type="text"
-                   class="form-control"
-                   placeholder="留空则使用默认标题"
-                   @bind="_title"
-                   @bind:event="oninput"
-                   maxlength="100" />
-            <p class="form-hint">自定义页面标题，将显示在浏览器标签页和搜索结果中</p>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">关键词 (Keywords)</label>
-            <TagInput @bind-Tags="_keywords" HelperText="按 Enter 或逗号添加，点击 X 可删除" />
-            <p class="form-hint">帮助搜索引擎理解页面主题，建议 3-5 个</p>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">描述 (Description)</label>
-            <textarea class="form-control seo-form__textarea"
-                      placeholder="简短描述页面内容，将显示在搜索结果中"
-                      rows="4"
-                      @bind="_description"
-                      @bind:event="oninput"
-                      maxlength="200"></textarea>
-            <p class="form-hint">建议 120-160 个字符，简洁明了地描述页面内容</p>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">其他元数据 (Metas)</label>
-            <div class="seo-form__metas">
-                @foreach (var meta in _metas)
+                @if (Model?.Route == null && Model?.Relations.Count > 0)
                 {
-                    <div class="seo-form__meta-item">
-                        <input type="text"
-                               class="form-control seo-form__meta-key"
-                               placeholder="属性名"
-                               @bind="meta.Key"
-                               @bind:event="oninput" />
-                        <input type="text"
-                               class="form-control seo-form__meta-value"
-                               placeholder="属性值"
-                               @bind="meta.Value"
-                               @bind:event="oninput" />
-                        <button class="btn btn-sm btn-danger seo-form__meta-remove" type="button" @onclick="() => RemoveMeta(meta)">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <div class="seo-form-alert">
+                        <i class="fas fa-history"></i>
+                        <span>这条数据来自旧 Relations 格式，保存后会转换为结构化 Route。</span>
                     </div>
                 }
-                <button class="btn btn-sm btn-secondary" type="button" @onclick="AddMeta">
-                    <i class="fas fa-plus"></i>
-                    添加元数据
+
+                <div class="seo-route-picker">
+                    <input type="text"
+                           class="form-control"
+                           placeholder="过滤 Controller、Action、模板..."
+                           @bind="_routeSearch"
+                           @bind:event="oninput" />
+                    <select class="form-control"
+                            value="@_selectedRouteKey"
+                            @onchange="HandleRouteChanged"
+                            disabled="@(Routes.Count == 0)">
+                        <option value="">请选择路由</option>
+                        @foreach (var route in FilteredRoutes)
+                        {
+                            <option value="@route.RouteKey">@FormatRoute(route)</option>
+                        }
+                    </select>
+                </div>
+
+                @if (Routes.Count == 0)
+                {
+                    <div class="seo-form-alert seo-form-alert--warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>路由目录为空，请确认 Web 站点已完成路由扫描。</span>
+                    </div>
+                }
+                else if (_selectedRoute == null)
+                {
+                    <div class="seo-form-alert seo-form-alert--warning">
+                        <i class="fas fa-circle-info"></i>
+                        <span>请选择一个路由后再保存页面 SEO。</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="seo-selected-route">
+                        <div class="seo-selected-route__main">
+                            <span>@FormatRoute(_selectedRoute)</span>
+                            <small>@_selectedRoute.RouteKey</small>
+                        </div>
+                        <div class="seo-selected-route__templates">
+                            @foreach (var endpoint in _selectedRoute.Endpoints.Take(3))
+                            {
+                                <code>@endpoint.Template</code>
+                            }
+                        </div>
+                    </div>
+
+                    @if (_selectedRoute.Parameters.Count > 0)
+                    {
+                        <div class="seo-route-params">
+                            @foreach (var parameter in _selectedRoute.Parameters)
+                            {
+                                <div class="seo-route-param">
+                                    <div class="seo-route-param__label">
+                                        <span>@parameter.Name</span>
+                                        <small>@FormatParameterSource(parameter.Source)</small>
+                                    </div>
+                                    <input type="text"
+                                           class="form-control"
+                                           value="@GetParameterValue(parameter.Name)"
+                                           placeholder="留空则不限定该参数"
+                                           @oninput="e => SetParameterValue(parameter.Name, e.Value?.ToString() ?? string.Empty)" />
+                                    <span class="seo-route-param__type">
+                                        @(parameter.TypeName ?? "string")
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="seo-form-muted">这个路由没有可配置参数。</div>
+                    }
+                }
+            </section>
+        }
+
+        <section class="seo-form-section">
+            <div class="seo-form-section__heading">
+                <div>
+                    <h3>SEO 内容</h3>
+                    <p>标题、关键词、描述和扩展 Meta 标签</p>
+                </div>
+            </div>
+
+            @if (IsPublicMetadata)
+            {
+                <label class="seo-switch">
+                    <input type="checkbox" @bind="_applyToUnconfiguredPages" />
+                    <span></span>
+                    <strong>应用到未配置页面</strong>
+                </label>
+            }
+            else
+            {
+                <div class="seo-segmented">
+                    <button type="button"
+                            class="@(_inheritanceMode == PageMetadataInheritanceMode.Inherit ? "is-active" : "")"
+                            @onclick="() => SetInheritanceMode(PageMetadataInheritanceMode.Inherit)">
+                        <i class="fas fa-layer-group"></i>
+                        继承公共
+                    </button>
+                    <button type="button"
+                            class="@(_inheritanceMode == PageMetadataInheritanceMode.Ignore ? "is-active" : "")"
+                            @onclick="() => SetInheritanceMode(PageMetadataInheritanceMode.Ignore)">
+                        <i class="fas fa-ban"></i>
+                        不继承
+                    </button>
+                </div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">页面标题 (Title)</label>
+                <input type="text"
+                       class="form-control"
+                       placeholder="留空则使用继承或默认标题"
+                       @bind="_title"
+                       @bind:event="oninput"
+                       maxlength="100" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">关键词 (Keywords)</label>
+                <TagInput @bind-Tags="_keywords" HelperText="按 Enter 或逗号添加，点击 X 可删除" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">描述 (Description)</label>
+                <textarea class="form-control seo-form__textarea"
+                          placeholder="简短描述页面内容，将显示在搜索结果中"
+                          rows="4"
+                          @bind="_description"
+                          @bind:event="oninput"
+                          maxlength="200"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">其他元数据 (Metas)</label>
+                <div class="seo-form__metas">
+                    @foreach (var meta in _metas)
+                    {
+                        <div class="seo-form__meta-item">
+                            <input type="text"
+                                   class="form-control seo-form__meta-key"
+                                   placeholder="属性名"
+                                   @bind="meta.Key"
+                                   @bind:event="oninput" />
+                            <input type="text"
+                                   class="form-control seo-form__meta-value"
+                                   placeholder="属性值"
+                                   @bind="meta.Value"
+                                   @bind:event="oninput" />
+                            <button class="btn btn-sm btn-danger seo-form__meta-remove"
+                                    type="button"
+                                    title="删除元数据"
+                                    @onclick="() => RemoveMeta(meta)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    }
+                    <button class="btn btn-sm btn-secondary" type="button" @onclick="AddMeta">
+                        <i class="fas fa-plus"></i>
+                        添加元数据
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="seo-form-section seo-preview-panel">
+            <div class="seo-form-section__heading">
+                <div>
+                    <h3>合并预览</h3>
+                    <p>调用结构化 Preview 接口查看最终 SEO 结果</p>
+                </div>
+                <button class="btn btn-secondary btn-sm"
+                        type="button"
+                        @onclick="RefreshPreviewAsync"
+                        disabled="@_isPreviewing">
+                    <i class="fas fa-rotate @(_isPreviewing ? "fa-spin" : "")"></i>
+                    刷新预览
                 </button>
             </div>
-            <p class="form-hint">如 og:image, twitter:card 等社交媒体元标签</p>
-        </div>
 
-        <div class="seo-form__preview">
-            <div class="seo-form__preview-title">
-                <i class="fas fa-eye"></i>
-                搜索结果预览
-            </div>
             <div class="seo-form__preview-card">
                 <div class="seo-form__preview-url">@PreviewUrl</div>
-                <div class="seo-form__preview-page-title">@PreviewTitle</div>
-                <div class="seo-form__preview-desc">@PreviewDescription</div>
+                @if (!string.IsNullOrWhiteSpace(_previewError))
+                {
+                    <div class="seo-preview-panel__error">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        @_previewError
+                    </div>
+                }
+                else
+                {
+                    <div class="seo-form__preview-page-title">
+                        @(_preview?.Title ?? "页面标题 - 叫我阿胖")
+                    </div>
+                    <div class="seo-form__preview-desc">
+                        @(_preview?.Description ?? "这里是页面描述，简短介绍页面内容，帮助用户快速了解该页面的主题...")
+                    </div>
+                    <div class="seo-preview-panel__keywords">
+                        @foreach (var keyword in (_preview?.Keywords ?? []).Take(8))
+                        {
+                            <span class="seo-chip">@keyword</span>
+                        }
+                    </div>
+                    @if (_preview?.Metas.Count > 0)
+                    {
+                        <div class="seo-preview-panel__metas">
+                            @foreach (var meta in _preview.Metas.Take(6))
+                            {
+                                <div>
+                                    <span>@meta.Key</span>
+                                    <strong>@meta.Value</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
             </div>
-        </div>
+        </section>
     </div>
 
     <div class="seo-form__footer">
         <button class="btn btn-secondary" @onclick="Cancel" disabled="@_isSubmitting">取消</button>
-        <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_isSubmitting">
+        <button class="btn btn-primary" @onclick="SaveAsync" disabled="@(_isSubmitting || _isPreviewing)">
             @if (_isSubmitting)
             {
                 <span class="btn-loading">

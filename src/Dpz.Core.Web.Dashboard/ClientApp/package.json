@@ -33,7 +33,7 @@
         "@milkdown/crepe": "^7.21.2",
         "chart.js": "^4.5.1",
         "hls.js": "^1.6.16",
-        "mermaid": "^11.15.0",
+        "mermaid": "^11.16.1",
         "photoswipe": "^5.4.4",
         "prismjs": "^1.30.0"
     },

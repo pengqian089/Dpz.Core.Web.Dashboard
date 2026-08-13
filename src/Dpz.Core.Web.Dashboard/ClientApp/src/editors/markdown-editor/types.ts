@@ -15,10 +15,14 @@ export type MarkdownViewportMode = "desktop" | "mobile";
 /** 编辑模式：可视化（所见即所得）/ 源码（原始 Markdown）。 */
 export type MarkdownEditMode = "visual" | "source";
 
+/** 图片处理模式：编辑器内联显示 / 独立画廊显示。 */
+export type MarkdownImageMode = "inline" | "gallery";
+
 /** 单个编辑器实例的运行时状态。 */
 export type MarkdownEditorInstance = {
     crepe: Crepe;
     dotNetHelper: DotNetHelper;
+    imageMode: MarkdownImageMode;
     mode: MarkdownEditMode;
     sourceEditor: SourceMarkdownEditor;
     sourceHost: HTMLElement;

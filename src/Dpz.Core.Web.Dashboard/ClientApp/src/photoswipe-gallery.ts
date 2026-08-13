@@ -67,16 +67,16 @@ class PhotoSwipeGallery {
             return null;
         }
 
+        const images = this.getGalleryImages(image);
+        const index = Math.max(images.indexOf(image), 0);
         this.destroyPhotoViewer();
         this.photoViewer = new PhotoSwipe({
-            dataSource: [
-                {
-                    src: image.src,
-                    width: image.naturalWidth || 1920,
-                    height: image.naturalHeight || 1080
-                }
-            ],
-            index: 0,
+            dataSource: images.map((item) => ({
+                src: item.src,
+                width: item.naturalWidth || 1920,
+                height: item.naturalHeight || 1080
+            })),
+            index,
             showHideAnimationType: "fade",
             bgOpacity: 0.88,
             escKey: true,
@@ -86,6 +86,18 @@ class PhotoSwipeGallery {
 
         this.photoViewer.init();
         return this.photoViewer;
+    }
+
+    private getGalleryImages(image: HTMLImageElement): HTMLImageElement[] {
+        const gallery = image.closest(".pswp-gallery");
+        if (!gallery) {
+            return [image];
+        }
+
+        const images = Array.from(gallery.querySelectorAll("img")).filter(
+            (item): item is HTMLImageElement => item instanceof HTMLImageElement && !!item.src
+        );
+        return images.length > 0 ? images : [image];
     }
 }
 

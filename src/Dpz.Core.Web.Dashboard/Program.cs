@@ -36,6 +36,7 @@ builder.Services.AddOidcAuthentication(options =>
     oidcConfig.Bind(options.ProviderOptions);
     Console.WriteLine(options.ProviderOptions.ClientId);
     options.ProviderOptions.DefaultScopes.Add("roles");
+    options.ProviderOptions.DefaultScopes.Add("offline_access");
     options.UserOptions.RoleClaim = "role";
 });
 

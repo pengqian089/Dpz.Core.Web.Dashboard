@@ -307,7 +307,7 @@ public class HttpService(
         }
         else
         {
-            newUri += "?" + queryParameters;
+            newUri = uri + "?" + queryParameters;
         }
 
         return newUri;

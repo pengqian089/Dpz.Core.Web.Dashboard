@@ -14,6 +14,7 @@ import type {
     DotNetHelper,
     MarkdownEditMode,
     MarkdownEditorInstance,
+    MarkdownImageMode,
     MarkdownViewportMode
 } from "./types";
 
@@ -47,7 +48,8 @@ export class MarkdownEditorRegistry {
         elementId: string,
         markdown: string,
         editOnly: boolean,
-        dotNetHelper: DotNetHelper
+        dotNetHelper: DotNetHelper,
+        imageMode: MarkdownImageMode = "inline"
     ): Promise<void> {
         const root = document.getElementById(elementId);
         const container = document.getElementById(`markdown-container-${elementId}`);
@@ -58,6 +60,7 @@ export class MarkdownEditorRegistry {
         await this.destroy(elementId);
         root.textContent = "";
         root.classList.add("markdown-editor-workspace");
+        container.classList.toggle("markdown-editor-container--gallery", imageMode === "gallery");
         this.configureToolbar(container);
         this.destroyToolbarHints(elementId);
 
@@ -80,6 +83,7 @@ export class MarkdownEditorRegistry {
         this.editors.set(elementId, {
             crepe,
             dotNetHelper,
+            imageMode,
             mode: "visual",
             sourceEditor,
             sourceHost,
@@ -226,6 +230,11 @@ export class MarkdownEditorRegistry {
                     }
 
                     const urls = await this.uploadImages(dotNetHelper, images);
+                    if (this.getImageMode(dotNetHelper) === "gallery") {
+                        this.appendUploadedImages(dotNetHelper, images, urls);
+                        return [];
+                    }
+
                     return urls
                         .map((src) => nodeType.createAndFill({ src }))
                         .filter((node) => node !== null);
@@ -362,23 +371,33 @@ export class MarkdownEditorRegistry {
     }
 
     private startImageInputManager(elementId: string, root: HTMLElement): void {
-        const manager = new MultiImageInputManager(root, async (input, files) => {
-            const instance = this.editors.get(elementId);
-            if (!instance) {
-                return;
-            }
+        const manager = new MultiImageInputManager(
+            root,
+            async (input, files) => {
+                const instance = this.editors.get(elementId);
+                if (!instance) {
+                    return;
+                }
 
-            const urls = await this.uploadImages(instance.dotNetHelper, files);
-            if (urls.length === 0) {
-                return;
-            }
+                const urls = await this.uploadImages(instance.dotNetHelper, files);
+                if (urls.length === 0) {
+                    return;
+                }
 
-            const firstUrlInserted = this.setCurrentImageUrl(input, urls[0]);
-            const remainingUrls = firstUrlInserted ? urls.slice(1) : urls;
-            if (remainingUrls.length > 0) {
-                this.insertValue(elementId, this.createImageMarkdown(files, remainingUrls));
-            }
-        });
+                if (instance.imageMode === "gallery") {
+                    this.clearCurrentImageInput(input);
+                    this.appendUploadedImages(instance.dotNetHelper, files, urls);
+                    return;
+                }
+
+                const firstUrlInserted = this.setCurrentImageUrl(input, urls[0]);
+                const remainingUrls = firstUrlInserted ? urls.slice(1) : urls;
+                if (remainingUrls.length > 0) {
+                    this.insertValue(elementId, this.createImageMarkdown(files, remainingUrls));
+                }
+            },
+            (_, files) => this.editors.get(elementId)?.imageMode === "gallery" || files.length > 1
+        );
 
         manager.start();
         this.imageInputManagers.set(elementId, manager);
@@ -457,6 +476,11 @@ export class MarkdownEditorRegistry {
 
     private async uploadImage(dotNetHelper: DotNetHelper, file: File): Promise<string> {
         const urls = await this.uploadImages(dotNetHelper, [file]);
+        if (this.getImageMode(dotNetHelper) === "gallery") {
+            this.appendUploadedImages(dotNetHelper, [file], urls);
+            return urls[0] ?? "";
+        }
+
         return urls[0] ?? "";
     }
 
@@ -485,6 +509,42 @@ export class MarkdownEditorRegistry {
         return Array.from(files).filter((file) => file.type.includes("image"));
     }
 
+    private appendUploadedImages(
+        dotNetHelper: DotNetHelper,
+        files: readonly File[],
+        urls: readonly string[]
+    ): void {
+        const elementId = this.getElementId(dotNetHelper);
+        if (!elementId || urls.length === 0) {
+            return;
+        }
+
+        const markdown = this.createImageMarkdown(files, urls);
+        const instance = this.editors.get(elementId);
+        if (!instance) {
+            return;
+        }
+
+        const nextMarkdown = `${this.getMarkdown(elementId)}${markdown}`;
+        instance.crepe.editor.action(replaceAll(nextMarkdown, true));
+        instance.sourceEditor.setValue(nextMarkdown);
+    }
+
+    private getImageMode(dotNetHelper: DotNetHelper): MarkdownImageMode {
+        const elementId = this.getElementId(dotNetHelper);
+        return elementId ? (this.editors.get(elementId)?.imageMode ?? "inline") : "inline";
+    }
+
+    private getElementId(dotNetHelper: DotNetHelper): string | undefined {
+        for (const [elementId, instance] of this.editors) {
+            if (instance.dotNetHelper === dotNetHelper) {
+                return elementId;
+            }
+        }
+
+        return undefined;
+    }
+
     /**
      * 将第一张上传后的图片 URL 注入 Milkdown 图片弹窗。
      *
@@ -502,6 +562,17 @@ export class MarkdownEditorRegistry {
         linkInput.dispatchEvent(new InputEvent("input", { bubbles: true, data: url }));
         linkInput.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
         return true;
+    }
+
+    private clearCurrentImageInput(input: HTMLInputElement): void {
+        const imageEdit = input.closest(".image-edit");
+        const linkInput = imageEdit?.querySelector<HTMLInputElement>(".link-input-area");
+        if (!linkInput) {
+            return;
+        }
+
+        linkInput.value = "";
+        linkInput.dispatchEvent(new InputEvent("input", { bubbles: true, data: "" }));
     }
 
     private createImageMarkdown(files: readonly File[], urls: readonly string[]): string {

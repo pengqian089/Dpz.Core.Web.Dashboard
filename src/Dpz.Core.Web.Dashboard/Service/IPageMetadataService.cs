@@ -1,4 +1,5 @@
-﻿using System.Threading;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models.Request;
@@ -21,6 +22,16 @@ public interface IPageMetadataService
         string controller,
         string action,
         string? routeId = null,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<IReadOnlyList<PageRouteDefinitionResponse>> GetRoutesAsync(
+        bool activeOnly = true,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<PageMetadataResponse?> PreviewAsync(
+        SeoPreviewRequest request,
         CancellationToken cancellationToken = default
     );
 

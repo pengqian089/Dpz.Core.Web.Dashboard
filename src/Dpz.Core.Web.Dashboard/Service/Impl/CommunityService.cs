@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+using System.Threading;
+using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 
 namespace Dpz.Core.Web.Dashboard.Service.Impl;
@@ -10,10 +11,22 @@ public class CommunityService(IHttpService httpService) : ICommunityService
         return await httpService.GetAsync<string>("/api/Community/logs") ?? "";
     }
 
-    public async Task<SummaryInformation> GetSummaryAsync()
+    public Task<SummaryInformation?> GetSummaryAsync(CancellationToken cancellationToken = default)
     {
-        return await httpService.GetAsync<SummaryInformation>("/api/Community/summary")
-            ?? new SummaryInformation();
+        return httpService.GetAsync<SummaryInformation>(
+            "/api/Community/summary",
+            cancellationToken: cancellationToken
+        );
+    }
+
+    public Task<SummaryInformation?> RefreshSummaryCacheAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        return httpService.PostAsync<SummaryInformation>(
+            "/api/Community/summary/refresh-cache",
+            cancellationToken: cancellationToken
+        );
     }
 
     public async Task<string> GetFooterAsync()

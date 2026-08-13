@@ -1,11 +1,16 @@
-﻿using System.Threading.Tasks;
+using System.Threading;
+using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 
 namespace Dpz.Core.Web.Dashboard.Service;
 
 public interface ICommunityService
 {
-    Task<SummaryInformation> GetSummaryAsync();
+    Task<SummaryInformation?> GetSummaryAsync(CancellationToken cancellationToken = default);
+
+    Task<SummaryInformation?> RefreshSummaryCacheAsync(
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// 获取页脚内容

@@ -14,7 +14,7 @@ export class MultiImageInputManager {
         }
 
         const files = input.files;
-        if (!this.isImageInput(input) || !files || files.length < 2) {
+        if (!this.isImageInput(input) || !files || !this.shouldHandle(input, files)) {
             return;
         }
 
@@ -40,7 +40,11 @@ export class MultiImageInputManager {
 
     public constructor(
         private readonly root: HTMLElement,
-        private readonly onUpload: (input: HTMLInputElement, files: File[]) => Promise<void>
+        private readonly onUpload: (input: HTMLInputElement, files: File[]) => Promise<void>,
+        private readonly shouldHandle: (input: HTMLInputElement, files: FileList) => boolean = (
+            _,
+            files
+        ) => files.length > 1
     ) {
         this.observer = new MutationObserver(() => this.apply());
     }

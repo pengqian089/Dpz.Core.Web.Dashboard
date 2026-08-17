@@ -1,17 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using TinyPinyin;
 
 namespace Dpz.Core.Web.Dashboard.Shared;
 
-public partial class NavMenu
+public partial class NavMenu(ILocalStorageService localStorageService, ILogger<NavMenu> logger)
 {
+    private const string CollapsedGroupsStorageKey = "nav-menu-collapsed-groups";
+
     private static readonly IReadOnlyList<NavGroup> Groups =
     [
         new(
+            "menu",
             "菜单",
             [
                 new("", NavLinkMatch.All, "fas fa-gauge", "首页"),
@@ -20,6 +28,7 @@ public partial class NavMenu
             ]
         ),
         new(
+            "audio",
             "音频管理",
             [
                 new("music", NavLinkMatch.Prefix, "fas fa-music", "音乐管理"),
@@ -27,6 +36,7 @@ public partial class NavMenu
             ]
         ),
         new(
+            "content",
             "内容管理",
             [
                 new("mumble", NavLinkMatch.Prefix, "fas fa-comment-dots", "碎碎念管理"),
@@ -36,6 +46,7 @@ public partial class NavMenu
             ]
         ),
         new(
+            "comments",
             "评论管理",
             [
                 new("comment", NavLinkMatch.All, "fas fa-comments", "所有评论"),
@@ -47,6 +58,7 @@ public partial class NavMenu
             ]
         ),
         new(
+            "system",
             "系统管理",
             [
                 new("video", NavLinkMatch.Prefix, "fas fa-video", "视频管理"),
@@ -79,6 +91,9 @@ public partial class NavMenu
         .ToArray();
 
     private string _searchText = "";
+    private readonly HashSet<string> _collapsedGroupKeys = new(StringComparer.Ordinal);
+
+    private bool IsSearchActive => !string.IsNullOrWhiteSpace(_searchText);
 
     private IReadOnlyList<NavGroup> FilteredGroups
     {
@@ -111,6 +126,65 @@ public partial class NavMenu
         _searchText = "";
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var savedKeys = await localStorageService.GetItemAsync<string[]>(
+                CollapsedGroupsStorageKey
+            );
+            var knownKeys = Groups.Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
+            _collapsedGroupKeys.UnionWith(
+                savedKeys?.Where(key => key is not null && knownKeys.Contains(key))
+                    ?? Enumerable.Empty<string>()
+            );
+        }
+        catch (Exception ex) when (ex is JsonException or JSException)
+        {
+            logger.LogWarning(ex, "Failed to load navigation group collapse state");
+        }
+    }
+
+    private bool IsGroupExpanded(NavGroup group)
+    {
+        return IsSearchActive || !_collapsedGroupKeys.Contains(group.Key);
+    }
+
+    private string GetGroupToggleLabel(NavGroup group, bool isExpanded)
+    {
+        if (IsSearchActive)
+        {
+            return $"{group.Title}（搜索中展开）";
+        }
+
+        return isExpanded ? $"收起{group.Title}" : $"展开{group.Title}";
+    }
+
+    private async Task ToggleGroupAsync(string groupKey)
+    {
+        if (IsSearchActive)
+        {
+            return;
+        }
+
+        if (!_collapsedGroupKeys.Add(groupKey))
+        {
+            _collapsedGroupKeys.Remove(groupKey);
+        }
+
+        try
+        {
+            await localStorageService.SetItemAsync(
+                CollapsedGroupsStorageKey,
+                _collapsedGroupKeys.OrderBy(key => key, StringComparer.Ordinal).ToArray()
+            );
+        }
+        catch (JSException ex)
+        {
+            logger.LogWarning(ex, "Failed to save navigation group collapse state");
+        }
+    }
+
     private static string CreateSearchIndex(string groupTitle, NavItem item)
     {
         var text = $"{groupTitle} {item.Label} {item.Href}";
@@ -125,7 +199,7 @@ public partial class NavMenu
         return value.Trim().Replace(" ", "", StringComparison.Ordinal).ToLowerInvariant();
     }
 
-    private sealed record NavGroup(string Title, IReadOnlyList<NavItem> Items);
+    private sealed record NavGroup(string Key, string Title, IReadOnlyList<NavItem> Items);
 
     private sealed record NavItem(string Href, NavLinkMatch Match, string Icon, string Label)
     {

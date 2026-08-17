@@ -20,14 +20,38 @@
 
     @foreach (var group in FilteredGroups)
     {
-        <div class="nav-group__title">@group.Title</div>
-        @foreach (var item in group.Items)
-        {
-            <NavLink href="@item.Href" Match="@item.Match" Class="nav-item">
-                <i class="@item.Icon" aria-hidden="true"></i>
-                <span>@item.Label</span>
-            </NavLink>
-        }
+        var isExpanded = IsGroupExpanded(group);
+        var groupContentId = $"nav-group-{group.Key}";
+        <section class="nav-group">
+            <button
+                id="@(groupContentId)-title"
+                class="nav-group__title"
+                type="button"
+                aria-expanded="@isExpanded.ToString().ToLowerInvariant()"
+                aria-controls="@groupContentId"
+                aria-label="@GetGroupToggleLabel(group, isExpanded)"
+                title="@GetGroupToggleLabel(group, isExpanded)"
+                disabled="@IsSearchActive"
+                @onclick="() => ToggleGroupAsync(group.Key)">
+                <span>@group.Title</span>
+                <i
+                    class="fas fa-chevron-down nav-group__chevron @(isExpanded ? "is-expanded" : "")"
+                    aria-hidden="true"></i>
+            </button>
+            <div
+                id="@groupContentId"
+                class="nav-group__items"
+                aria-labelledby="@(groupContentId)-title"
+                hidden="@(!isExpanded)">
+                @foreach (var item in group.Items)
+                {
+                    <NavLink href="@item.Href" Match="@item.Match" Class="nav-item">
+                        <i class="@item.Icon" aria-hidden="true"></i>
+                        <span>@item.Label</span>
+                    </NavLink>
+                }
+            </div>
+        </section>
     }
 
     @if (!FilteredGroups.Any())

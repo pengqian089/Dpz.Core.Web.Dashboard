@@ -2,27 +2,20 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <Version>2.3.1</Version>
+    <Version>2.3.2</Version>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="1.5.1" />
+    <PackageReference Include="AngleSharp" Version="1.7.1" />
     <PackageReference Include="dpz.core.enumlibrary" Version="1.0.3.1" />
-    <PackageReference Include="Markdig" Version="1.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.11" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.9" />
-    <PackageReference
-      Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"
-      Version="10.0.9"
-    />
-    <PackageReference
-      Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer"
-      Version="10.0.9"
-      PrivateAssets="all"
-    />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
+    <PackageReference Include="Markdig" Version="1.3.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
     <PackageReference Include="TinyPinyin" Version="1.1.0" />
   </ItemGroup>
 

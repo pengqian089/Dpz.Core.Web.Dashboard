@@ -107,15 +107,15 @@
         }
         else
         {
-            <div class="code-table">
+            <div class="code-table code-table--flat">
                 <div class="code-table__wrapper">
                     <table>
                         <thead>
                         <tr>
-                            <th>名称</th>
+                            <th class="code-table__nowrap code-table__pin-left">名称</th>
                             <th>路径</th>
-                            <th>类型</th>
-                            <th @onclick="() => ToggleSortAsync(CodeFileSortField.Size)" class="sortable code-table__th--size">
+                            <th class="code-table__nowrap">类型</th>
+                            <th @onclick="() => ToggleSortAsync(CodeFileSortField.Size)" class="sortable code-table__th--size code-table__nowrap">
                                 <div class="code-table__th-content">
                                     大小
                                     @if (_request.SortField == CodeFileSortField.Size)
@@ -128,7 +128,7 @@
                                     }
                                 </div>
                             </th>
-                            <th>扩展名</th>
+                            <th class="code-table__nowrap">扩展名</th>
                             <th>说明</th>
                             <th @onclick="() => ToggleSortAsync(CodeFileSortField.CreatedTime)" class="sortable code-table__th--time">
                                 <div class="code-table__th-content">
@@ -182,14 +182,14 @@
                                     }
                                 </div>
                             </th>
-                            <th class="code-table__th--actions">操作</th>
+                            <th class="code-table__th--actions code-table__pin-right">操作</th>
                         </tr>
                         </thead>
                         <tbody>
                         @foreach (var item in _pagedList)
                         {
                             <tr>
-                                <td data-label="名称">
+                                <td data-label="名称" class="code-table__nowrap code-table__pin-left">
                                     <div class="code-table__name">
                                         <CodeIcon Name="@item.Name" IsFolder="@item.IsDirectory" />
                                         <span>@item.Name</span>
@@ -200,12 +200,12 @@
                                         @GetDisplayPath(item.ParentPathSegments)
                                     </span>
                                 </td>
-                                <td data-label="类型">
+                                <td data-label="类型" class="code-table__nowrap">
                                     <span class="code-table__tag @(item.IsDirectory ? "" : "code-table__tag--file")">
                                         @(item.IsDirectory ? "目录" : "文件")
                                     </span>
                                 </td>
-                                <td data-label="大小">
+                                <td data-label="大小" class="code-table__nowrap">
                                     @if (item.Size.HasValue)
                                     {
                                         <span class="code-flat__size">@FormatFileSize(item.Size.Value)</span>
@@ -215,7 +215,7 @@
                                         <span class="text-muted">-</span>
                                     }
                                 </td>
-                                <td data-label="扩展名">
+                                <td data-label="扩展名" class="code-table__nowrap">
                                     @if (!string.IsNullOrWhiteSpace(item.Extension))
                                     {
                                         <code class="code-flat__extension">@item.Extension</code>
@@ -255,7 +255,7 @@
                                         <span class="text-muted">-</span>
                                     }
                                 </td>
-                                <td data-label="操作">
+                                <td data-label="操作" class="code-table__pin-right">
                                     <div class="code-table__actions">
                                         @if (item.IsDirectory)
                                         {

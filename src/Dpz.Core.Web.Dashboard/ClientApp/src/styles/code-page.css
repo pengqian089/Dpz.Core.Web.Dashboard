@@ -1079,3 +1079,48 @@
         pointer-events: none;
     }
 }
+
+/* Flat list desktop: keep key columns single-line and pin outer columns while scrolling */
+@media (min-width: 601px) {
+    .code-table--flat table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .code-table--flat .code-table__nowrap {
+        white-space: nowrap;
+    }
+
+    .code-table--flat .code-table__name {
+        flex-wrap: nowrap;
+    }
+
+    .code-table--flat .code-table__pin-left {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        box-shadow: inset -1px 0 0 var(--border-color);
+    }
+
+    .code-table--flat .code-table__pin-right {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        box-shadow: inset 1px 0 0 var(--border-color);
+    }
+
+    .code-table--flat thead .code-table__pin-left,
+    .code-table--flat thead .code-table__pin-right {
+        background-color: color-mix(in srgb, rgb(30 41 59) 50%, var(--bg-surface));
+    }
+
+    .code-table--flat tbody .code-table__pin-left,
+    .code-table--flat tbody .code-table__pin-right {
+        background-color: var(--bg-surface);
+    }
+
+    .code-table--flat tbody tr:hover .code-table__pin-left,
+    .code-table--flat tbody tr:hover .code-table__pin-right {
+        background-color: var(--bg-surface-hover);
+    }
+}

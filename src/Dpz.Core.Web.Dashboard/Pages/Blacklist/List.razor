@@ -1,0 +1,143 @@
+@page "/blacklist"
+@attribute [Authorize]
+
+<div class="security-list blacklist-page">
+    <div class="security-list__header">
+        <div>
+            <p class="security-list__eyebrow">SECURITY CENTER</p>
+            <h1 class="page-title"><i class="fas fa-shield-halved"></i> 安全防护</h1>
+            <p class="page-description">查看被拦截的请求，并管理临时封禁 IP</p>
+        </div>
+        <button class="btn-icon" type="button" title="刷新" @onclick="ReloadAsync" disabled="@_isLoading">
+            <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+        </button>
+    </div>
+
+    <div class="security-list__switcher" role="tablist" aria-label="安全记录类型">
+        <button
+            type="button"
+            role="tab"
+            aria-selected="@(_view == SecurityView.Blacklist)"
+            class="security-list__switcher-item @(_view == SecurityView.Blacklist ? "is-active" : "")"
+            @onclick="() => SwitchViewAsync(SecurityView.Blacklist)">
+            <i class="fas fa-ban"></i>
+            <span>请求黑名单</span>
+            <strong>@(_view == SecurityView.Blacklist ? _blacklist.Count : 0)</strong>
+        </button>
+        <button
+            type="button"
+            role="tab"
+            aria-selected="@(_view == SecurityView.BlockedIps)"
+            class="security-list__switcher-item @(_view == SecurityView.BlockedIps ? "is-active" : "")"
+            @onclick="() => SwitchViewAsync(SecurityView.BlockedIps)">
+            <i class="fas fa-lock"></i>
+            <span>封禁 IP</span>
+            <strong>@(_view == SecurityView.BlockedIps ? _blockedIps.Count : 0)</strong>
+        </button>
+    </div>
+
+    @if (_view == SecurityView.BlockedIps)
+    {
+        <div class="security-list__toolbar">
+            <span class="security-list__hint">手动封禁适合临时处理异常来源，最长 24 小时</span>
+            <button class="btn btn-primary btn-sm" type="button" @onclick="ToggleBlockForm">
+                <i class="fas fa-plus"></i>
+                @( _isBlockFormOpen ? "收起" : "手动封禁")
+            </button>
+        </div>
+
+        @if (_isBlockFormOpen)
+        {
+            <EditForm class="security-list__inline-form" Model="_blockForm" OnValidSubmit="BlockIpAsync">
+                <DataAnnotationsValidator />
+                <label>
+                    <span>IP 地址</span>
+                    <input class="form-control" @bind="_blockForm.Ip" placeholder="例如 203.0.113.10" inputmode="decimal" />
+                    <ValidationMessage For="@(() => _blockForm.Ip)" />
+                </label>
+                <label>
+                    <span>封禁分钟</span>
+                    <input class="form-control" type="number" min="1" max="1440" @bind="_blockForm.Minutes" />
+                    <ValidationMessage For="@(() => _blockForm.Minutes)" />
+                </label>
+                <div class="security-list__inline-form-actions">
+                    <button class="btn btn-secondary btn-sm" type="button" @onclick="ToggleBlockForm">取消</button>
+                    <button class="btn btn-danger btn-sm" type="submit" disabled="@_isSaving">
+                        <i class="fas fa-lock"></i> @( _isSaving ? "处理中" : "确认封禁")
+                    </button>
+                </div>
+            </EditForm>
+        }
+    }
+
+    @if (_isLoading)
+    {
+        <div class="security-list__loading" aria-live="polite">
+            <span class="btn-loading__spinner"></span>
+            <span>正在加载安全记录...</span>
+        </div>
+    }
+    else if (_view == SecurityView.Blacklist)
+    {
+        @if (_blacklist.Count == 0)
+        {
+            <div class="security-list__empty"><i class="fas fa-shield-check"></i><span>暂无请求黑名单记录</span></div>
+        }
+        else
+        {
+            <div class="security-list__cards">
+                @foreach (var item in _blacklist)
+                {
+                    <article class="security-card">
+                        <div class="security-card__heading">
+                            <div class="security-card__title">
+                                <span class="security-card__method">@item.RequestMethod</span>
+                                <code title="@item.RequestPath">@item.RequestPath</code>
+                            </div>
+                            <button class="btn-icon btn-icon--danger" type="button" title="删除记录" @onclick="() => DeleteBlacklistAsync(item)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="security-card__meta">
+                            <span><i class="fas fa-chart-line"></i> @item.AccessCount 次访问</span>
+                            <span><i class="fas fa-location-dot"></i> @FormatCount(item.IpAddresses.Length, "个 IP")</span>
+                            <span><i class="fas fa-user-secret"></i> @FormatCount(item.UserAgents.Length, "个 UA")</span>
+                        </div>
+                        <div class="security-card__details">
+                            @if (item.IpAddresses.Length > 0)
+                            {
+                                <div><span>IP</span><code>@string.Join(", ", item.IpAddresses)</code></div>
+                            }
+                            @if (item.UserAgents.Length > 0)
+                            {
+                                <div><span>UA</span><span class="text-truncate" title="@FormatUserAgents(item.UserAgents)">@FormatUserAgents(item.UserAgents)</span></div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    }
+    else if (_blockedIps.Count == 0)
+    {
+        <div class="security-list__empty"><i class="fas fa-lock-open"></i><span>当前没有封禁中的 IP</span></div>
+    }
+    else
+    {
+        <div class="security-list__cards">
+            @foreach (var item in _blockedIps)
+            {
+                <article class="security-card security-card--blocked">
+                    <div class="security-card__heading">
+                        <div class="security-card__title"><i class="fas fa-lock security-card__status-icon"></i><code>@item.Ip</code></div>
+                        <button class="btn btn-secondary btn-sm" type="button" @onclick="() => UnblockIpAsync(item)"><i class="fas fa-lock-open"></i> 解封</button>
+                    </div>
+                    <div class="security-card__meta">
+                        <span><i class="fas fa-clock"></i> 截止 @FormatTime(item.BlockedUntil)</span>
+                        <span><i class="fas fa-wave-square"></i> 当前窗口 @item.EventCount 次</span>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>

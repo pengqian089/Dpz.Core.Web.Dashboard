@@ -19,36 +19,32 @@ public partial class NavMenu(ILocalStorageService localStorageService, ILogger<N
     private static readonly IReadOnlyList<NavGroup> Groups =
     [
         new(
-            "menu",
-            "菜单",
+            "workspace",
+            "工作台",
             [
                 new("", NavLinkMatch.All, "fas fa-gauge", "首页"),
-                new("article", NavLinkMatch.Prefix, "fas fa-file-lines", "文章管理"),
-                new("picture", NavLinkMatch.Prefix, "fas fa-images", "相册管理"),
-            ]
-        ),
-        new(
-            "audio",
-            "音频管理",
-            [
-                new("music", NavLinkMatch.Prefix, "fas fa-music", "音乐管理"),
-                new("audio", NavLinkMatch.Prefix, "fas fa-microphone", "录音管理"),
+                new("message-outbox", NavLinkMatch.Prefix, "fas fa-route", "消息队列"),
             ]
         ),
         new(
             "content",
-            "内容管理",
+            "内容创作",
             [
+                new("article", NavLinkMatch.Prefix, "fas fa-file-lines", "文章管理"),
+                new("picture", NavLinkMatch.Prefix, "fas fa-images", "相册管理"),
+                new("video", NavLinkMatch.Prefix, "fas fa-video", "视频管理"),
+                new("music", NavLinkMatch.Prefix, "fas fa-music", "音乐管理"),
+                new("audio", NavLinkMatch.Prefix, "fas fa-microphone", "录音管理"),
                 new("mumble", NavLinkMatch.Prefix, "fas fa-comment-dots", "碎碎念管理"),
                 new("timeline", NavLinkMatch.Prefix, "fas fa-stream", "时间轴管理"),
-                new("danmaku", NavLinkMatch.Prefix, "fas fa-comments", "弹幕管理"),
                 new("dynamic", NavLinkMatch.Prefix, "fas fa-pager", "动态页管理"),
             ]
         ),
         new(
-            "comments",
-            "评论管理",
+            "interaction",
+            "互动管理",
             [
+                new("danmaku", NavLinkMatch.Prefix, "fas fa-comments", "弹幕管理"),
                 new("comment", NavLinkMatch.All, "fas fa-comments", "所有评论"),
                 new("comment/Article", NavLinkMatch.All, "fas fa-file-alt", "文章评论"),
                 new("comment/Friends", NavLinkMatch.All, "fas fa-link", "友链评论"),
@@ -58,19 +54,29 @@ public partial class NavMenu(ILocalStorageService localStorageService, ILogger<N
             ]
         ),
         new(
-            "system",
-            "系统管理",
+            "site",
+            "站点配置",
             [
-                new("video", NavLinkMatch.Prefix, "fas fa-video", "视频管理"),
-                new("account", NavLinkMatch.Prefix, "fas fa-users", "用户管理"),
                 new("friends", NavLinkMatch.Prefix, "fas fa-link", "友情链接"),
-                new("code/tree", NavLinkMatch.Prefix, "fas fa-code-branch", "源码管理"),
                 new("footer", NavLinkMatch.Prefix, "fas fa-info-circle", "页脚内容"),
-                new("system-notification", NavLinkMatch.Prefix, "fas fa-bullhorn", "系统通知"),
-                new("message-outbox", NavLinkMatch.Prefix, "fas fa-route", "消息队列"),
                 new("robots", NavLinkMatch.Prefix, "fas fa-robot", "Robots.txt"),
                 new("seo", NavLinkMatch.Prefix, "fas fa-search", "SEO 管理"),
+                new("system-notification", NavLinkMatch.Prefix, "fas fa-bullhorn", "系统通知"),
             ]
+        ),
+        new(
+            "security",
+            "安全防护",
+            [
+                new("blacklist", NavLinkMatch.Prefix, "fas fa-shield-halved", "黑名单与封禁"),
+                new("intercept-rules", NavLinkMatch.Prefix, "fas fa-filter", "拦截规则"),
+                new("account", NavLinkMatch.Prefix, "fas fa-users", "用户与权限"),
+            ]
+        ),
+        new(
+            "developer",
+            "开发工具",
+            [new("code/tree", NavLinkMatch.Prefix, "fas fa-code-branch", "源码管理")]
         ),
     ];
 

@@ -1,0 +1,98 @@
+@page "/intercept-rules"
+@attribute [Authorize]
+
+<div class="security-list intercept-rules-page">
+    <div class="security-list__header">
+        <div>
+            <p class="security-list__eyebrow">REQUEST FILTERS</p>
+            <h1 class="page-title"><i class="fas fa-filter"></i> 拦截规则</h1>
+            <p class="page-description">按请求特征拦截异常流量，支持通配符 <code>*</code> 和 <code>?</code></p>
+        </div>
+        <div class="security-list__header-actions">
+            <button class="btn btn-primary btn-sm" type="button" @onclick="StartCreate" disabled="@_isLoading">
+                <i class="fas fa-plus"></i> 新增规则
+            </button>
+            <button class="btn-icon" type="button" title="刷新" @onclick="LoadAsync" disabled="@_isLoading">
+                <i class="fas fa-sync-alt @(_isLoading ? "fa-spin" : "")"></i>
+            </button>
+        </div>
+    </div>
+
+    @if (_isFormOpen)
+    {
+        <EditForm class="intercept-rules__form" Model="_form" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <div class="intercept-rules__form-heading">
+                <div>
+                    <h2>@(_form.Id is null ? "新增拦截规则" : "编辑拦截规则")</h2>
+                    <p>先选择匹配对象，再填写精确值或通配符模式</p>
+                </div>
+                <button class="btn-icon" type="button" title="关闭" @onclick="CancelEdit"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="intercept-rules__form-grid">
+                <label>
+                    <span>拦截类型</span>
+                    <select class="form-control" @bind="_form.Type">
+                        @foreach (var type in RuleTypes)
+                        {
+                            <option value="@type">@GetTypeText(type)</option>
+                        }
+                    </select>
+                    <ValidationMessage For="@(() => _form.Type)" />
+                </label>
+                @if (NeedsKey(_form.Type))
+                {
+                    <label>
+                        <span>参数 / 请求头名称</span>
+                        <input class="form-control" @bind="_form.Key" placeholder="例如 User-Agent 或 token" />
+                    </label>
+                }
+                <label class="intercept-rules__form-pattern">
+                    <span>匹配模式</span>
+                    <input class="form-control" @bind="_form.Pattern" placeholder="@GetPatternPlaceholder(_form.Type)" />
+                    <ValidationMessage For="@(() => _form.Pattern)" />
+                </label>
+            </div>
+            <div class="intercept-rules__form-actions">
+                <button class="btn btn-secondary btn-sm" type="button" @onclick="CancelEdit">取消</button>
+                <button class="btn btn-primary btn-sm" type="submit" disabled="@_isSaving">
+                    <i class="fas fa-save"></i> @( _isSaving ? "保存中" : "保存规则")
+                </button>
+            </div>
+        </EditForm>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="security-list__loading" aria-live="polite"><span class="btn-loading__spinner"></span><span>正在加载拦截规则...</span></div>
+    }
+    else if (_rules.Count == 0)
+    {
+        <div class="security-list__empty"><i class="fas fa-filter-circle-xmark"></i><span>暂无拦截规则，先添加一条吧</span></div>
+    }
+    else
+    {
+        <div class="security-list__cards intercept-rules__cards">
+            @foreach (var rule in _rules)
+            {
+                <article class="security-card intercept-rule-card">
+                    <div class="security-card__heading">
+                        <div class="security-card__title">
+                            <span class="security-card__type">@GetTypeText(rule.Type)</span>
+                            @if (!string.IsNullOrWhiteSpace(rule.Key))
+                            {
+                                <span class="intercept-rule-card__key">@rule.Key</span>
+                            }
+                        </div>
+                        <div class="security-card__actions">
+                            <button class="btn-icon" type="button" title="编辑规则" @onclick="() => StartEdit(rule)"><i class="fas fa-pen"></i></button>
+                            <button class="btn-icon btn-icon--danger" type="button" title="删除规则" @onclick="() => DeleteAsync(rule)"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <code class="intercept-rule-card__pattern" title="@rule.Pattern">@rule.Pattern</code>
+                    <div class="intercept-rule-card__hint">匹配后由服务端直接拦截请求</div>
+                </article>
+            }
+        </div>
+    }
+</div>

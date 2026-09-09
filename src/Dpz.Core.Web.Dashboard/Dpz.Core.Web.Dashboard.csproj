@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
+    <UseMonoRuntime>false</UseMonoRuntime>
     <LangVersion>latest</LangVersion>
-    <Version>2.3.2</Version>
+    <Version>2.6.0</Version>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -11,11 +12,11 @@
     <PackageReference Include="dpz.core.enumlibrary" Version="1.0.3.1" />
     <PackageReference Include="Markdig" Version="1.3.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.12" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.11" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-rc.1.26425.128" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-rc.1.26425.128" />
     <PackageReference Include="TinyPinyin" Version="1.1.0" />
   </ItemGroup>
 

@@ -15,45 +15,35 @@ public static class AppTools
         return Program.BaseAddress;
     }
 
-    public static readonly Lazy<Dictionary<int, string>> PictureTypes = new(() =>
-        typeof(PictureType)
-            .GetFields()
-            .Where(x => x is { IsPublic: true, IsStatic: true })
-            .Select(x =>
-            {
-                var key = -1;
-                var typeValue = (int?)x.GetValue(null);
-                if (typeValue.HasValue)
+    public static Lazy<Dictionary<int, string>> PictureTypes =>
+        new(() =>
+            typeof(PictureType)
+                .GetFields()
+                .Where(x => x is { IsPublic: true, IsStatic: true })
+                .Select(x =>
                 {
-                    key = typeValue.Value;
-                }
-                return new KeyValuePair<int, string>(key, x.Name);
-            })
-            .Where(x => x.Key >= 0)
-            .ToDictionary(x => x.Key, x => x.Value)
-    );
+                    var key = -1;
+                    var typeValue = (PictureType?)x.GetValue(null);
+                    if (typeValue.HasValue)
+                    {
+                        key = (int)typeValue.Value;
+                    }
+                    return new KeyValuePair<int, string>(key, x.Name);
+                })
+                .Where(x => x.Key >= 0)
+                .ToDictionary(x => x.Key, x => x.Value)
+        );
 
     /// <summary>
     /// 客户端最大读取文件大小 unit byte
     /// </summary>
-    public const long MaxFileSize = 1024 * 1024 * 100;
+    public static long MaxFileSize => 1024 * 1024 * 100;
 
     /// <summary>
     /// 图片扩展名
     /// </summary>
-    public static string[] ImageExtensions =
-    [
-        "jpg",
-        "jpge",
-        "png",
-        "gif",
-        "webp",
-        "svg",
-        "tiff",
-        "psd",
-        "bmp",
-        "jiff",
-    ];
+    public static string[] ImageExtensions =>
+        ["jpg", "jpge", "png", "gif", "webp", "svg", "tiff", "psd", "bmp", "jiff"];
 
     /// <summary>
     /// 显示文件大小
@@ -77,61 +67,5 @@ public static class AppTools
         }
 
         return sizeText;
-    }
-
-    /// <summary>
-    /// 深拷贝
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="source"></param>
-    /// <param name="destination"></param>
-    public static void CopyTo<T>(this T source, out T? destination)
-        where T : class, new()
-    {
-        try
-        {
-            var json = JsonSerializer.Serialize(source);
-            destination = JsonSerializer.Deserialize<T>(json);
-            return;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-        destination = null;
-    }
-
-    public static string TimeAgo(this DateTime time)
-    {
-        var ts = new TimeSpan(DateTime.UtcNow.Ticks - time.ToUniversalTime().Ticks);
-        var delta = Math.Abs(ts.TotalSeconds);
-
-        switch (delta)
-        {
-            case < 60:
-                return ts.Seconds == 1 ? "刚刚" : ts.Seconds + "秒前";
-            case < 60 * 2:
-                return "1分钟前";
-            case < 45 * 60:
-                return ts.Minutes + "分钟前";
-            case < 90 * 60:
-                return "1小时前";
-            case < 24 * 60 * 60:
-                return ts.Hours + "小时前";
-            case < 48 * 60 * 60:
-                return "昨天";
-            case < 30 * 24 * 60 * 60:
-                return $"约{ts.Days}天前";
-            case < 12 * 30 * 24 * 60 * 60:
-            {
-                var months = Convert.ToInt32(Math.Floor((double)ts.Days / 30));
-                return months <= 1 ? "约一个月前" : $"约{months}个月前";
-            }
-            default:
-            {
-                var years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
-                return years <= 1 ? "大约1年前" : $"大约{years}年前";
-            }
-        }
     }
 }

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
     <UseMonoRuntime>false</UseMonoRuntime>
+    <Features>runtime-async=on</Features>
     <LangVersion>latest</LangVersion>
     <Version>2.6.0</Version>
     <Nullable>enable</Nullable>

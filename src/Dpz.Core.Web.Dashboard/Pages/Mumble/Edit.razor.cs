@@ -86,7 +86,6 @@ public partial class Edit(
         {
             dialogService.Toast("保存失败，请重试", ToastType.Error);
             _isPublishing = false;
-            StateHasChanged();
         }
     }
 }

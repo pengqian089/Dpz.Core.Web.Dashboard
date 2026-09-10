@@ -6,6 +6,7 @@ using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models.Request;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Picture;
@@ -15,7 +16,8 @@ public partial class Edit(
     NavigationManager navigationManager,
     IPictureService pictureService,
     IJSRuntime jsRuntime,
-    IAssetManifestService assetManifestService
+    IAssetManifestService assetManifestService,
+    ILogger<Edit> logger
 ) : IAsyncDisposable
 {
     private bool _editPicture;
@@ -31,7 +33,14 @@ public partial class Edit(
     {
         _tags = await pictureService.GetTagsAsync();
         var modulePath = await assetManifestService.GetAssetPathAsync("src/photoswipe-gallery.ts");
-        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        try
+        {
+            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to import photo swipe gallery module.");
+        }
 
         if (!string.IsNullOrWhiteSpace(Id))
         {
@@ -57,7 +66,20 @@ public partial class Edit(
         if (_pictureLoaded && _jsModule != null && !string.IsNullOrWhiteSpace(_picture.ImageUrl))
         {
             _pictureLoaded = false;
-            await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+            try
+            {
+                await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+            }
+            catch (Exception ex)
+            {
+                await appDialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"图片查看器初始化失败：{ex.Message}",
+                    }
+                );
+            }
         }
     }
 
@@ -94,7 +116,14 @@ public partial class Edit(
     {
         if (_jsModule != null)
         {
-            await _jsModule.InvokeVoidAsync("destroyPhotoViewer");
+            try
+            {
+                await _jsModule.InvokeVoidAsync("destroyPhotoViewer");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to destroy photo viewer.");
+            }
             await _jsModule.DisposeAsync();
         }
     }

@@ -531,11 +531,20 @@ public class HttpService(
         var modulePath = await assetManifestService.GetAssetPathAsync(
             "src/interop/upload-interop.ts"
         );
-        _uploadModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-            "import",
-            cancellationToken,
-            modulePath
-        );
+        try
+        {
+            _uploadModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+                "import",
+                cancellationToken,
+                modulePath
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to import upload module.");
+            throw;
+        }
+
         return _uploadModule;
     }
 
@@ -619,6 +628,11 @@ public class HttpService(
             }
 
             return JsonSerializer.Deserialize<T>(response, JsonSerializerOptions);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to upload files with progress.");
+            throw;
         }
         finally
         {

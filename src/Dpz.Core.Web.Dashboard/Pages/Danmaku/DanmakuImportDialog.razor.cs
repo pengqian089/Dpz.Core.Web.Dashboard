@@ -106,7 +106,6 @@ public partial class DanmakuImportDialog(
         finally
         {
             _isImporting = false;
-            StateHasChanged();
         }
     }
 }

@@ -22,10 +22,9 @@ public partial class List(IAppOptionService optionService, IAppDialogService dia
     private async Task LoadDataAsync()
     {
         _isLoading = true;
-        StateHasChanged();
+
         _friends = (await optionService.GetFriendsAsync()).ToList();
         _isLoading = false;
-        StateHasChanged();
     }
 
     private async Task DeleteAsync(string id)

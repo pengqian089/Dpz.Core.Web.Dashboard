@@ -306,7 +306,6 @@ public partial class Edit(IPageMetadataService seoService, IAppDialogService dia
         }
 
         _isPreviewing = true;
-        StateHasChanged();
 
         try
         {
@@ -321,7 +320,6 @@ public partial class Edit(IPageMetadataService seoService, IAppDialogService dia
         finally
         {
             _isPreviewing = false;
-            StateHasChanged();
         }
     }
 
@@ -335,7 +333,6 @@ public partial class Edit(IPageMetadataService seoService, IAppDialogService dia
         }
 
         _isSubmitting = true;
-        StateHasChanged();
 
         try
         {
@@ -365,7 +362,6 @@ public partial class Edit(IPageMetadataService seoService, IAppDialogService dia
         finally
         {
             _isSubmitting = false;
-            StateHasChanged();
         }
     }
 

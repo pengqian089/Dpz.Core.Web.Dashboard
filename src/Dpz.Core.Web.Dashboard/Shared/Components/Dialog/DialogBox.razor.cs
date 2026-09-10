@@ -4,6 +4,7 @@ using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
@@ -11,8 +12,11 @@ namespace Dpz.Core.Web.Dashboard.Shared.Components.Dialog;
 /// <summary>
 /// 对话框 Popup 组件，使用 Web Awesome 组件库实现动画、焦点管理和键盘交互
 /// </summary>
-public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService assetManifestService)
-    : IAsyncDisposable
+public partial class DialogBox(
+    IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService,
+    ILogger<DialogBox> logger
+) : IAsyncDisposable
 {
     /// <summary>
     /// 对话框的数据模型，包含类型、标题、内容及等待关闭的 TaskCompletionSource
@@ -51,10 +55,34 @@ public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService asset
         var modulePath = await assetManifestService.GetAssetPathAsync(
             "src/interop/webawesome-dialog.ts"
         );
-        _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        try
+        {
+            _dialogModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to import webawesome dialog module.");
+        }
         _dotNetRef = DotNetObjectReference.Create(this);
-        await _dialogModule.InvokeVoidAsync("bindDialog", _dialogRef, _dotNetRef);
-        await _dialogModule.InvokeVoidAsync("notifyContentReady");
+        if (_dialogModule != null)
+        {
+            try
+            {
+                await _dialogModule.InvokeVoidAsync("bindDialog", _dialogRef, _dotNetRef);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to bind dialog.");
+            }
+            try
+            {
+                await _dialogModule.InvokeVoidAsync("notifyContentReady");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to notify dialog content ready.");
+            }
+        }
 
         if (Model.Type == AppDialogType.Prompt)
         {
@@ -117,7 +145,14 @@ public partial class DialogBox(IJSRuntime jsRuntime, IAssetManifestService asset
 
         if (_dialogModule != null)
         {
-            await _dialogModule.InvokeVoidAsync("hideDialog", _dialogRef);
+            try
+            {
+                await _dialogModule.InvokeVoidAsync("hideDialog", _dialogRef);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to hide dialog.");
+            }
         }
 
         await OnClose.InvokeAsync(Model);

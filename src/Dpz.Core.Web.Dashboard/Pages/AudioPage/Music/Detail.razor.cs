@@ -57,7 +57,6 @@ public partial class Detail(
             return;
         }
 
-        StateHasChanged();
         _isPosting = true;
         using var content = new MultipartFormDataContent();
 
@@ -144,7 +143,6 @@ public partial class Detail(
         if (_coverFile != null)
         {
             _showCover = true;
-            StateHasChanged();
         }
     }
 

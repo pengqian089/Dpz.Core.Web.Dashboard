@@ -1,14 +1,19 @@
 using System;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components;
 
-public partial class CodeEditor(IJSRuntime jsRuntime, IAssetManifestService assetManifestService)
-    : ComponentBase,
-        IAsyncDisposable
+public partial class CodeEditor(
+    IJSRuntime jsRuntime,
+    IAssetManifestService assetManifestService,
+    IAppDialogService dialogService,
+    ILogger<CodeEditor> logger
+) : ComponentBase, IAsyncDisposable
 {
     [Parameter]
     public string Value { get; set; } = "";
@@ -36,31 +41,73 @@ public partial class CodeEditor(IJSRuntime jsRuntime, IAssetManifestService asse
     {
         if (_module == null)
         {
-            var modulePath = await assetManifestService.GetAssetPathAsync(
-                "src/editors/code-editor.ts"
-            );
-            _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+            try
+            {
+                var modulePath = await assetManifestService.GetAssetPathAsync(
+                    "src/editors/code-editor.ts"
+                );
+                _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"代码编辑器脚本加载失败：{ex.Message}",
+                    }
+                );
+            }
         }
 
         if (!_initialized)
         {
-            await _module.InvokeVoidAsync(
-                "createEditor",
-                _elementId,
-                new CodeEditorOptions(Value, Language, ReadOnly)
-            );
+            if (_module != null)
+            {
+                try
+                {
+                    await _module.InvokeVoidAsync(
+                        "createEditor",
+                        _elementId,
+                        new CodeEditorOptions(Value, Language, ReadOnly)
+                    );
+                }
+                catch (Exception ex)
+                {
+                    await dialogService.ShowAlertAsync(
+                        new AppDialogOptions
+                        {
+                            Title = "错误",
+                            Message = $"代码编辑器初始化失败：{ex.Message}",
+                        }
+                    );
+                }
+            }
             RememberParameters();
             _initialized = true;
             return;
         }
 
-        if (HasParameterChanges())
+        if (HasParameterChanges() && _module != null)
         {
-            await _module.InvokeVoidAsync(
-                "updateEditor",
-                _elementId,
-                new CodeEditorOptions(Value, Language, ReadOnly)
-            );
+            try
+            {
+                await _module.InvokeVoidAsync(
+                    "updateEditor",
+                    _elementId,
+                    new CodeEditorOptions(Value, Language, ReadOnly)
+                );
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"代码编辑器更新失败：{ex.Message}",
+                    }
+                );
+            }
             RememberParameters();
         }
     }
@@ -72,7 +119,21 @@ public partial class CodeEditor(IJSRuntime jsRuntime, IAssetManifestService asse
             return Value;
         }
 
-        return await _module.InvokeAsync<string>("getValue", _elementId);
+        try
+        {
+            return await _module.InvokeAsync<string>("getValue", _elementId);
+        }
+        catch (Exception ex)
+        {
+            await dialogService.ShowAlertAsync(
+                new AppDialogOptions
+                {
+                    Title = "错误",
+                    Message = $"获取编辑器内容失败：{ex.Message}",
+                }
+            );
+            return Value;
+        }
     }
 
     public async Task InsertValueAsync(string value)
@@ -82,7 +143,20 @@ public partial class CodeEditor(IJSRuntime jsRuntime, IAssetManifestService asse
             return;
         }
 
-        await _module.InvokeVoidAsync("insertValue", _elementId, value);
+        try
+        {
+            await _module.InvokeVoidAsync("insertValue", _elementId, value);
+        }
+        catch (Exception ex)
+        {
+            await dialogService.ShowAlertAsync(
+                new AppDialogOptions
+                {
+                    Title = "错误",
+                    Message = $"插入编辑器内容失败：{ex.Message}",
+                }
+            );
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -91,7 +165,14 @@ public partial class CodeEditor(IJSRuntime jsRuntime, IAssetManifestService asse
         {
             if (_initialized)
             {
-                await _module.InvokeVoidAsync("destroy", _elementId);
+                try
+                {
+                    await _module.InvokeVoidAsync("destroy", _elementId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to destroy code editor.");
+                }
             }
 
             await _module.DisposeAsync();

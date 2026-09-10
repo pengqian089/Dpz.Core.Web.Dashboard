@@ -216,7 +216,6 @@ public partial class SystemNotification(
         finally
         {
             _isSending = false;
-            StateHasChanged();
         }
     }
 

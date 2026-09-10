@@ -53,7 +53,6 @@ public partial class Post(
         {
             dialogService.Toast("发布失败，请重试", ToastType.Error);
             _isPublishing = false;
-            StateHasChanged();
         }
     }
 }

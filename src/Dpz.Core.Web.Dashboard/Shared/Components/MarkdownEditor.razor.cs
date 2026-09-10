@@ -7,9 +7,11 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Helper;
 using Dpz.Core.Web.Dashboard.Models;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components;
@@ -18,7 +20,9 @@ public partial class MarkdownEditor(
     IHttpService httpService,
     IJSRuntime jsRuntime,
     IAssetManifestService assetManifestService,
-    ILocalStorageService localStorageService
+    ILocalStorageService localStorageService,
+    IAppDialogService dialogService,
+    ILogger<MarkdownEditor> logger
 ) : ComponentBase, IAsyncDisposable
 {
     [Parameter]
@@ -139,14 +143,32 @@ public partial class MarkdownEditor(
 
     public async Task<string> GetValueAsync()
     {
-        if (_jsModule == null || !_editorInitialized)
-        {
-            return ImageMode == MarkdownImageMode.Gallery
+        var fallback =
+            ImageMode == MarkdownImageMode.Gallery
                 ? NormalizeGalleryMarkdown(Markdown, _galleryImages)
                 : Markdown;
+        if (_jsModule == null || !_editorInitialized)
+        {
+            return fallback;
         }
 
-        var markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+        string markdown;
+        try
+        {
+            markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+        }
+        catch (Exception ex)
+        {
+            await dialogService.ShowAlertAsync(
+                new AppDialogOptions
+                {
+                    Title = "错误",
+                    Message = $"获取编辑器内容失败：{ex.Message}",
+                }
+            );
+            return fallback;
+        }
+
         return ImageMode == MarkdownImageMode.Gallery
             ? NormalizeGalleryMarkdown(markdown, _galleryImages)
             : markdown;
@@ -169,7 +191,20 @@ public partial class MarkdownEditor(
 
         if (_jsModule != null && _editorInitialized)
         {
-            await _jsModule.InvokeVoidAsync("setReadonly", _editorId, _editOnly);
+            try
+            {
+                await _jsModule.InvokeVoidAsync("setReadonly", _editorId, _editOnly);
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"切换编辑模式失败：{ex.Message}",
+                    }
+                );
+            }
         }
     }
 
@@ -282,9 +317,37 @@ public partial class MarkdownEditor(
 
         if (_jsModule != null && _editorInitialized)
         {
-            var markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+            string markdown;
+            try
+            {
+                markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"获取编辑器内容失败：{ex.Message}",
+                    }
+                );
+                return;
+            }
             var normalizedMarkdown = NormalizeGalleryMarkdown(markdown, _galleryImages);
-            await _jsModule.InvokeVoidAsync("setMarkdown", _editorId, normalizedMarkdown);
+            try
+            {
+                await _jsModule.InvokeVoidAsync("setMarkdown", _editorId, normalizedMarkdown);
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"更新编辑器内容失败：{ex.Message}",
+                    }
+                );
+            }
         }
     }
 
@@ -292,7 +355,14 @@ public partial class MarkdownEditor(
     {
         if (_photoSwipeModule != null)
         {
-            await _photoSwipeModule.InvokeVoidAsync("destroyPhotoViewer");
+            try
+            {
+                await _photoSwipeModule.InvokeVoidAsync("destroyPhotoViewer");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to destroy photo swipe module.");
+            }
             await _photoSwipeModule.DisposeAsync();
         }
 
@@ -300,7 +370,14 @@ public partial class MarkdownEditor(
         {
             if (_editorInitialized)
             {
-                await _jsModule.InvokeVoidAsync("destroy", _editorId);
+                try
+                {
+                    await _jsModule.InvokeVoidAsync("destroy", _editorId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to destroy markdown editor.");
+                }
             }
 
             await _jsModule.DisposeAsync();
@@ -321,7 +398,20 @@ public partial class MarkdownEditor(
             return;
         }
 
-        await _photoSwipeModule.InvokeVoidAsync("initPhotoSwipe", $"#{GalleryId}");
+        try
+        {
+            await _photoSwipeModule.InvokeVoidAsync("initPhotoSwipe", $"#{GalleryId}");
+        }
+        catch (Exception ex)
+        {
+            await dialogService.ShowAlertAsync(
+                new AppDialogOptions
+                {
+                    Title = "错误",
+                    Message = $"初始化图片查看器失败：{ex.Message}",
+                }
+            );
+        }
         _photoSwipeInitialized = true;
         _shouldRefreshPhotoSwipe = false;
     }

@@ -68,7 +68,6 @@ public partial class TagInput : ComponentBase
         _inputValue = string.Empty;
 
         await TagsChanged.InvokeAsync(Tags);
-        StateHasChanged();
     }
 
     private async Task RemoveTag(string tag)

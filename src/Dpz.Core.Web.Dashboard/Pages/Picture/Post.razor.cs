@@ -8,6 +8,7 @@ using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Picture;
@@ -17,7 +18,8 @@ public partial class Post(
     IAppDialogService dialogService,
     NavigationManager navigation,
     IJSRuntime jsRuntime,
-    IAssetManifestService assetManifestService
+    IAssetManifestService assetManifestService,
+    ILogger<Post> logger
 ) : IAsyncDisposable
 {
     private bool _isPosting;
@@ -33,14 +35,34 @@ public partial class Post(
     {
         _tags = await pictureService.GetTagsAsync();
         var modulePath = await assetManifestService.GetAssetPathAsync("src/photoswipe-gallery.ts");
-        _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        try
+        {
+            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to import photo swipe gallery module.");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && _jsModule != null)
         {
-            await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+            try
+            {
+                await _jsModule.InvokeVoidAsync("initPhotoSwipe", ".pswp-gallery");
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"图片查看器初始化失败：{ex.Message}",
+                    }
+                );
+            }
         }
     }
 
@@ -54,7 +76,6 @@ public partial class Post(
 
         _isPosting = true;
         _uploadProgress = 0;
-        StateHasChanged();
 
         try
         {
@@ -85,7 +106,6 @@ public partial class Post(
         {
             dialogService.Toast($"上传失败: {ex.Message}", ToastType.Error);
             _isPosting = false;
-            StateHasChanged();
         }
     }
 
@@ -111,7 +131,20 @@ public partial class Post(
             );
             var jsImageStream = resizedImage.OpenReadStream(AppTools.MaxFileSize);
             var dotnetImageStream = new DotNetStreamReference(jsImageStream);
-            await _jsModule.InvokeVoidAsync("setImagePreview", "imagePreview", dotnetImageStream);
+            try
+            {
+                await _jsModule.InvokeVoidAsync(
+                    "setImagePreview",
+                    "imagePreview",
+                    dotnetImageStream
+                );
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions { Title = "错误", Message = $"图片预览失败：{ex.Message}" }
+                );
+            }
         }
     }
 
@@ -124,7 +157,14 @@ public partial class Post(
     {
         if (_jsModule != null)
         {
-            await _jsModule.InvokeVoidAsync("destroyPhotoViewer");
+            try
+            {
+                await _jsModule.InvokeVoidAsync("destroyPhotoViewer");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to destroy photo viewer.");
+            }
             await _jsModule.DisposeAsync();
         }
     }

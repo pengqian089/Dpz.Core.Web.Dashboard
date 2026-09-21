@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Web;
 using Dpz.Core.Web.Dashboard.Service;
 using Markdig;
+using Markdig.Renderers.Html;
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
@@ -25,6 +30,23 @@ public partial class MarkdownPreview(
     [Parameter]
     public string? Style { get; set; }
 
+    /// <summary>
+    /// 是否将仓库内源码链接（以 src 开头）重写为代码浏览页地址，
+    /// 并为外部链接添加新标签页打开属性。
+    /// </summary>
+    [Parameter]
+    public bool EnableCodeTreeLinks { get; set; }
+
+    private static readonly HashSet<string> ExternalSchemes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "http",
+        "https",
+        "ftp",
+        "mailto",
+        "tel",
+        "data",
+    };
+
     protected override async Task OnParametersSetAsync()
     {
         var pipeline = new MarkdownPipelineBuilder()
@@ -39,9 +61,80 @@ public partial class MarkdownPreview(
             .Build();
 
         var document = Markdig.Markdown.Parse(Markdown, pipeline);
+        if (EnableCodeTreeLinks)
+        {
+            RewriteCodeTreeLinks(document);
+        }
+
         _htmlContent = document.ToHtml(pipeline);
 
         await base.OnParametersSetAsync();
+    }
+
+    private static void RewriteCodeTreeLinks(MarkdownDocument document)
+    {
+        foreach (var link in document.Descendants<LinkInline>())
+        {
+            if (link.IsImage)
+            {
+                continue;
+            }
+
+            var url = link.Url?.Trim();
+            if (string.IsNullOrEmpty(url))
+            {
+                continue;
+            }
+
+            if (IsExternalUrl(url))
+            {
+                AddNewTabAttributes(link);
+                continue;
+            }
+
+            var normalized = url.Replace('\\', '/');
+            while (normalized.StartsWith("./", StringComparison.Ordinal))
+            {
+                normalized = normalized[2..];
+            }
+
+            normalized = normalized.TrimStart('/');
+            var suffixStart = normalized.IndexOfAny(['#', '?']);
+            var path = suffixStart >= 0 ? normalized[..suffixStart] : normalized;
+            if (
+                !string.Equals(path, "src", StringComparison.OrdinalIgnoreCase)
+                && !path.StartsWith("src/", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                continue;
+            }
+
+            var suffix = suffixStart >= 0 ? normalized[suffixStart..] : string.Empty;
+            link.Url = $"/code/tree?path={HttpUtility.UrlEncode(path)}{suffix}";
+        }
+
+        foreach (var link in document.Descendants<AutolinkInline>())
+        {
+            link.GetAttributes().AddPropertyIfNotExist("target", "_blank");
+            link.GetAttributes().AddPropertyIfNotExist("rel", "noopener noreferrer");
+        }
+    }
+
+    private static bool IsExternalUrl(string url)
+    {
+        if (url.StartsWith("//", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            && ExternalSchemes.Contains(uri.Scheme);
+    }
+
+    private static void AddNewTabAttributes(LinkInline link)
+    {
+        link.GetAttributes().AddPropertyIfNotExist("target", "_blank");
+        link.GetAttributes().AddPropertyIfNotExist("rel", "noopener noreferrer");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

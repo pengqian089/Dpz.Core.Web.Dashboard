@@ -96,7 +96,6 @@ public partial class Edit(
         finally
         {
             _isPublishing = false;
-            StateHasChanged();
         }
     }
 

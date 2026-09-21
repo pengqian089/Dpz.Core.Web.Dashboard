@@ -50,7 +50,6 @@ public partial class Post(
         finally
         {
             _isPublishing = false;
-            StateHasChanged();
         }
     }
 

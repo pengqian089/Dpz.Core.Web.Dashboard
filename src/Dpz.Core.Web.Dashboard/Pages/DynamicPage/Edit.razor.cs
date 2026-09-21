@@ -33,7 +33,7 @@ public partial class Edit(
     protected override async Task OnInitializedAsync()
     {
         _isLoading = true;
-        StateHasChanged();
+
         try
         {
             var model = await dynamicPageService.GetDynamicPageAsync(Id);
@@ -55,7 +55,6 @@ public partial class Edit(
         finally
         {
             _isLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -101,7 +100,6 @@ public partial class Edit(
         finally
         {
             _isPublishing = false;
-            StateHasChanged();
         }
     }
 

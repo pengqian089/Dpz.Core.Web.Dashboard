@@ -23,7 +23,7 @@ public partial class Footer(ICommunityService communityService, IAppDialogServic
     private async Task ReloadAsync()
     {
         _isLoading = true;
-        StateHasChanged();
+
         try
         {
             _content = await communityService.GetFooterAsync();
@@ -35,7 +35,6 @@ public partial class Footer(ICommunityService communityService, IAppDialogServic
         finally
         {
             _isLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -48,7 +47,7 @@ public partial class Footer(ICommunityService communityService, IAppDialogServic
         }
 
         _isSaving = true;
-        StateHasChanged();
+
         try
         {
             var content = await _editor.GetValueAsync();
@@ -63,7 +62,6 @@ public partial class Footer(ICommunityService communityService, IAppDialogServic
         finally
         {
             _isSaving = false;
-            StateHasChanged();
         }
     }
 }

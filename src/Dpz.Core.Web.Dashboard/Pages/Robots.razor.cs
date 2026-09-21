@@ -26,7 +26,7 @@ public partial class Robots(ICommunityService communityService, IAppDialogServic
     private async Task ReloadAsync()
     {
         _isLoading = true;
-        StateHasChanged();
+
         try
         {
             _textContent = await communityService.GetRobotsAsync();
@@ -39,7 +39,6 @@ public partial class Robots(ICommunityService communityService, IAppDialogServic
         finally
         {
             _isLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -206,7 +205,7 @@ public partial class Robots(ICommunityService communityService, IAppDialogServic
     private async Task SaveAsync(EditContext context)
     {
         _isSaving = true;
-        StateHasChanged();
+
         try
         {
             var content = _isTextMode ? _textContent : GenerateRobotsText();
@@ -221,7 +220,6 @@ public partial class Robots(ICommunityService communityService, IAppDialogServic
         finally
         {
             _isSaving = false;
-            StateHasChanged();
         }
     }
 

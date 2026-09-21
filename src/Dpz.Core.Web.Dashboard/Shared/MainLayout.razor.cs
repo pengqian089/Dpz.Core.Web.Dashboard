@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Dpz.Core.EnumLibrary;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
@@ -12,7 +14,8 @@ namespace Dpz.Core.Web.Dashboard.Shared;
 public partial class MainLayout(
     AuthenticationStateProvider authenticationStateProvider,
     NavigationManager navigation,
-    IJSRuntime jsRuntime
+    IJSRuntime jsRuntime,
+    IAppDialogService dialogService
 ) : LayoutComponentBase, IAsyncDisposable
 {
     private bool _drawerOpen;
@@ -26,6 +29,13 @@ public partial class MainLayout(
 
     protected override async Task OnInitializedAsync()
     {
+        await CheckPermissionAsync();
+        authenticationStateProvider.AuthenticationStateChanged += HandleAuthenticationStateChanged;
+        navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private async Task CheckPermissionAsync()
+    {
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         if (
             !Enum.TryParse(
@@ -37,18 +47,38 @@ public partial class MainLayout(
         {
             navigation.NavigateTo("/no-permission");
         }
-        navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void HandleAuthenticationStateChanged(Task<AuthenticationState> authenticationStateTask)
+    {
+        _ = CheckPermissionAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./Shared/MainLayout.razor.js"
-            );
-            await _jsModule.InvokeVoidAsync("initDropdowns");
+            try
+            {
+                _jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    "./Shared/MainLayout.razor.js"
+                );
+                if (_jsModule != null)
+                {
+                    await _jsModule.InvokeVoidAsync("initDropdowns");
+                }
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"界面初始化失败：{ex.Message}",
+                    }
+                );
+            }
         }
     }
 
@@ -64,6 +94,7 @@ public partial class MainLayout(
     public async ValueTask DisposeAsync()
     {
         navigation.LocationChanged -= OnLocationChanged;
+        authenticationStateProvider.AuthenticationStateChanged -= HandleAuthenticationStateChanged;
 
         if (_jsModule is not null)
         {

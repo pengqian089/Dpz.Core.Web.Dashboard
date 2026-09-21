@@ -57,7 +57,6 @@ public partial class Add(
             return;
         }
 
-        StateHasChanged();
         _isPosting = true;
         _uploadProgress = 0;
         var files = new List<UploadFilePart>();

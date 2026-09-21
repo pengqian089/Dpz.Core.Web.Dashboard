@@ -63,7 +63,6 @@ public partial class AuthLoginPrompt(NavigationManager navigation) : IDisposable
     {
         _autoRedirect = false;
         _timer?.Stop();
-        StateHasChanged();
     }
 
     private void LoginNow()

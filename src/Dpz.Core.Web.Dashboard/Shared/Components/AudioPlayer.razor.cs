@@ -1,11 +1,15 @@
 using System;
 using System.Threading.Tasks;
+using Dpz.Core.Web.Dashboard.Models.Dialog;
+using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components;
 
-public partial class AudioPlayer(IJSRuntime jsRuntime) : ComponentBase, IAsyncDisposable
+public partial class AudioPlayer(IJSRuntime jsRuntime, IAppDialogService dialogService)
+    : ComponentBase,
+        IAsyncDisposable
 {
     [Parameter]
     [EditorRequired]
@@ -59,12 +63,30 @@ public partial class AudioPlayer(IJSRuntime jsRuntime) : ComponentBase, IAsyncDi
 
         if (_isPlaying)
         {
-            await _jsPlayer.InvokeVoidAsync("pause");
+            try
+            {
+                await _jsPlayer.InvokeVoidAsync("pause");
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions { Title = "错误", Message = $"暂停音频失败：{ex.Message}" }
+                );
+            }
             _isPlaying = false;
         }
         else
         {
-            await _jsPlayer.InvokeVoidAsync("play");
+            try
+            {
+                await _jsPlayer.InvokeVoidAsync("play");
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions { Title = "错误", Message = $"播放音频失败：{ex.Message}" }
+                );
+            }
             _isPlaying = true;
         }
     }
@@ -77,7 +99,16 @@ public partial class AudioPlayer(IJSRuntime jsRuntime) : ComponentBase, IAsyncDi
         }
 
         _currentTime = time;
-        await _jsPlayer.InvokeVoidAsync("setCurrentTime", time);
+        try
+        {
+            await _jsPlayer.InvokeVoidAsync("setCurrentTime", time);
+        }
+        catch (Exception ex)
+        {
+            await dialogService.ShowAlertAsync(
+                new AppDialogOptions { Title = "错误", Message = $"跳转播放位置失败：{ex.Message}" }
+            );
+        }
     }
 
     private void OnSeekInput(ChangeEventArgs e)

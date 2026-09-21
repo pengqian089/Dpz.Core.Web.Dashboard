@@ -3,13 +3,15 @@ using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Service;
 using Markdig;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Dpz.Core.Web.Dashboard.Shared.Components;
 
 public partial class MarkdownPreview(
     IJSRuntime jsRuntime,
-    IAssetManifestService assetManifestService
+    IAssetManifestService assetManifestService,
+    ILogger<MarkdownPreview> logger
 ) : ComponentBase, IAsyncDisposable
 {
     private ElementReference _contentRef;
@@ -49,12 +51,26 @@ public partial class MarkdownPreview(
             var modulePath = await assetManifestService.GetAssetPathAsync(
                 "src/markdown-preview.ts"
             );
-            _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+            try
+            {
+                _module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to import markdown preview module.");
+            }
         }
 
         if (_module != null)
         {
-            await _module.InvokeVoidAsync("highlightCodeBlocks", _contentRef);
+            try
+            {
+                await _module.InvokeVoidAsync("highlightCodeBlocks", _contentRef);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to highlight code blocks.");
+            }
         }
 
         await base.OnAfterRenderAsync(firstRender);

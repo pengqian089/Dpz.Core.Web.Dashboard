@@ -36,6 +36,28 @@
         </button>
     </div>
 
+    <div class="security-list__search">
+        <div class="security-list__search-field">
+            <i class="fas fa-search"></i>
+            <input class="form-control"
+                   type="text"
+                   placeholder="@(_view == SecurityView.Blacklist ? "搜索请求地址 / IP / UA..." : "搜索 IP...")"
+                   aria-label="搜索安全记录"
+                   @bind="Query"
+                   @bind:event="oninput" />
+            @if (IsSearching)
+            {
+                <button class="btn-icon security-list__search-clear" type="button" title="清空搜索" @onclick="ClearQuery">
+                    <i class="fas fa-times"></i>
+                </button>
+            }
+        </div>
+        @if (IsSearching)
+        {
+            <span class="security-list__search-count">@MatchCount 条匹配</span>
+        }
+    </div>
+
     @if (_view == SecurityView.BlockedIps)
     {
         <div class="security-list__toolbar">
@@ -83,16 +105,37 @@
         {
             <div class="security-list__empty"><i class="fas fa-shield-check"></i><span>暂无请求黑名单记录</span></div>
         }
+        else if (_filteredBlacklist.Count == 0)
+        {
+            <div class="security-list__empty">
+                <i class="fas fa-search"></i>
+                <span>没有匹配“@NormalizedQuery”的黑名单记录</span>
+                <button class="btn btn-secondary btn-sm" type="button" @onclick="ClearQuery">清空搜索</button>
+            </div>
+        }
         else
         {
             <div class="security-list__cards">
-                @foreach (var item in _blacklist)
+                @foreach (var item in _filteredBlacklist)
                 {
                     <article class="security-card">
                         <div class="security-card__heading">
                             <div class="security-card__title">
-                                <span class="security-card__method">@item.RequestMethod</span>
-                                <code title="@item.RequestPath">@item.RequestPath</code>
+                                <span class="security-card__method">@Highlight(item.RequestMethod)</span>
+                                <code class="security-card__path @(IsPathExpanded(item) ? "is-expanded" : "")"
+                                      title="@item.RequestPath"
+                                      @onclick='() => ToggleField(item.Id, "path")'>
+                                    @Highlight(item.RequestPath)
+                                </code>
+                                @if (!IsSearching && item.RequestPath.Length > PathExpandThreshold)
+                                {
+                                    <button class="btn-icon security-card__toggle"
+                                            type="button"
+                                            title="@(IsPathExpanded(item) ? "收起" : "展开完整地址")"
+                                            @onclick='() => ToggleField(item.Id, "path")'>
+                                        <i class="fas @(IsPathExpanded(item) ? "fa-chevron-up" : "fa-chevron-down")"></i>
+                                    </button>
+                                }
                             </div>
                             <button class="btn-icon btn-icon--danger" type="button" title="删除记录" @onclick="() => DeleteBlacklistAsync(item)">
                                 <i class="fas fa-trash"></i>
@@ -106,11 +149,43 @@
                         <div class="security-card__details">
                             @if (item.IpAddresses.Length > 0)
                             {
-                                <div><span>IP</span><code>@string.Join(", ", item.IpAddresses)</code></div>
+                                <div class="security-card__detail-row">
+                                    <span class="security-card__detail-label">IP</span>
+                                    <div class="security-card__chips">
+                                        @foreach (var ip in VisibleIps(item))
+                                        {
+                                            <span class="security-chip">@Highlight(ip)</span>
+                                        }
+                                        @if (!IsSearching && item.IpAddresses.Length > IpPreviewCount)
+                                        {
+                                            <button class="security-chip security-chip--more"
+                                                    type="button"
+                                                    @onclick='() => ToggleField(item.Id, "ips")'>
+                                                @(IsFieldExpanded(item.Id, "ips") ? "收起" : $"+{item.IpAddresses.Length - IpPreviewCount}")
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
                             }
                             @if (item.UserAgents.Length > 0)
                             {
-                                <div><span>UA</span><span class="text-truncate" title="@FormatUserAgents(item.UserAgents)">@FormatUserAgents(item.UserAgents)</span></div>
+                                <div class="security-card__detail-row">
+                                    <span class="security-card__detail-label">UA</span>
+                                    <div class="security-card__ua-list">
+                                        @foreach (var ua in VisibleUserAgents(item))
+                                        {
+                                            <div class="security-card__ua">@Highlight(ua)</div>
+                                        }
+                                        @if (!IsSearching && item.UserAgents.Length > UaPreviewCount)
+                                        {
+                                            <button class="security-card__more"
+                                                    type="button"
+                                                    @onclick='() => ToggleField(item.Id, "uas")'>
+                                                @(IsFieldExpanded(item.Id, "uas") ? "收起" : $"展开全部 {item.UserAgents.Length} 条")
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
                             }
                         </div>
                     </article>
@@ -122,14 +197,22 @@
     {
         <div class="security-list__empty"><i class="fas fa-lock-open"></i><span>当前没有封禁中的 IP</span></div>
     }
+    else if (_filteredBlockedIps.Count == 0)
+    {
+        <div class="security-list__empty">
+            <i class="fas fa-search"></i>
+            <span>没有匹配“@NormalizedQuery”的封禁 IP</span>
+            <button class="btn btn-secondary btn-sm" type="button" @onclick="ClearQuery">清空搜索</button>
+        </div>
+    }
     else
     {
         <div class="security-list__cards">
-            @foreach (var item in _blockedIps)
+            @foreach (var item in _filteredBlockedIps)
             {
                 <article class="security-card security-card--blocked">
                     <div class="security-card__heading">
-                        <div class="security-card__title"><i class="fas fa-lock security-card__status-icon"></i><code>@item.Ip</code></div>
+                        <div class="security-card__title"><i class="fas fa-lock security-card__status-icon"></i><code>@Highlight(item.Ip)</code></div>
                         <button class="btn btn-secondary btn-sm" type="button" @onclick="() => UnblockIpAsync(item)"><i class="fas fa-lock-open"></i> 解封</button>
                     </div>
                     <div class="security-card__meta">

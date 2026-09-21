@@ -1,21 +1,52 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Service;
+using Microsoft.AspNetCore.Components;
 
 namespace Dpz.Core.Web.Dashboard.Pages.Blacklist;
 
 public partial class List(IBlacklistService blacklistService, IAppDialogService dialogService)
 {
+    private const int IpPreviewCount = 8;
+    private const int UaPreviewCount = 2;
+    private const int PathExpandThreshold = 60;
+
     private readonly List<BlacklistRecord> _blacklist = [];
     private readonly List<BlockedIpInfoModel> _blockedIps = [];
     private readonly BlockIpRequestModel _blockForm = new();
+    private readonly HashSet<string> _expandedFields = [];
+    private List<BlacklistRecord> _filteredBlacklist = [];
+    private List<BlockedIpInfoModel> _filteredBlockedIps = [];
     private SecurityView _view = SecurityView.Blacklist;
     private bool _isLoading = true;
     private bool _isSaving;
     private bool _isBlockFormOpen;
+    private string _query = "";
+
+    private string Query
+    {
+        get => _query;
+        set
+        {
+            if (_query == value)
+            {
+                return;
+            }
+
+            _query = value;
+            _expandedFields.Clear();
+            ApplyFilter();
+        }
+    }
+
+    private string NormalizedQuery => _query.Trim();
+
+    private int MatchCount =>
+        _view == SecurityView.Blacklist ? _filteredBlacklist.Count : _filteredBlockedIps.Count;
 
     protected override async Task OnInitializedAsync()
     {
@@ -44,6 +75,7 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
         }
         finally
         {
+            ApplyFilter();
             _isLoading = false;
         }
     }
@@ -118,12 +150,108 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
         await LoadAsync();
     }
 
-    private static string FormatCount(int count, string suffix) => $"{count} {suffix}";
-
-    private static string FormatUserAgents(IReadOnlyList<string> userAgents)
+    private void ClearQuery()
     {
-        return string.Join(" | ", userAgents);
+        Query = string.Empty;
     }
+
+    private void ApplyFilter()
+    {
+        _filteredBlacklist =
+            NormalizedQuery.Length == 0 ? [.. _blacklist] : _blacklist.Where(MatchesQuery).ToList();
+        _filteredBlockedIps =
+            NormalizedQuery.Length == 0
+                ? [.. _blockedIps]
+                : _blockedIps.Where(item => ContainsQuery(item.Ip)).ToList();
+    }
+
+    private bool MatchesQuery(BlacklistRecord item)
+    {
+        return ContainsQuery(item.RequestPath)
+            || ContainsQuery(item.RequestMethod)
+            || item.IpAddresses.Any(ContainsQuery)
+            || item.UserAgents.Any(ContainsQuery);
+    }
+
+    private bool ContainsQuery(string? text)
+    {
+        return NormalizedQuery.Length > 0
+            && !string.IsNullOrEmpty(text)
+            && text.Contains(NormalizedQuery, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsSearching => NormalizedQuery.Length > 0;
+
+    private bool IsFieldExpanded(string id, string field) =>
+        _expandedFields.Contains(FieldKey(id, field));
+
+    private bool IsPathExpanded(BlacklistRecord item) =>
+        IsSearching || IsFieldExpanded(item.Id, "path");
+
+    private void ToggleField(string id, string field)
+    {
+        var key = FieldKey(id, field);
+        if (!_expandedFields.Remove(key))
+        {
+            _expandedFields.Add(key);
+        }
+    }
+
+    private IReadOnlyList<string> VisibleIps(BlacklistRecord item) =>
+        IsSearching || IsFieldExpanded(item.Id, "ips")
+            ? item.IpAddresses
+            : item.IpAddresses.Take(IpPreviewCount).ToArray();
+
+    private IReadOnlyList<string> VisibleUserAgents(BlacklistRecord item) =>
+        IsSearching || IsFieldExpanded(item.Id, "uas")
+            ? item.UserAgents
+            : item.UserAgents.Take(UaPreviewCount).ToArray();
+
+    private RenderFragment Highlight(string? text) =>
+        builder =>
+        {
+            var query = NormalizedQuery;
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            if (query.Length == 0)
+            {
+                builder.AddContent(0, text);
+                return;
+            }
+
+            var sequence = 0;
+            var start = 0;
+            while (true)
+            {
+                var index = text.IndexOf(query, start, StringComparison.OrdinalIgnoreCase);
+                if (index < 0)
+                {
+                    break;
+                }
+
+                if (index > start)
+                {
+                    builder.AddContent(sequence++, text[start..index]);
+                }
+
+                builder.OpenElement(sequence++, "mark");
+                builder.AddContent(sequence++, text.Substring(index, query.Length));
+                builder.CloseElement();
+                start = index + query.Length;
+            }
+
+            if (start < text.Length)
+            {
+                builder.AddContent(sequence, text[start..]);
+            }
+        };
+
+    private static string FieldKey(string id, string field) => $"{id}:{field}";
+
+    private static string FormatCount(int count, string suffix) => $"{count} {suffix}";
 
     private static string FormatTime(DateTime value)
     {

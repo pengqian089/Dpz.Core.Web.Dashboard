@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -48,6 +50,27 @@ builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(BaseAddre
 RegisterInject(builder);
 
 var host = builder.Build();
+var logger = host.Services.GetRequiredService<ILogger<Program>>();
+
+try
+{
+    var js = host.Services.GetRequiredService<IJSRuntime>();
+    var tz = await js.InvokeAsync<string?>(
+        "eval",
+        "Intl.DateTimeFormat().resolvedOptions().timeZone"
+    );
+    if (!string.IsNullOrWhiteSpace(tz))
+    {
+        Environment.SetEnvironmentVariable("TZ", tz);
+        TimeZoneInfo.ClearCachedData();
+    }
+}
+catch (Exception e)
+{
+    logger.LogWarning(e, "设置时区失败");
+}
+
+logger.LogInformation("当前时区：{TimeZone}", Environment.GetEnvironmentVariable("TZ"));
 
 await host.RunAsync();
 

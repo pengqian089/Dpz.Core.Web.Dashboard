@@ -25,6 +25,7 @@ public partial class Index(
 {
     private readonly CancellationTokenSource _disposeTokenSource = new();
     private bool _chartsNeedRender;
+    private bool _isRenderingCharts;
     private bool _isLoading = true;
     private bool _isRefreshing;
     private bool _loadFailed;
@@ -202,7 +203,7 @@ public partial class Index(
             return;
         }
 
-        if (_chartsNeedRender && _renderedVersion != _renderVersion)
+        if (_chartsNeedRender && _renderedVersion != _renderVersion && !_isRenderingCharts)
         {
             await EnsureDashboardModuleAsync();
             await RenderChartsAsync();
@@ -267,10 +268,13 @@ public partial class Index(
 
     private async Task RenderChartsAsync()
     {
-        if (_module == null || _summary == null)
+        if (_module == null || _summary == null || _isRenderingCharts)
         {
             return;
         }
+
+        _isRenderingCharts = true;
+        var version = _renderVersion;
 
         try
         {
@@ -306,14 +310,23 @@ public partial class Index(
                 "dashboardBannerCarousel"
             );
 
-            _chartsNeedRender = false;
-            _renderedVersion = _renderVersion;
+            _renderedVersion = version;
+            _chartsNeedRender = _renderVersion != version;
         }
         catch (OperationCanceledException) when (_disposeTokenSource.IsCancellationRequested) { }
         catch (JSDisconnectedException) { }
         catch (Exception ex)
         {
             logger.LogError(ex, "failed to render dashboard charts");
+        }
+        finally
+        {
+            _isRenderingCharts = false;
+        }
+
+        if (_chartsNeedRender)
+        {
+            StateHasChanged();
         }
     }
 

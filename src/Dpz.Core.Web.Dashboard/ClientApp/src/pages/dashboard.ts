@@ -188,6 +188,9 @@ class DashboardPage {
         this.destroyChart(canvasId);
 
         const Chart = await this.getChart();
+
+        Chart.getChart(canvas)?.destroy();
+
         this.charts.set(canvasId, new Chart(canvas, chartConfig) as DashboardChart);
     }
 

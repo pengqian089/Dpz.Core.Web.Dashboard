@@ -337,6 +337,12 @@
     font-family: inherit;
 }
 
+.security-chip--count {
+    color: var(--text-muted);
+    background: rgba(148, 163, 184, 0.08);
+    font-family: inherit;
+}
+
 .security-card__ua-list {
     display: flex;
     flex: 1;
@@ -359,6 +365,11 @@
     border: 0;
     cursor: pointer;
     font: inherit;
+    font-size: 0.72rem;
+}
+
+.security-card__ua-more {
+    color: var(--text-muted);
     font-size: 0.72rem;
 }
 
@@ -448,6 +459,12 @@
 .intercept-rule-card__hint {
     color: var(--text-muted);
     font-size: 0.72rem;
+}
+
+.security-list .pagination {
+    margin-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
 }
 
 @media (max-width: 768px) {

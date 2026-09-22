@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Dpz.Core.Web.Dashboard.Models;
 using Dpz.Core.Web.Dashboard.Models.Dialog;
@@ -11,21 +12,30 @@ namespace Dpz.Core.Web.Dashboard.Pages.Blacklist;
 
 public partial class List(IBlacklistService blacklistService, IAppDialogService dialogService)
 {
+    private const int PageSize = 24;
     private const int IpPreviewCount = 8;
     private const int UaPreviewCount = 2;
+    private const int IpMatchLimit = 20;
+    private const int UaMatchLimit = 8;
     private const int PathExpandThreshold = 60;
 
     private readonly List<BlacklistRecord> _blacklist = [];
     private readonly List<BlockedIpInfoModel> _blockedIps = [];
     private readonly BlockIpRequestModel _blockForm = new();
     private readonly HashSet<string> _expandedFields = [];
+    private readonly Dictionary<string, string> _haystack = new();
     private List<BlacklistRecord> _filteredBlacklist = [];
     private List<BlockedIpInfoModel> _filteredBlockedIps = [];
+    private List<BlacklistRecord> _pageBlacklist = [];
+    private List<BlockedIpInfoModel> _pageBlockedIps = [];
     private SecurityView _view = SecurityView.Blacklist;
     private bool _isLoading = true;
     private bool _isSaving;
     private bool _isBlockFormOpen;
+    private int _pageIndex = 1;
     private string _query = "";
+    private string _queryTrimmed = "";
+    private string _queryLower = "";
 
     private string Query
     {
@@ -38,15 +48,20 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
             }
 
             _query = value;
+            _queryTrimmed = value.Trim();
+            _queryLower = _queryTrimmed.ToLowerInvariant();
             _expandedFields.Clear();
+            _pageIndex = 1;
             ApplyFilter();
         }
     }
 
-    private string NormalizedQuery => _query.Trim();
+    private bool IsSearching => _queryLower.Length > 0;
 
-    private int MatchCount =>
+    private int TotalCount =>
         _view == SecurityView.Blacklist ? _filteredBlacklist.Count : _filteredBlockedIps.Count;
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,6 +77,7 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
             {
                 _blacklist.Clear();
                 _blacklist.AddRange(await blacklistService.GetBlacklistAsync());
+                BuildSearchIndex();
             }
             else
             {
@@ -80,6 +96,26 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
         }
     }
 
+    private void BuildSearchIndex()
+    {
+        _haystack.Clear();
+        foreach (var item in _blacklist)
+        {
+            var builder = new StringBuilder(item.RequestPath.Length + 64);
+            builder.Append(item.RequestMethod).Append('\n').Append(item.RequestPath);
+            foreach (var ip in item.IpAddresses)
+            {
+                builder.Append('\n').Append(ip);
+            }
+            foreach (var ua in item.UserAgents)
+            {
+                builder.Append('\n').Append(ua);
+            }
+
+            _haystack[item.Id] = builder.ToString().ToLowerInvariant();
+        }
+    }
+
     private async Task SwitchViewAsync(SecurityView view)
     {
         if (_view == view)
@@ -89,6 +125,7 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
 
         _view = view;
         _isBlockFormOpen = false;
+        _pageIndex = 1;
         await LoadAsync();
     }
 
@@ -157,30 +194,68 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
 
     private void ApplyFilter()
     {
-        _filteredBlacklist =
-            NormalizedQuery.Length == 0 ? [.. _blacklist] : _blacklist.Where(MatchesQuery).ToList();
-        _filteredBlockedIps =
-            NormalizedQuery.Length == 0
-                ? [.. _blockedIps]
-                : _blockedIps.Where(item => ContainsQuery(item.Ip)).ToList();
+        if (_queryLower.Length == 0)
+        {
+            _filteredBlacklist = [.. _blacklist];
+            _filteredBlockedIps = [.. _blockedIps];
+        }
+        else
+        {
+            _filteredBlacklist = _blacklist
+                .Where(item =>
+                    _haystack.TryGetValue(item.Id, out var haystack)
+                    && haystack.Contains(_queryLower, StringComparison.Ordinal)
+                )
+                .ToList();
+            _filteredBlockedIps = _blockedIps
+                .Where(item => item.Ip.Contains(_queryTrimmed, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        if (_pageIndex > TotalPages)
+        {
+            _pageIndex = TotalPages;
+        }
+
+        if (_pageIndex < 1)
+        {
+            _pageIndex = 1;
+        }
+
+        PageItems();
     }
 
-    private bool MatchesQuery(BlacklistRecord item)
+    private void PageItems()
     {
-        return ContainsQuery(item.RequestPath)
-            || ContainsQuery(item.RequestMethod)
-            || item.IpAddresses.Any(ContainsQuery)
-            || item.UserAgents.Any(ContainsQuery);
+        if (_view == SecurityView.Blacklist)
+        {
+            _pageBlacklist = _filteredBlacklist
+                .Skip((_pageIndex - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+            _pageBlockedIps.Clear();
+        }
+        else
+        {
+            _pageBlockedIps = _filteredBlockedIps
+                .Skip((_pageIndex - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+            _pageBlacklist.Clear();
+        }
     }
 
-    private bool ContainsQuery(string? text)
+    private Task OnPageChangedAsync(int page)
     {
-        return NormalizedQuery.Length > 0
-            && !string.IsNullOrEmpty(text)
-            && text.Contains(NormalizedQuery, StringComparison.OrdinalIgnoreCase);
-    }
+        if (page == _pageIndex || page < 1 || page > TotalPages)
+        {
+            return Task.CompletedTask;
+        }
 
-    private bool IsSearching => NormalizedQuery.Length > 0;
+        _pageIndex = page;
+        PageItems();
+        return Task.CompletedTask;
+    }
 
     private bool IsFieldExpanded(string id, string field) =>
         _expandedFields.Contains(FieldKey(id, field));
@@ -197,20 +272,80 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
         }
     }
 
-    private IReadOnlyList<string> VisibleIps(BlacklistRecord item) =>
-        IsSearching || IsFieldExpanded(item.Id, "ips")
-            ? item.IpAddresses
-            : item.IpAddresses.Take(IpPreviewCount).ToArray();
+    private SubItemView BuildIps(BlacklistRecord item)
+    {
+        if (IsSearching)
+        {
+            var matches = new List<string>();
+            foreach (var ip in item.IpAddresses)
+            {
+                if (ip.Contains(_queryTrimmed, StringComparison.OrdinalIgnoreCase))
+                {
+                    matches.Add(ip);
+                }
+            }
 
-    private IReadOnlyList<string> VisibleUserAgents(BlacklistRecord item) =>
-        IsSearching || IsFieldExpanded(item.Id, "uas")
-            ? item.UserAgents
-            : item.UserAgents.Take(UaPreviewCount).ToArray();
+            if (matches.Count > 0)
+            {
+                var visible =
+                    matches.Count > IpMatchLimit ? matches.GetRange(0, IpMatchLimit) : matches;
+                return new SubItemView(visible, matches.Count - visible.Count, false, false);
+            }
+
+            var preview =
+                item.IpAddresses.Length > IpPreviewCount
+                    ? item.IpAddresses[..IpPreviewCount]
+                    : item.IpAddresses;
+            return new SubItemView(preview, 0, false, false);
+        }
+
+        var expanded = IsFieldExpanded(item.Id, "ips");
+        var shown =
+            expanded || item.IpAddresses.Length <= IpPreviewCount
+                ? item.IpAddresses
+                : item.IpAddresses[..IpPreviewCount];
+        return new SubItemView(shown, 0, item.IpAddresses.Length > IpPreviewCount, expanded);
+    }
+
+    private SubItemView BuildUserAgents(BlacklistRecord item)
+    {
+        if (IsSearching)
+        {
+            var matches = new List<string>();
+            foreach (var ua in item.UserAgents)
+            {
+                if (ua.Contains(_queryTrimmed, StringComparison.OrdinalIgnoreCase))
+                {
+                    matches.Add(ua);
+                }
+            }
+
+            if (matches.Count > 0)
+            {
+                var visible =
+                    matches.Count > UaMatchLimit ? matches.GetRange(0, UaMatchLimit) : matches;
+                return new SubItemView(visible, matches.Count - visible.Count, false, false);
+            }
+
+            var preview =
+                item.UserAgents.Length > UaPreviewCount
+                    ? item.UserAgents[..UaPreviewCount]
+                    : item.UserAgents;
+            return new SubItemView(preview, 0, false, false);
+        }
+
+        var expanded = IsFieldExpanded(item.Id, "uas");
+        var shown =
+            expanded || item.UserAgents.Length <= UaPreviewCount
+                ? item.UserAgents
+                : item.UserAgents[..UaPreviewCount];
+        return new SubItemView(shown, 0, item.UserAgents.Length > UaPreviewCount, expanded);
+    }
 
     private RenderFragment Highlight(string? text) =>
         builder =>
         {
-            var query = NormalizedQuery;
+            var query = _queryTrimmed;
             if (string.IsNullOrEmpty(text))
             {
                 return;
@@ -257,6 +392,13 @@ public partial class List(IBlacklistService blacklistService, IAppDialogService 
     {
         return value.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
     }
+
+    private readonly record struct SubItemView(
+        IReadOnlyList<string> Visible,
+        int HiddenMatches,
+        bool ShowToggle,
+        bool IsExpanded
+    );
 
     private enum SecurityView
     {

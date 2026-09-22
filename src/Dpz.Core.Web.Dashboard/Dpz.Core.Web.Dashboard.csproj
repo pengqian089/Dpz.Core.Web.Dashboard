@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
-    <UseRazorSourceGenerator>false</UseRazorSourceGenerator>
     <UseMonoRuntime>false</UseMonoRuntime>
     <Features>runtime-async=on</Features>
     <LangVersion>latest</LangVersion>

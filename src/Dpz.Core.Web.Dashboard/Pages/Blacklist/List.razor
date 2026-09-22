@@ -54,7 +54,7 @@
         </div>
         @if (IsSearching)
         {
-            <span class="security-list__search-count">@MatchCount 条匹配</span>
+            <span class="security-list__search-count">@TotalCount 条匹配</span>
         }
     </div>
 
@@ -109,16 +109,19 @@
         {
             <div class="security-list__empty">
                 <i class="fas fa-search"></i>
-                <span>没有匹配“@NormalizedQuery”的黑名单记录</span>
+                <span>没有匹配“@_queryTrimmed”的黑名单记录</span>
                 <button class="btn btn-secondary btn-sm" type="button" @onclick="ClearQuery">清空搜索</button>
             </div>
         }
         else
         {
             <div class="security-list__cards">
-                @foreach (var item in _filteredBlacklist)
+                @foreach (var item in _pageBlacklist)
                 {
-                    <article class="security-card">
+                    var ips = BuildIps(item);
+                    var uas = BuildUserAgents(item);
+
+                    <article class="security-card" @key="item.Id">
                         <div class="security-card__heading">
                             <div class="security-card__title">
                                 <span class="security-card__method">@Highlight(item.RequestMethod)</span>
@@ -152,16 +155,20 @@
                                 <div class="security-card__detail-row">
                                     <span class="security-card__detail-label">IP</span>
                                     <div class="security-card__chips">
-                                        @foreach (var ip in VisibleIps(item))
+                                        @foreach (var ip in ips.Visible)
                                         {
                                             <span class="security-chip">@Highlight(ip)</span>
                                         }
-                                        @if (!IsSearching && item.IpAddresses.Length > IpPreviewCount)
+                                        @if (ips.HiddenMatches > 0)
+                                        {
+                                            <span class="security-chip security-chip--count">+@ips.HiddenMatches 条匹配</span>
+                                        }
+                                        else if (ips.ShowToggle)
                                         {
                                             <button class="security-chip security-chip--more"
                                                     type="button"
                                                     @onclick='() => ToggleField(item.Id, "ips")'>
-                                                @(IsFieldExpanded(item.Id, "ips") ? "收起" : $"+{item.IpAddresses.Length - IpPreviewCount}")
+                                                @(ips.IsExpanded ? "收起" : $"+{item.IpAddresses.Length - IpPreviewCount}")
                                             </button>
                                         }
                                     </div>
@@ -172,16 +179,20 @@
                                 <div class="security-card__detail-row">
                                     <span class="security-card__detail-label">UA</span>
                                     <div class="security-card__ua-list">
-                                        @foreach (var ua in VisibleUserAgents(item))
+                                        @foreach (var ua in uas.Visible)
                                         {
                                             <div class="security-card__ua">@Highlight(ua)</div>
                                         }
-                                        @if (!IsSearching && item.UserAgents.Length > UaPreviewCount)
+                                        @if (uas.HiddenMatches > 0)
+                                        {
+                                            <div class="security-card__ua-more">+@uas.HiddenMatches 条匹配</div>
+                                        }
+                                        else if (uas.ShowToggle)
                                         {
                                             <button class="security-card__more"
                                                     type="button"
                                                     @onclick='() => ToggleField(item.Id, "uas")'>
-                                                @(IsFieldExpanded(item.Id, "uas") ? "收起" : $"展开全部 {item.UserAgents.Length} 条")
+                                                @(uas.IsExpanded ? "收起" : $"展开全部 {item.UserAgents.Length} 条")
                                             </button>
                                         }
                                     </div>
@@ -191,6 +202,12 @@
                     </article>
                 }
             </div>
+
+            <Pagination CurrentPage="@_pageIndex"
+                        TotalPages="@TotalPages"
+                        TotalCount="@TotalCount"
+                        PageSize="@PageSize"
+                        OnPageChanged="OnPageChangedAsync" />
         }
     }
     else if (_blockedIps.Count == 0)
@@ -201,16 +218,16 @@
     {
         <div class="security-list__empty">
             <i class="fas fa-search"></i>
-            <span>没有匹配“@NormalizedQuery”的封禁 IP</span>
+            <span>没有匹配“@_queryTrimmed”的封禁 IP</span>
             <button class="btn btn-secondary btn-sm" type="button" @onclick="ClearQuery">清空搜索</button>
         </div>
     }
     else
     {
         <div class="security-list__cards">
-            @foreach (var item in _filteredBlockedIps)
+            @foreach (var item in _pageBlockedIps)
             {
-                <article class="security-card security-card--blocked">
+                <article class="security-card security-card--blocked" @key="item.Ip">
                     <div class="security-card__heading">
                         <div class="security-card__title"><i class="fas fa-lock security-card__status-icon"></i><code>@Highlight(item.Ip)</code></div>
                         <button class="btn btn-secondary btn-sm" type="button" @onclick="() => UnblockIpAsync(item)"><i class="fas fa-lock-open"></i> 解封</button>
@@ -222,5 +239,11 @@
                 </article>
             }
         </div>
+
+        <Pagination CurrentPage="@_pageIndex"
+                    TotalPages="@TotalPages"
+                    TotalCount="@TotalCount"
+                    PageSize="@PageSize"
+                    OnPageChanged="OnPageChangedAsync" />
     }
 </div>

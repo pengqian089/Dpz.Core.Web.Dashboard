@@ -500,8 +500,8 @@
     align-items: center;
     gap: 12px;
     min-width: 0;
-    margin: 0 -8px;
-    padding: 10px 8px;
+    margin: 0;
+    padding: 10px 12px;
     border-radius: 7px;
     transition:
         background 0.18s ease,
@@ -537,8 +537,8 @@
 
 .dashboard-slow-item {
     min-width: 0;
-    margin: 0 -8px;
-    padding: 10px 8px;
+    margin: 0;
+    padding: 10px 12px;
     border-radius: 7px;
     background: transparent;
     transition:
@@ -568,11 +568,12 @@
 .dashboard-method,
 .dashboard-status {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    min-width: 42px;
+    min-width: 46px;
     height: 24px;
-    padding: 0 8px;
+    padding: 0 10px;
     border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 800;
@@ -610,6 +611,7 @@
     margin-top: 8px;
     color: var(--text-muted);
     font-size: 0.76rem;
+    align-items: center;
 }
 
 .dashboard-carousel {
@@ -693,8 +695,8 @@
     align-items: center;
     column-gap: 14px;
     min-width: 0;
-    margin: 0 -8px;
-    padding: 9px 8px;
+    margin: 0;
+    padding: 9px 12px;
     border: 0;
     border-radius: 7px;
     background: transparent;
@@ -817,6 +819,10 @@
         gap: 0;
     }
 
+    .dashboard-panel--slow .dashboard-slow-list {
+        gap: 6px;
+    }
+
     .dashboard-panel--popular .dashboard-route-item {
         flex: 1 1 0;
         min-height: 44px;
@@ -824,10 +830,11 @@
 
     .dashboard-panel--slow .dashboard-slow-item {
         display: flex;
-        flex: 1 1 0;
+        flex: 1 1 auto;
         flex-direction: column;
         justify-content: center;
-        min-height: 55px;
+        gap: 6px;
+        padding: 14px 12px;
     }
 
     .dashboard-panel--banner .dashboard-panel__body--flush {
@@ -948,13 +955,9 @@
     }
 
     .dashboard-hero__meta {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-wrap: wrap;
         gap: 8px;
-    }
-
-    .dashboard-hero__meta span {
-        max-width: 100%;
+        margin-top: 14px;
     }
 
     .dashboard-refresh {
@@ -962,18 +965,38 @@
     }
 
     .dashboard-metrics {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
         margin-bottom: 16px;
     }
 
     .dashboard-metric {
-        min-height: 88px;
-        padding: 14px;
+        flex: 1 1 calc(50% - 5px);
+        min-width: 132px;
+        min-height: 72px;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .dashboard-metric--skeleton {
+        min-height: 84px;
+    }
+
+    .dashboard-metric__icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 7px;
+        font-size: 0.85rem;
     }
 
     .dashboard-metric strong {
-        font-size: 1.25rem;
+        font-size: 1.05rem;
+    }
+
+    .dashboard-metric span {
+        margin-top: 3px;
+        font-size: 0.72rem;
     }
 
     .dashboard-board {
@@ -1045,6 +1068,10 @@
     .dashboard-slow-item__top em {
         grid-column: 2;
         justify-self: start;
+    }
+
+    .dashboard-slow-item__meta {
+        align-items: center;
     }
 
     .dashboard-error {

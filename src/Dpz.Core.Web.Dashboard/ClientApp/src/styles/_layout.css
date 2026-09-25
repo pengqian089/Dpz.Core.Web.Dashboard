@@ -9,20 +9,36 @@
     background-color: var(--bg-surface);
     border-right: 1px solid var(--border-color);
     position: fixed;
+    /* 100dvh 跟随移动端地址栏的显示/隐藏动态变化，避免底部菜单被地址栏遮挡 */
     height: 100vh;
+    height: 100dvh;
     left: 0;
     top: 0;
     z-index: 50;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: contain;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-sidebar__header {
-    height: var(--header-height);
+    flex: 0 0 auto;
+    height: calc(var(--header-height) + env(safe-area-inset-top));
     display: flex;
     align-items: center;
-    padding: 0 var(--spacing-md);
+    padding: env(safe-area-inset-top) var(--spacing-md) 0;
     border-bottom: 1px solid var(--border-color);
+}
+
+/* 侧边栏可滚动区域：搜索框和菜单项在此区域内滚动，顶部 logo 固定 */
+.app-sidebar__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .app-sidebar__logo {
@@ -551,6 +567,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 45; /* Below sidebar (50) but above header (40) */
     opacity: 0;
@@ -593,6 +610,7 @@
         max-width: none;
         min-width: unset;
         max-height: calc(100vh - var(--header-height) - 16px);
+        max-height: calc(100dvh - var(--header-height) - 16px);
         overflow-y: auto;
         overflow-x: hidden;
         white-space: normal;

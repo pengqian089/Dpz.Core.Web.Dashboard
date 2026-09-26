@@ -423,6 +423,15 @@
     gap: 12px;
 }
 
+.app-gallery__tagfilter {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--stroke-1);
+    background: rgba(8, 13, 25, 0.5);
+    max-height: 92px;
+    overflow-y: auto;
+}
+
 .app-gallery__card .ui-cover {
     border-radius: 0;
     border: 0;
@@ -536,6 +545,70 @@
     color: #fff;
     font-family: var(--font-mono);
     font-size: 11.5px;
+}
+
+/* ---------- mumble ---------- */
+
+.app-mumble__gallery {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    max-width: 440px;
+}
+
+/* ---------- audio (recording) ---------- */
+
+.app-audio__player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 210px;
+}
+
+.app-audio__track {
+    flex: 1;
+    min-width: 80px;
+}
+
+.app-audio__time {
+    width: 44px;
+    text-align: right;
+    font-size: 11px;
+}
+
+/* ---------- music ---------- */
+
+.app-music__player {
+    display: grid;
+    gap: 10px;
+}
+
+.app-music__bar {
+    height: 5px;
+    border-radius: var(--radius-full);
+    background: rgba(148, 163, 184, 0.14);
+    overflow: hidden;
+}
+
+.app-music__bar i {
+    display: block;
+    height: 100%;
+    width: 38%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.app-music__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-2);
+}
+
+.app-music__lyric {
+    max-height: 260px;
+    overflow: auto;
+    white-space: pre-wrap;
 }
 
 /* ---------- comments ---------- */

@@ -17,8 +17,35 @@
     overflow: hidden;
     animation: os-window-in var(--dur-4) var(--ease-spring);
     transition:
+        left 380ms var(--ease-out),
+        top 380ms var(--ease-out),
+        width 380ms var(--ease-out),
+        height 380ms var(--ease-out),
+        border-radius 380ms var(--ease-out),
         box-shadow var(--dur-3) var(--ease-out),
         border-color var(--dur-3) var(--ease-out);
+}
+
+.os-window.is-dragging,
+.os-window.is-resizing {
+    transition:
+        box-shadow var(--dur-3) var(--ease-out),
+        border-color var(--dur-3) var(--ease-out);
+}
+
+.os-window.is-dragging .os-window__body,
+.os-window.is-resizing .os-window__body {
+    pointer-events: none;
+}
+
+.os-app-host {
+    height: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.os-app-host > .ui-page {
+    min-height: 100%;
 }
 
 @keyframes os-window-in {

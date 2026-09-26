@@ -71,6 +71,7 @@
                     return;
                 }
                 settled = true;
+                window.removeEventListener("keydown", onKey, true);
                 animateOut(modal, function () {
                     modal.remove();
                 });
@@ -96,6 +97,15 @@
                     finish(false);
                 }
                 if (event.key === "Enter") {
+                    var target = event.target;
+                    var multiline =
+                        target &&
+                        (target.tagName === "TEXTAREA" ||
+                            target.isContentEditable ||
+                            target.hasAttribute("data-ignore-enter"));
+                    if (multiline) {
+                        return;
+                    }
                     event.stopPropagation();
                     window.removeEventListener("keydown", onKey, true);
                     finish(true);

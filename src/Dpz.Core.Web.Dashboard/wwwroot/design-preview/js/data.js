@@ -301,6 +301,174 @@
 
         pictureTypes: ["全部", "相册", "博客", "头像", "说说", "时间轴"],
 
+        mumbles: [
+            {
+                id: "m1",
+                author: "胖子",
+                content: "把后台改成桌面形态之后，第一次觉得管理网站这件事也可以很好玩。\n\n窗口拖来拖去，居然有点上瘾。",
+                images: 0,
+                likes: 42,
+                comments: 9,
+                createdAt: daysAgo(0, 9, 20),
+                updatedAt: daysAgo(0, 9, 22)
+            },
+            {
+                id: "m2",
+                author: "胖子",
+                content: "周末的咖啡和未完成的代码。#生活",
+                images: 2,
+                likes: 68,
+                comments: 5,
+                createdAt: daysAgo(1, 15, 40),
+                updatedAt: daysAgo(1, 15, 40)
+            },
+            {
+                id: "m3",
+                author: "胖子",
+                content: "深夜机房巡检 vlog 剪完了，凌晨两点的服务器比白天安静得多。",
+                images: 1,
+                likes: 33,
+                comments: 12,
+                createdAt: daysAgo(2, 23, 50),
+                updatedAt: daysAgo(3, 0, 10)
+            },
+            {
+                id: "m4",
+                author: "阿星",
+                content: "新头像上线，感谢胖子的设计。",
+                images: 1,
+                likes: 21,
+                comments: 3,
+                createdAt: daysAgo(4, 11, 5),
+                updatedAt: daysAgo(4, 11, 5)
+            },
+            {
+                id: "m5",
+                author: "胖子",
+                content: "给时间轴换了一套发光的节点样式，详情页见。#前端",
+                images: 0,
+                likes: 17,
+                comments: 2,
+                createdAt: daysAgo(6, 20, 15),
+                updatedAt: daysAgo(6, 20, 18)
+            },
+            {
+                id: "m6",
+                author: "胖子",
+                content: "今天把相册接口的上传进度条重写了，XHR 还是比 fetch 香。",
+                images: 0,
+                likes: 12,
+                comments: 4,
+                createdAt: daysAgo(9, 10, 30),
+                updatedAt: daysAgo(9, 10, 30)
+            },
+            {
+                id: "m7",
+                author: "Mira",
+                content: "路过，这个站点的配色真好看。",
+                images: 0,
+                likes: 9,
+                comments: 1,
+                createdAt: daysAgo(12, 18, 2),
+                updatedAt: daysAgo(12, 18, 2)
+            },
+            {
+                id: "m8",
+                author: "胖子",
+                content: "旧后台正式退役。纪念一下那个用 jQuery 写的第一版。",
+                images: 3,
+                likes: 56,
+                comments: 15,
+                createdAt: daysAgo(26, 17, 55),
+                updatedAt: daysAgo(26, 18, 30)
+            }
+        ],
+
+        timelines: [
+            {
+                id: "t1",
+                title: "发布赛博桌面后台 2.7.0",
+                date: daysAgo(0, 9, 30),
+                more: "/article/read/cyber-desktop-270.html",
+                author: "胖子",
+                content: "## 里程碑\n\n窗口化外壳上线，任务栏、命令面板与会话恢复全部就绪。",
+                createdAt: daysAgo(0, 9, 30),
+                updatedAt: daysAgo(0, 9, 30)
+            },
+            {
+                id: "t2",
+                title: "第一篇文章上线",
+                date: daysAgo(30, 20, 0),
+                more: "/article/read/hello-world.html",
+                author: "胖子",
+                content: "站点终于有了第一篇文章，域名也备案通过。",
+                createdAt: daysAgo(30, 20, 0),
+                updatedAt: daysAgo(30, 20, 0)
+            },
+            {
+                id: "t3",
+                title: "音乐库收录 100 首",
+                date: daysAgo(60, 21, 15),
+                more: "/music",
+                author: "胖子",
+                content: "整理歌词与封面花了整整两天。",
+                createdAt: daysAgo(60, 21, 15),
+                updatedAt: daysAgo(60, 21, 15)
+            },
+            {
+                id: "t4",
+                title: "加入 OIDC 单点登录",
+                date: daysAgo(90, 14, 20),
+                more: "/article/read/oidc.html",
+                author: "阿星",
+                content: "后台、网盘、笔记共用一套账号体系。",
+                createdAt: daysAgo(90, 14, 20),
+                updatedAt: daysAgo(90, 14, 20)
+            },
+            {
+                id: "t5",
+                title: "站点迁移到新服务器",
+                date: daysAgo(150, 2, 40),
+                more: "",
+                author: "胖子",
+                content: "凌晨割接，全程 18 分钟，零丢包。",
+                createdAt: daysAgo(150, 2, 40),
+                updatedAt: daysAgo(150, 2, 40)
+            },
+            {
+                id: "t6",
+                title: "写下第一行代码",
+                date: daysAgo(420, 22, 10),
+                more: "",
+                author: "胖子",
+                content: "那时候还叫 dpz.core.web，只有一个首页。",
+                createdAt: daysAgo(420, 22, 10),
+                updatedAt: daysAgo(420, 22, 10)
+            }
+        ],
+
+        recordings: [
+            { id: "r1", name: "深夜电台 第 12 期.mp3", size: "28.4 MB", uploader: "胖子", uploadedAt: daysAgo(0, 23, 40), duration: 2280 },
+            { id: "r2", name: "吉他练习 01.m4a", size: "12.1 MB", uploader: "胖子", uploadedAt: daysAgo(2, 20, 15), duration: 645 },
+            { id: "r3", name: "会议录音 2026-09-22.mp3", size: "45.8 MB", uploader: "阿星", uploadedAt: daysAgo(4, 15, 30), duration: 3720 },
+            { id: "r4", name: "猫踩键盘现场.m4a", size: "3.2 MB", uploader: "胖子", uploadedAt: daysAgo(8, 10, 5), duration: 186 },
+            { id: "r5", name: "雨声采样 01.wav", size: "62.5 MB", uploader: "胖子", uploadedAt: daysAgo(15, 21, 50), duration: 900 },
+            { id: "r6", name: "播客片头 v3.mp3", size: "5.6 MB", uploader: "阿星", uploadedAt: daysAgo(21, 11, 20), duration: 42 }
+        ],
+
+        musicGroups: ["全部", "轻音乐", "摇滚", "电子", "民谣", "古典"],
+
+        musicTracks: [
+            { id: "mu1", title: "Neon Drive", artist: "Aurora Field", fileName: "neon-drive.flac", groups: ["电子"], duration: 254, source: "本地", hasLyrics: true, size: "38.2 MB", uploadedAt: daysAgo(0, 21, 10), updatedAt: daysAgo(0, 21, 12) },
+            { id: "mu2", title: "夜航", artist: "林深", fileName: "night-flight.mp3", groups: ["民谣"], duration: 312, source: "网易云", hasLyrics: true, size: "9.8 MB", uploadedAt: daysAgo(1, 19, 5), updatedAt: daysAgo(1, 19, 5) },
+            { id: "mu3", title: "Glass Horizon", artist: "Mira", fileName: "glass-horizon.ogg", groups: ["轻音乐"], duration: 428, source: "本地", hasLyrics: false, size: "16.4 MB", uploadedAt: daysAgo(3, 22, 30), updatedAt: daysAgo(3, 22, 30) },
+            { id: "mu4", title: "Binary Sunset", artist: "Kaito", fileName: "binary-sunset.mp3", groups: ["电子", "摇滚"], duration: 366, source: "本地", hasLyrics: true, size: "11.2 MB", uploadedAt: daysAgo(6, 20, 45), updatedAt: daysAgo(6, 21, 0) },
+            { id: "mu5", title: "城市褶皱", artist: "胖子", fileName: "city-fold.mp3", groups: ["摇滚"], duration: 289, source: "原创", hasLyrics: true, size: "10.5 MB", uploadedAt: daysAgo(9, 18, 20), updatedAt: daysAgo(9, 18, 20) },
+            { id: "mu6", title: "Prelude in C", artist: "J.S. Bach", fileName: "prelude-c.flac", groups: ["古典"], duration: 168, source: "本地", hasLyrics: false, size: "24.1 MB", uploadedAt: daysAgo(14, 9, 40), updatedAt: daysAgo(14, 9, 40) },
+            { id: "mu7", title: "深夜机房", artist: "胖子", fileName: "server-room.mp3", groups: ["电子"], duration: 402, source: "原创", hasLyrics: false, size: "13.6 MB", uploadedAt: daysAgo(20, 23, 10), updatedAt: daysAgo(20, 23, 10) },
+            { id: "mu8", title: "Paper Planes", artist: "Night Call", fileName: "paper-planes.mp3", groups: ["民谣", "轻音乐"], duration: 228, source: "本地", hasLyrics: true, size: "8.7 MB", uploadedAt: daysAgo(28, 12, 25), updatedAt: daysAgo(28, 12, 25) }
+        ],
+
         videos: [
             { id: "v1", title: "赛博桌面设计演示", subtitle: "从启动到窗口管理的完整流程", views: 12840, comments: 96, danmaku: 428, duration: 754, tags: ["设计", "演示"], desc: "演示新版后台桌面的交互细节，包括任务栏、命令面板与吸附布局。" },
             { id: "v2", title: "Blazor WASM 性能调优实录", subtitle: "首屏从 4.2s 到 1.6s", views: 8620, comments: 54, danmaku: 312, duration: 1922, tags: ["Blazor", "性能"], desc: "记录一次真实的首屏优化过程，包含裁剪与懒加载策略。" },

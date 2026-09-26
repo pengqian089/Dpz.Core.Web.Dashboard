@@ -201,8 +201,6 @@
                 })
                 .join("");
 
-        layer().appendChild(rootNode);
-
         var record = {
             id: id,
             appId: app.id,
@@ -222,11 +220,12 @@
         if (opts.x !== undefined && opts.y !== undefined) {
             geometry = { x: opts.x, y: opts.y, w: geometry.w, h: geometry.h };
         }
-        setRect(record, geometry);
         if (opts.maximized || app.size === "max") {
             record.root.classList.add("is-maximized");
             record.maximized = true;
         }
+        setRect(record, geometry);
+        layer().appendChild(rootNode);
 
         bindWindow(record);
         if (opts.minimized) {
@@ -441,6 +440,7 @@
             resizing = true;
             start = { x: event.clientX, y: event.clientY, rect: currentRect(record) };
             handle.setPointerCapture(event.pointerId);
+            record.root.classList.add("is-resizing");
         });
 
         handle.addEventListener("pointermove", function (event) {
@@ -477,6 +477,7 @@
             }
             resizing = false;
             handle.releasePointerCapture(event.pointerId);
+            record.root.classList.remove("is-resizing");
             scheduleSave();
         }
 
@@ -492,9 +493,14 @@
         var body = record.root.querySelector(".os-window__body");
         var ctx = createContext(record);
         record.ctx = ctx;
-        body.innerHTML = record.app.render(ctx);
+        var host = document.createElement("div");
+        host.className = "os-app-host";
+        host.setAttribute("data-app-id", record.appId);
+        host.innerHTML = record.app.render(ctx);
+        body.innerHTML = "";
+        body.appendChild(host);
         if (typeof record.app.mount === "function") {
-            record.mountCleanup = record.app.mount(body, ctx) || null;
+            record.mountCleanup = record.app.mount(host, ctx) || null;
         }
         if (ctx.__subtitle) {
             record.root.querySelector('[data-role="subtitle"]').textContent = ctx.__subtitle;

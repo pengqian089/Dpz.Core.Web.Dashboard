@@ -1714,6 +1714,25 @@ html[data-wallpaper="void"] .os-wallpaper__grid {
         display: none;
     }
 
+    .os-taskbar__apps--mobile {
+        justify-content: flex-start;
+        scroll-snap-type: x proximity;
+        padding: 0 4px;
+    }
+
+    .os-taskbar__apps--mobile .os-app-btn {
+        flex: none;
+        scroll-snap-align: center;
+        width: 42px;
+        height: 42px;
+    }
+
+    .os-app-btn--more {
+        color: var(--accent);
+        background: var(--accent-softer);
+        box-shadow: inset 0 0 0 1px var(--accent-line);
+    }
+
     .os-start {
         left: 8px;
         right: 8px;

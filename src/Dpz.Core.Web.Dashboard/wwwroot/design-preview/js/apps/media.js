@@ -13,8 +13,13 @@
             if (state.type && state.type !== "全部" && picture.category !== state.type) {
                 return false;
             }
-            if (state.tag && state.tag !== "全部" && picture.tags.indexOf(state.tag) < 0) {
-                return false;
+            if (state.tags && state.tags.length) {
+                var hit = state.tags.some(function (tag) {
+                    return picture.tags.indexOf(tag) >= 0;
+                });
+                if (!hit) {
+                    return false;
+                }
             }
             if (state.desc && picture.desc.toLowerCase().indexOf(state.desc.toLowerCase()) < 0) {
                 return false;
@@ -139,16 +144,44 @@
         state.page = state.page || 1;
         state.view = state.view || "grid";
         state.type = state.type || "全部";
-        state.tag = state.tag || "全部";
+        state.tags = state.tags || [];
         state.desc = state.desc || "";
 
         var rows = filtered(state);
         var totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
         state.page = util.clamp(state.page, 1, totalPages);
         var pageRows = rows.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
-        var tags = ["全部"].concat(
-            data.tags.slice(0, 10)
-        );
+        var tagPool = [];
+        data.pictures.forEach(function (picture) {
+            picture.tags.forEach(function (tag) {
+                if (tagPool.indexOf(tag) < 0) {
+                    tagPool.push(tag);
+                }
+            });
+        });
+
+        var tagFilter =
+            '<div class="ui-chips app-gallery__tagfilter">' +
+            '<button type="button" class="ui-chip ui-chip--click' +
+            (state.tags.length === 0 ? " ui-chip--active" : "") +
+            '" data-tag-filter="__all__">' +
+            icon("layers") +
+            "全部标签</button>" +
+            tagPool
+                .map(function (tag) {
+                    return (
+                        '<button type="button" class="ui-chip ui-chip--click' +
+                        (state.tags.indexOf(tag) >= 0 ? " ui-chip--active" : "") +
+                        '" data-tag-filter="' +
+                        util.esc(tag) +
+                        '">' +
+                        icon("tag") +
+                        util.esc(tag) +
+                        "</button>"
+                    );
+                })
+                .join("") +
+            "</div>";
 
         return (
             '<div class="ui-page">' +
@@ -178,26 +211,27 @@
                         '" data-view="table">' +
                         icon("list") +
                         "表格</button>" +
-                        "</div>"
-                ],
-                [
+                        "</div>",
                     ui.select({
                         options: data.pictureTypes,
                         value: state.type,
                         attrs: 'data-role="filter-type"'
-                    }),
-                    ui.select({
-                        options: tags,
-                        value: state.tag,
-                        attrs: 'data-role="filter-tag"'
                     }),
                     ui.search({
                         placeholder: "搜索描述，回车确认",
                         value: state.desc,
                         attrs: 'data-role="search-desc"'
                     })
+                ],
+                [
+                    ui.badge(
+                        state.tags.length ? "已选 " + state.tags.length + " 个标签" : "标签可多选",
+                        state.tags.length ? "accent" : null,
+                        "tag"
+                    )
                 ]
             ]) +
+            tagFilter +
             (state.view === "grid" ? renderGridView(pageRows) : renderTableView(pageRows)) +
             ui.pager({
                 page: state.page,
@@ -213,6 +247,23 @@
         var state = ctx.state;
 
         rootNode.addEventListener("click", function (event) {
+            var tagFilter = event.target.closest("[data-tag-filter]");
+            if (tagFilter) {
+                var value = tagFilter.getAttribute("data-tag-filter");
+                if (value === "__all__") {
+                    state.tags = [];
+                } else if (state.tags.indexOf(value) >= 0) {
+                    state.tags = state.tags.filter(function (tag) {
+                        return tag !== value;
+                    });
+                } else {
+                    state.tags = state.tags.concat([value]);
+                }
+                state.page = 1;
+                ctx.rerender();
+                return;
+            }
+
             var view = event.target.closest("[data-view]");
             if (view) {
                 state.view = view.getAttribute("data-view");
@@ -257,6 +308,8 @@
                         util.esc(picture.size) +
                         "<br>类型：" +
                         util.esc(picture.category) +
+                        "<br>标签：" +
+                        util.esc(picture.tags.join("、")) +
                         "<br>上传人：" +
                         util.esc(picture.uploader) +
                         "<br>MD5：" +
@@ -264,20 +317,7 @@
                 });
             }
             if (kind === "edit" && picture) {
-                DpzOS.dialog
-                    .prompt({
-                        title: "编辑描述",
-                        label: picture.name,
-                        value: picture.desc,
-                        icon: "edit"
-                    })
-                    .then(function (value) {
-                        if (value !== null) {
-                            picture.desc = value;
-                            ctx.rerender();
-                            DpzOS.toast({ title: "已保存", tone: "success", icon: "check-circle" });
-                        }
-                    });
+                openPictureEditor(ctx, picture);
             }
             if (kind === "delete" && picture) {
                 ctx.confirm({
@@ -315,11 +355,103 @@
                 state.page = 1;
                 ctx.rerender();
             }
-            if (event.target.matches('[data-role="filter-tag"]')) {
-                state.tag = event.target.value;
-                state.page = 1;
-                ctx.rerender();
+        });
+    }
+
+    function openPictureEditor(ctx, picture) {
+        var draft = { desc: picture.desc, tags: picture.tags.slice() };
+        var promise = ctx.dialog({
+            title: "编辑图片",
+            subtitle: picture.name + " · " + picture.dimensions + " · " + picture.size,
+            icon: "edit",
+            confirmText: "保存",
+            html:
+                '<div class="ui-stack">' +
+                ui.cover(picture.id, {
+                    cls: "ui-cover--wide",
+                    center: icon("image"),
+                    time: picture.dimensions
+                }) +
+                ui.field({
+                    label: "描述",
+                    control:
+                        '<textarea class="ui-textarea" data-role="picture-desc">' +
+                        util.esc(picture.desc) +
+                        "</textarea>"
+                }) +
+                ui.field({
+                    label: "标签",
+                    hint: "点击 × 删除，输入后回车添加",
+                    control:
+                        '<div class="ui-chips" data-role="picture-tags"></div>' +
+                        '<div class="ui-search" style="margin-top:8px">' +
+                        icon("tag") +
+                        '<input class="ui-input" data-role="picture-tag-input" data-ignore-enter placeholder="新标签，例如：壁纸">' +
+                        "</div>"
+                }) +
+                ui.callout("标签会同步用于筛选器与前台展示，移动端同样支持多选筛选。", {
+                    icon: "info"
+                }) +
+                "</div>"
+        });
+
+        var modal = document.querySelector("#modal-root .os-modal");
+        if (modal) {
+            var tagsBox = modal.querySelector('[data-role="picture-tags"]');
+            var tagInput = modal.querySelector('[data-role="picture-tag-input"]');
+            var descInput = modal.querySelector('[data-role="picture-desc"]');
+
+            function renderTags() {
+                tagsBox.innerHTML = draft.tags.length
+                    ? draft.tags
+                          .map(function (tag) {
+                              return ui.chip(tag, {
+                                  removable: true,
+                                  tone: "accent",
+                                  attrs: 'data-tag="' + util.esc(tag) + '"'
+                              });
+                          })
+                          .join("")
+                    : '<span class="u-dim" style="font-size:12px">暂无标签</span>';
             }
+
+            renderTags();
+            tagsBox.addEventListener("click", function (event) {
+                var chip = event.target.closest(".ui-chip[data-tag]");
+                if (chip && event.target.closest(".ui-chip__x")) {
+                    var tag = chip.getAttribute("data-tag");
+                    draft.tags = draft.tags.filter(function (item) {
+                        return item !== tag;
+                    });
+                    renderTags();
+                }
+            });
+            tagInput.addEventListener("keydown", function (event) {
+                if (event.key !== "Enter") {
+                    return;
+                }
+                event.preventDefault();
+                var value = tagInput.value.trim();
+                if (!value || draft.tags.indexOf(value) >= 0) {
+                    return;
+                }
+                draft.tags.push(value);
+                tagInput.value = "";
+                renderTags();
+            });
+            descInput.addEventListener("input", function () {
+                draft.desc = descInput.value;
+            });
+        }
+
+        promise.then(function (ok) {
+            if (!ok) {
+                return;
+            }
+            picture.desc = draft.desc;
+            picture.tags = draft.tags.slice();
+            ctx.rerender();
+            DpzOS.toast({ title: "图片信息已保存", tone: "success", icon: "check-circle" });
         });
     }
 
@@ -403,8 +535,9 @@
                         '<article class="ui-card" data-id="' +
                         video.id +
                         '">' +
+                        '<div class="app-video__cover">' +
                         ui.cover(video.id, {
-                            cls: "ui-cover--wide app-video__cover",
+                            cls: "ui-cover--wide",
                             center: "",
                             tag: ui.badge(video.tags[0] || "视频", "accent"),
                             time: util.formatDuration(video.duration)
@@ -414,6 +547,7 @@
                         '"><i>' +
                         icon("play") +
                         "</i></div>" +
+                        "</div>" +
                         '<div class="ui-card__body">' +
                         '<div class="ui-card__title">' +
                         util.esc(video.title) +
@@ -437,7 +571,7 @@
                         "</div>" +
                         '<div class="ui-row ui-row--tight">' +
                         ui.btn({ label: "编辑", icon: "edit", size: "sm", attrs: 'data-action="edit" data-id="' + video.id + '"' }) +
-                        ui.btn({ label: "封面截图", icon: "scissors", size: "sm", attrs: 'data-action="screenshot" data-id="' + video.id + '"' }) +
+                        ui.btn({ label: "封面截图", icon: "camera", size: "sm", attrs: 'data-action="screenshot" data-id="' + video.id + '"' }) +
                         ui.btn({ label: "弹幕", icon: "comments", size: "sm", variant: "ghost", attrs: 'data-action="danmaku" data-id="' + video.id + '"' }) +
                         "</div>" +
                         "</div>" +
@@ -488,44 +622,14 @@
                 DpzOS.toast({ title: "视频列表已刷新", tone: "success", icon: "refresh" });
             }
             if (kind === "edit") {
-                ctx
-                    .dialog({
-                        title: "编辑视频信息",
-                        subtitle: video.title,
-                        icon: "edit",
-                        confirmText: "保存",
-                        html:
-                            '<div class="ui-stack">' +
-                            ui.field({ label: "标题", required: true, control: '<input class="ui-input" value="' + util.esc(video.title) + '">' }) +
-                            ui.field({ label: "副标题", control: '<input class="ui-input" value="' + util.esc(video.subtitle) + '">' }) +
-                            ui.field({
-                                label: "标签",
-                                hint: "回车或逗号添加，最多 10 个",
-                                control:
-                                    '<div class="ui-input" style="display:flex;align-items:center;gap:6px;height:auto;min-height:var(--ctl-h);flex-wrap:wrap;padding:6px 8px">' +
-                                    video.tags
-                                        .map(function (tag) {
-                                            return ui.chip(tag, { removable: true, tone: "accent" });
-                                        })
-                                        .join("") +
-                                    '<input style="border:0;background:transparent;flex:1;min-width:80px;outline:none" placeholder="添加标签…">' +
-                                    "</div>"
-                            }) +
-                            ui.field({ label: "描述", control: '<textarea class="ui-textarea">' + util.esc(video.desc) + "</textarea>" }) +
-                            "</div>"
-                    })
-                    .then(function (ok) {
-                        if (ok) {
-                            DpzOS.toast({ title: "视频信息已保存", tone: "success", icon: "check-circle" });
-                        }
-                    });
+                ctx.open("video-edit", { id: id });
             }
             if (kind === "screenshot") {
                 ctx
                     .dialog({
                         title: "设置封面",
                         subtitle: "输入截取时间点（秒），服务端会截帧并生成封面",
-                        icon: "scissors",
+                        icon: "camera",
                         confirmText: "开始截取",
                         html:
                             '<div class="ui-stack">' +
@@ -568,7 +672,7 @@
             return item.id === (ctx.params && ctx.params.id);
         });
         if (!video) {
-            return ui.empty({ icon: "video", title: "视频不存在" });
+            video = data.videos[0];
         }
         var related = data.danmaku.filter(function (item) {
             return item.group.indexOf(video.title.slice(0, 4)) >= 0;
@@ -624,7 +728,7 @@
                     "</div>" +
                     '<div class="ui-row" style="margin-top:14px">' +
                     ui.btn({ label: "编辑信息", icon: "edit", size: "sm", attrs: 'data-action="edit"' }) +
-                    ui.btn({ label: "设置封面", icon: "scissors", size: "sm", attrs: 'data-action="screenshot"' }) +
+                    ui.btn({ label: "设置封面", icon: "camera", size: "sm", attrs: 'data-action="screenshot"' }) +
                     ui.btn({ label: "打开弹幕管理", icon: "comments", size: "sm", variant: "primary", attrs: 'data-action="danmaku"' }) +
                     "</div>"
             }) +
@@ -670,8 +774,7 @@
                 ctx.open("danmaku", { group: ctx.params.id });
             }
             if (kind === "edit" || kind === "screenshot") {
-                DpzOS.toast({ title: "请在视频管理列表中操作", text: "演示：打开视频管理窗口", tone: "info" });
-                ctx.open("video");
+                ctx.open("video-edit", { id: ctx.params.id });
             }
         });
     }
@@ -687,5 +790,267 @@
         desc: "HLS 播放与实时弹幕",
         render: renderPlayer,
         mount: bindPlayer
+    });
+
+    function renderVideoEdit(ctx) {
+        var state = ctx.state;
+        var video = data.videos.find(function (item) {
+            return item.id === (ctx.params && ctx.params.id);
+        });
+        if (!video) {
+            video = data.videos[0];
+        }
+        state.form = state.form || {
+            title: video.title,
+            subtitle: video.subtitle,
+            tags: video.tags.slice(),
+            desc: video.desc,
+            frame: Math.round(video.duration / 3),
+            coverSeed: video.id
+        };
+        var form = state.form;
+        var frames = [0.15, 0.3, 0.45, 0.6, 0.75, 0.9].map(function (ratio) {
+            return {
+                ratio: ratio,
+                time: Math.round(video.duration * ratio),
+                seed: video.id + "-f" + Math.round(ratio * 100)
+            };
+        });
+
+        return (
+            '<div class="ui-page">' +
+            '<div class="ui-head">' +
+            '<div class="ui-head__text">' +
+            '<div class="ui-eyebrow">内容创作 · VIDEO / EDIT</div>' +
+            '<h1 class="ui-title">编辑视频</h1>' +
+            '<div class="ui-subtitle u-mono">' +
+            util.esc(video.id + " · " + util.formatDuration(video.duration) + " · " + util.formatCompact(video.views) + " 播放") +
+            "</div>" +
+            "</div>" +
+            '<div class="ui-head__actions">' +
+            ui.btn({ label: "返回列表", icon: "arrow-left", attrs: 'data-action="back"' }) +
+            ui.btn({ label: "重置", icon: "eraser", attrs: 'data-action="reset"' }) +
+            ui.btn({ label: "保存", icon: "check", variant: "primary", attrs: 'data-action="save"' }) +
+            "</div>" +
+            "</div>" +
+            '<div class="ui-grid ui-grid--2">' +
+            '<div class="ui-stack">' +
+            ui.panel({
+                title: "封面预览",
+                icon: "image",
+                sub: "16:9",
+                body:
+                    '<div class="app-video__cover">' +
+                    ui.cover(form.coverSeed, {
+                        cls: "ui-cover--wide",
+                        center: icon("play"),
+                        time: util.formatDuration(video.duration)
+                    }) +
+                    "</div>"
+            }) +
+            ui.panel({
+                title: "封面截图",
+                icon: "camera",
+                sub: "服务端按时间点截帧",
+                body:
+                    ui.field({
+                        label: "时间点（秒）",
+                        hint: "0.01 ~ " + video.duration + " 秒",
+                        control:
+                            '<div class="ui-row ui-row--tight">' +
+                            '<input class="ui-input u-mono" style="width:auto;flex:1;min-width:120px" type="number" min="0.01" max="' +
+                            video.duration +
+                            '" step="0.01" value="' +
+                            form.frame +
+                            '" data-role="frame-input">' +
+                            '<button type="button" class="ui-btn ui-btn--primary" data-action="capture">' +
+                            icon("camera") +
+                            "<span>截取</span></button>" +
+                            "</div>"
+                    }) +
+                    '<div class="app-editor__gallery" style="margin-top:12px">' +
+                    frames
+                        .map(function (frame) {
+                            return ui.cover(frame.seed, {
+                                cls: "ui-cover--square",
+                                center: icon("image"),
+                                time: util.formatDuration(frame.time),
+                                attrs: 'data-action="pick-frame" data-seed="' + util.esc(frame.seed) + '"'
+                            });
+                        })
+                        .join("") +
+                    "</div>"
+            }) +
+            "</div>" +
+            '<div class="ui-stack">' +
+            ui.panel({
+                title: "基本信息",
+                icon: "file",
+                body:
+                    ui.field({
+                        label: "标题",
+                        required: true,
+                        control:
+                            '<input class="ui-input" value="' +
+                            util.esc(form.title) +
+                            '" data-role="title-input">'
+                    }) +
+                    ui.field({
+                        label: "副标题",
+                        control:
+                            '<input class="ui-input" value="' +
+                            util.esc(form.subtitle) +
+                            '" data-role="subtitle-input">'
+                    })
+            }) +
+            ui.panel({
+                title: "标签",
+                icon: "tag",
+                sub: form.tags.length + " / 10",
+                body:
+                    '<div class="ui-chips" data-role="tag-list">' +
+                    form.tags
+                        .map(function (tag) {
+                            return ui.chip(tag, {
+                                removable: true,
+                                tone: "accent",
+                                attrs: 'data-tag="' + util.esc(tag) + '"'
+                            });
+                        })
+                        .join("") +
+                    "</div>" +
+                    '<div style="margin-top:10px">' +
+                    ui.search({
+                        placeholder: "输入标签后回车添加…",
+                        attrs: 'data-role="tag-input" data-ignore-enter'
+                    }) +
+                    "</div>"
+            }) +
+            ui.panel({
+                title: "描述",
+                icon: "quote",
+                body: '<textarea class="ui-textarea" style="min-height:140px" data-role="desc-input">' +
+                    util.esc(form.desc) +
+                    "</textarea>" +
+                    '<div class="ui-row" style="margin-top:12px">' +
+                    ui.btn({ label: "保存修改", icon: "check", variant: "primary", attrs: 'data-action="save"' }) +
+                    ui.btn({ label: "取消", icon: "x", variant: "ghost", attrs: 'data-action="back"' }) +
+                    "</div>"
+            }) +
+            ui.callout("保存走 <b>POST /api/Video</b>；封面截图走 <b>PATCH /api/Video/screenshot/{id}</b>，成功后 CDN 缓存会在数分钟内刷新。", {
+                tone: "accent",
+                icon: "info"
+            }) +
+            "</div>" +
+            "</div>" +
+            "</div>"
+        );
+    }
+
+    function bindVideoEdit(rootNode, ctx) {
+        var state = ctx.state;
+        var video = data.videos.find(function (item) {
+            return item.id === (ctx.params && ctx.params.id);
+        });
+        if (!video) {
+            video = data.videos[0];
+        }
+        var form = state.form;
+
+        function syncInput(selector, key) {
+            var input = rootNode.querySelector(selector);
+            if (input) {
+                input.addEventListener("input", function () {
+                    form[key] = input.value;
+                });
+            }
+        }
+
+        syncInput('[data-role="title-input"]', "title");
+        syncInput('[data-role="subtitle-input"]', "subtitle");
+        syncInput('[data-role="desc-input"]', "desc");
+        syncInput('[data-role="frame-input"]', "frame");
+
+        var tagInput = rootNode.querySelector('[data-role="tag-input"]');
+        if (tagInput) {
+            tagInput.addEventListener("keydown", function (event) {
+                if (event.key !== "Enter") {
+                    return;
+                }
+                var value = tagInput.value.trim();
+                if (!value || form.tags.indexOf(value) >= 0 || form.tags.length >= 10) {
+                    return;
+                }
+                form.tags.push(value);
+                ctx.rerender();
+            });
+        }
+
+        rootNode.addEventListener("click", function (event) {
+            var chip = event.target.closest(".ui-chip[data-tag]");
+            if (chip && event.target.closest(".ui-chip__x")) {
+                var tag = chip.getAttribute("data-tag");
+                form.tags = form.tags.filter(function (item) {
+                    return item !== tag;
+                });
+                ctx.rerender();
+                return;
+            }
+            var action = event.target.closest("[data-action]");
+            if (!action) {
+                return;
+            }
+            var kind = action.getAttribute("data-action");
+            if (kind === "back") {
+                ctx.open("video");
+                ctx.close();
+            }
+            if (kind === "reset") {
+                state.form = null;
+                ctx.rerender();
+                DpzOS.toast({ title: "已重置为未保存状态", tone: "info", icon: "eraser", timeout: 1600 });
+            }
+            if (kind === "capture") {
+                var input = rootNode.querySelector('[data-role="frame-input"]');
+                form.frame = util.clamp(Number(input.value) || 0, 0.01, video.duration);
+                form.coverSeed = video.id + "-shot" + form.frame;
+                ctx.rerender();
+                DpzOS.toast({
+                    title: "截图完成（演示）",
+                    text: "时间点 " + form.frame.toFixed(2) + "s",
+                    tone: "success",
+                    icon: "camera"
+                });
+            }
+            if (kind === "pick-frame") {
+                form.coverSeed = action.getAttribute("data-seed");
+                ctx.rerender();
+            }
+            if (kind === "save") {
+                if (!form.title.trim()) {
+                    DpzOS.toast({ title: "标题不能为空", tone: "danger", icon: "alert" });
+                    return;
+                }
+                video.title = form.title.trim();
+                video.subtitle = form.subtitle.trim();
+                video.tags = form.tags.slice();
+                video.desc = form.desc;
+                DpzOS.toast({ title: "视频信息已保存", tone: "success", icon: "check-circle" });
+                ctx.setSubtitle(video.id + " · 已保存");
+            }
+        });
+    }
+
+    DpzOS.registerApp({
+        id: "video-edit",
+        name: "编辑视频",
+        en: "Video edit",
+        icon: "edit",
+        tone: "violet",
+        group: "内容创作",
+        size: { w: 1160, h: 720 },
+        desc: "视频元数据、标签与封面截图",
+        render: renderVideoEdit,
+        mount: bindVideoEdit
     });
 })(window.DpzOS);

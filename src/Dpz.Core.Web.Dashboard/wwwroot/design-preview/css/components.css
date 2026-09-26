@@ -130,6 +130,7 @@
 .ui-stack {
     display: grid;
     gap: 10px;
+    align-content: start;
 }
 
 .ui-row {

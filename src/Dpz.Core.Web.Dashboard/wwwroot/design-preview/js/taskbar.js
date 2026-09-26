@@ -20,31 +20,52 @@
         "settings-app"
     ];
 
+    var MOBILE_DOCK_LIMIT = 6;
+
     function render() {
         var container = document.getElementById("taskbar-apps");
         if (!container) {
             return;
         }
+        var mobile = wm.isMobile();
         var running = {};
         wm.list().forEach(function (record) {
             running[record.appId] = record;
         });
 
-        var ids = pinned.slice();
-        wm.list().forEach(function (record) {
-            if (ids.indexOf(record.appId) < 0) {
-                ids.push(record.appId);
-            }
-        });
+        var ids = [];
+        if (mobile) {
+            wm.list().forEach(function (record) {
+                if (ids.indexOf(record.appId) < 0) {
+                    ids.push(record.appId);
+                }
+            });
+            pinned.forEach(function (appId) {
+                if (ids.length < MOBILE_DOCK_LIMIT && ids.indexOf(appId) < 0) {
+                    ids.push(appId);
+                }
+            });
+        } else {
+            ids = pinned.slice();
+            wm.list().forEach(function (record) {
+                if (ids.indexOf(record.appId) < 0) {
+                    ids.push(record.appId);
+                }
+            });
+        }
 
-        container.innerHTML = ids
+        var buttons = ids
             .map(function (appId) {
                 var app = DpzOS.getApp(appId);
                 if (!app) {
                     return "";
                 }
                 var record = running[appId];
-                var active = record && wm.getActive() && wm.getActive().appId === appId && !record.minimized;
+                var active =
+                    record &&
+                    wm.getActive() &&
+                    wm.getActive().appId === appId &&
+                    !record.minimized;
                 return (
                     '<button type="button" class="os-app-btn' +
                     (record ? " is-running" : "") +
@@ -63,7 +84,24 @@
             })
             .join("");
 
+        if (mobile) {
+            buttons +=
+                '<button type="button" class="os-app-btn os-app-btn--more" data-dock="more" ' +
+                'aria-label="所有应用">' +
+                icon("grid") +
+                '<span class="os-app-btn__label">所有应用</span>' +
+                "</button>";
+        }
+
+        container.innerHTML = buttons;
+        container.classList.toggle("os-taskbar__apps--mobile", mobile);
+
         container.onclick = function (event) {
+            var more = event.target.closest("[data-dock]");
+            if (more) {
+                DpzOS.startMenu.toggle();
+                return;
+            }
             var button = event.target.closest("[data-app]");
             if (!button) {
                 return;
@@ -172,6 +210,13 @@
         wm.onChange(function () {
             render();
         });
+
+        window.addEventListener(
+            "resize",
+            util.debounce(function () {
+                render();
+            }, 160)
+        );
 
         render();
         tickClock();

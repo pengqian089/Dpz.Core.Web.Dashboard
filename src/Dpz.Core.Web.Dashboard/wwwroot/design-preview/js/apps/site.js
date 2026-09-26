@@ -9,7 +9,6 @@
     function tabsFor(ctx, active) {
         return ui.tabs(
             [
-                { id: "friends", label: "友情链接", icon: "link", count: data.friends.length },
                 { id: "footer", label: "页脚内容", icon: "info" },
                 { id: "robots", label: "Robots.txt", icon: "bot" },
                 { id: "seo", label: "SEO 管理", icon: "search", count: data.seoPages.length },
@@ -25,78 +24,12 @@
             '<div class="ui-head__text">' +
             '<div class="ui-eyebrow">站点配置 · SITE</div>' +
             '<h1 class="ui-title">网站配置</h1>' +
-            '<div class="ui-subtitle">友链、页脚、抓取规则、SEO 与全站通知集中管理</div>' +
+            '<div class="ui-subtitle">页脚、抓取规则、SEO 与全站通知集中管理（友链见独立应用）</div>' +
             "</div>" +
             '<div class="ui-head__actions">' +
+            ui.btn({ label: "打开友链应用", icon: "link", attrs: 'data-action="open-friends"' }) +
             ui.btn({ label: "前台预览", icon: "external", attrs: 'data-action="preview-site"' }) +
             "</div>" +
-            "</div>"
-        );
-    }
-
-    function renderFriends(ctx) {
-        var state = ctx.state;
-        state.friendKeyword = state.friendKeyword || "";
-        var friends = data.friends.filter(function (friend) {
-            return util.matches(state.friendKeyword, [friend.name, friend.url, friend.desc]);
-        });
-        return (
-            ui.toolbar([
-                [
-                    ui.search({
-                        placeholder: "搜索友链…",
-                        value: state.friendKeyword,
-                        attrs: 'data-role="search-friend"'
-                    }),
-                    ui.btn({ label: "新增友链", icon: "plus", variant: "primary", attrs: 'data-action="add-friend"' })
-                ],
-                [ui.chip("共 " + data.friends.length + " 个友链", { icon: "link" })]
-            ]) +
-            '<div class="ui-grid ui-grid--2">' +
-            (friends.length
-                ? friends
-                      .map(function (friend) {
-                          return (
-                              '<article class="app-friend" data-id="' +
-                              friend.id +
-                              '">' +
-                              '<span class="app-friend__avatar" style="background-image:' +
-                              util.gradient(friend.name) +
-                              '">' +
-                              util.esc(util.initials(friend.name)) +
-                              "</span>" +
-                              '<div class="ui-item__main">' +
-                              '<div class="ui-item__title">' +
-                              util.esc(friend.name) +
-                              ui.badge("友链", "accent", "link") +
-                              "</div>" +
-                              '<div class="ui-item__sub u-ellipsis">' +
-                              util.esc(friend.desc) +
-                              "</div>" +
-                              '<div class="ui-item__sub u-mono">' +
-                              util.esc(friend.url) +
-                              "</div>" +
-                              "</div>" +
-                              '<div class="ui-item__side">' +
-                              ui.iconBtn("external", {
-                                  label: "访问",
-                                  attrs: 'data-action="visit" data-id="' + friend.id + '"'
-                              }) +
-                              ui.iconBtn("edit", {
-                                  label: "编辑",
-                                  attrs: 'data-action="edit-friend" data-id="' + friend.id + '"'
-                              }) +
-                              ui.iconBtn("trash", {
-                                  label: "删除",
-                                  danger: true,
-                                  attrs: 'data-action="delete-friend" data-id="' + friend.id + '"'
-                              }) +
-                              "</div>" +
-                              "</article>"
-                          );
-                      })
-                      .join("")
-                : ui.empty({ icon: "link", title: "还没有友链" })) +
             "</div>"
         );
     }
@@ -430,11 +363,8 @@
 
     function render(ctx) {
         var state = ctx.state;
-        state.tab = state.tab || (ctx.params && ctx.params.tab) || "friends";
+        state.tab = state.tab || (ctx.params && ctx.params.tab) || "footer";
         var body = "";
-        if (state.tab === "friends") {
-            body = renderFriends(ctx);
-        }
         if (state.tab === "footer") {
             body = renderFooter(ctx);
         }
@@ -454,62 +384,6 @@
             body +
             "</div>"
         );
-    }
-
-    function friendForm(ctx, friend) {
-        var draft = friend || { name: "", url: "", icon: "", desc: "" };
-        return ctx
-            .dialog({
-                title: friend ? "编辑友链" : "新增友链",
-                subtitle: "右侧会实时预览前台卡片效果",
-                icon: "link",
-                confirmText: "保存",
-                html:
-                    '<div class="ui-grid ui-grid--2" style="gap:16px">' +
-                    '<div class="ui-stack">' +
-                    ui.field({ label: "名称", required: true, control: '<input class="ui-input" data-field="name" value="' + util.esc(draft.name) + '">' }) +
-                    ui.field({ label: "链接", required: true, control: '<input class="ui-input u-mono" data-field="url" value="' + util.esc(draft.url) + '">' }) +
-                    ui.field({ label: "图标地址", required: true, control: '<input class="ui-input u-mono" data-field="icon" value="' + util.esc(draft.icon) + '">' }) +
-                    ui.field({ label: "描述", control: '<textarea class="ui-textarea" data-field="desc">' + util.esc(draft.desc) + "</textarea>" }) +
-                    "</div>" +
-                    '<div class="ui-stack"><div class="ui-eyebrow">实时预览</div>' +
-                    '<div class="app-friend app-friend__preview">' +
-                    '<span class="app-friend__avatar" style="background-image:' +
-                    util.gradient(draft.name || "新友链") +
-                    '">' +
-                    util.esc(util.initials(draft.name || "新")) +
-                    "</span>" +
-                    '<div class="ui-item__main">' +
-                    '<div class="ui-item__title">' +
-                    util.esc(draft.name || "友链名称") +
-                    "</div>" +
-                    '<div class="ui-item__sub">' +
-                    util.esc(draft.desc || "一句话描述") +
-                    "</div>" +
-                    "</div>" +
-                    "</div></div>" +
-                    "</div>"
-            })
-            .then(function (ok) {
-                if (!ok) {
-                    return;
-                }
-                if (friend) {
-                    DpzOS.toast({ title: "友链已更新（演示）", tone: "success", icon: "check-circle" });
-                } else {
-                    data.friends.unshift({
-                        id: util.uid("f"),
-                        name: draft.name || "新友链",
-                        url: draft.url || "https://example.com",
-                        icon: draft.icon,
-                        desc: draft.desc,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    });
-                    ctx.rerender();
-                    DpzOS.toast({ title: "友链已新增（演示）", tone: "success", icon: "link" });
-                }
-            });
     }
 
     function seoForm(ctx, page) {
@@ -619,44 +493,8 @@
                     icon: "external"
                 });
             }
-            if (kind === "add-friend") {
-                friendForm(ctx, null);
-            }
-            if (kind === "edit-friend") {
-                friendForm(
-                    ctx,
-                    data.friends.find(function (item) {
-                        return item.id === id;
-                    })
-                );
-            }
-            if (kind === "visit") {
-                var friend = data.friends.find(function (item) {
-                    return item.id === id;
-                });
-                if (friend) {
-                    DpzOS.toast({ title: "访问 " + friend.name, text: friend.url, tone: "info", icon: "globe" });
-                }
-            }
-            if (kind === "delete-friend") {
-                var target = data.friends.find(function (item) {
-                    return item.id === id;
-                });
-                ctx.confirm({
-                    title: "删除这个友链？",
-                    text: target ? target.name : "",
-                    confirmText: "删除",
-                    tone: "danger",
-                    icon: "trash"
-                }).then(function (ok) {
-                    if (ok) {
-                        data.friends = data.friends.filter(function (item) {
-                            return item.id !== id;
-                        });
-                        ctx.rerender();
-                        DpzOS.toast({ title: "友链已删除", tone: "success", icon: "check-circle" });
-                    }
-                });
+            if (kind === "open-friends") {
+                ctx.open("friends");
             }
             if (kind === "edit-footer") {
                 state.footerEditing = true;
@@ -801,16 +639,6 @@
             }
             if (event.target.matches('[data-role="footer-editor"]')) {
                 state.footerDraft = event.target.value;
-            }
-            if (event.target.matches('[data-role="search-friend"]')) {
-                state.friendKeyword = event.target.value;
-                var list = rootNode.querySelector(".ui-grid");
-                if (list) {
-                    list.querySelectorAll(".app-friend").forEach(function (node) {
-                        var haystack = node.textContent;
-                        node.style.display = util.matches(state.friendKeyword, [haystack]) ? "" : "none";
-                    });
-                }
             }
             if (event.target.matches('[data-role="search-seo"]')) {
                 state.seoKeyword = event.target.value;

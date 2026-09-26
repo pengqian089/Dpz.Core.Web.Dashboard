@@ -119,6 +119,17 @@
                 }
             },
             {
+                id: "action:auth-states",
+                label: "查看认证状态设计",
+                hint: "OIDC / 会话过期 / 权限不足",
+                icon: "shield",
+                group: "系统",
+                keywords: ["认证", "登录", "oidc", "会话", "权限"],
+                action: function () {
+                    window.open("./auth.html", "_blank");
+                }
+            },
+            {
                 id: "action:docs",
                 label: "查看设计改造文档",
                 hint: "docs/desktop-ui-redesign.md",

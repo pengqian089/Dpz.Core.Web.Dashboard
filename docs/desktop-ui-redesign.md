@@ -38,10 +38,30 @@
 | 内容 | 位置 |
 | --- | --- |
 | 静态可交互原型 | `src/Dpz.Core.Web.Dashboard/wwwroot/design-preview/` |
+| 认证与异常状态设计页 | `src/Dpz.Core.Web.Dashboard/wwwroot/design-preview/auth.html` |
 | 设计文档（本文） | `docs/desktop-ui-redesign.md` |
 
 原型为纯静态 HTML/CSS/JS，不依赖 npm 构建、不依赖后端服务，可直接双击
 `index.html` 打开，也可在 `dotnet run` 后通过 `https://localhost:5010/design-preview/` 访问。
+
+### 1.5 技术边界
+
+正式实现以 **Blazor WebAssembly 为主**，npm 前端资产仅用于没有成熟 Blazor
+替代方案的部分：
+
+| 能力 | 实现方 | 说明 |
+| --- | --- | --- |
+| 页面、组件、状态、路由 | Blazor / Razor | 业务逻辑全部留在 .NET |
+| 桌面外壳与窗口管理 | Blazor + 少量 JS interop | DOM 拖拽/缩放/吸附等指针细节可下沉到 TypeScript |
+| Markdown 编辑器 | npm（Milkdown Crepe） | 通过 JS interop 调用，已有封装 |
+| 代码编辑器 | npm（CodeMirror 6） | 同上 |
+| 图表 | npm（Chart.js） | 概览窗口挂载/销毁时管理实例 |
+| 播放器 | npm（hls.js）+ 原生 Audio | 视频走 HLS，音频用自定义组件 |
+| 图片查看 | npm（PhotoSwipe） | 灯箱与编辑器图库 |
+| 字体图标 | 现有 FontAwesome 或内置 SVG | 同一区域不混用两套 |
+| 设计令牌与布局 | 纯 CSS 变量 + 类名 | 与 npm 无关，可独立迁移 |
+
+原则：**外壳与组件用 Razor，能力型库用 npm**。不引入第二套 UI 框架。
 
 ---
 
@@ -156,7 +176,15 @@
 | 窗口打开 | 520ms | `--ease-spring` |
 | 窗口关闭 | 200ms | `--ease-in-out` |
 | 最小化 | 300ms | `--ease-in-out` |
+| 最大化 / 还原 / 吸附 | 380ms | `--ease-out` |
 
+窗口几何动画约定：
+
+- `left / top / width / height / border-radius` 统一过渡 380ms `--ease-out`，
+  最大化、还原、拖拽吸附都会平滑移动而不是瞬间跳变。
+- 拖拽与缩放期间给窗口加 `is-dragging` / `is-resizing`，这两类状态下禁用
+  几何过渡，保证指针跟手。
+- 窗口创建时先写入几何再插入 DOM，避免从默认坐标播放一次多余动画。
 - 通过 `html[data-motion="off"]` 一键关闭全部动画。
 - 同时尊重 `prefers-reduced-motion`。
 - 不使用长时间循环动画干扰阅读（壁纸极光是唯一例外）。
@@ -202,24 +230,36 @@
 | 文章编辑器 | `article-editor` | 内容创作 | 已实现 |
 | Markdown 预览 | `markdown-preview-app` | 内容创作 | 已实现 |
 | 相册管理 | `gallery` | 内容创作 | 已实现 |
-| 视频管理 | `video` / `video-player` | 内容创作 | 已实现 |
-| 音乐管理 | `music-app` | 内容创作 | 蓝图 |
-| 录音管理 | `audio-app` | 内容创作 | 蓝图 |
-| 碎碎念 | `mumble` | 内容创作 | 蓝图 |
-| 时间轴 | `timeline` | 内容创作 | 蓝图 |
+| 视频管理 | `video` | 内容创作 | 已实现 |
+| 视频播放 | `video-player` | 内容创作 | 已实现 |
+| 视频编辑 | `video-edit` | 内容创作 | 已实现 |
+| 音乐管理 | `music-app` | 内容创作 | 已实现 |
+| 音乐详情 | `music-detail` | 内容创作 | 已实现 |
+| 录音管理 | `audio-app` | 内容创作 | 已实现 |
+| 碎碎念 | `mumble` | 内容创作 | 已实现 |
+| 碎碎念编辑 | `mumble-editor` | 内容创作 | 已实现 |
+| 时间轴 | `timeline` | 内容创作 | 已实现 |
+| 时间轴编辑 | `timeline-editor` | 内容创作 | 已实现 |
 | 动态页 | `dynamic` | 内容创作 | 蓝图 |
 | 弹幕管理 | `danmaku` | 互动管理 | 已实现 |
 | 评论管理 | `comments` | 互动管理 | 已实现 |
-| 网站配置（友链/页脚/Robots/SEO/通知） | `site` | 站点配置 | 已实现 |
+| 友情链接 | `friends` | 站点配置 | 已实现 |
+| 网站配置（页脚/Robots/SEO/通知） | `site` | 站点配置 | 已实现 |
 | 安全中心（黑名单/封禁/规则） | `security` | 安全防护 | 已实现 |
 | 用户与权限 | `users` | 安全防护 | 已实现 |
 | 登录记录 | `token-history` | 安全防护 | 已实现 |
 | 源码管理 | `code` | 开发工具 | 已实现 |
 | 设置 | `settings-app` | 系统 | 已实现 |
 | 终端 | `terminal` | 系统 | 已实现 |
+| 认证与异常状态 | `auth.html`（独立页） | — | 已实现 |
 
 蓝图类应用使用统一的「设计蓝图」模板展示：计划功能、主要流程、布局线框、
-迁移要点与参考应用，用于确认信息架构后再开发。
+迁移要点与参考应用，用于确认信息架构后再开发。目前仅「动态页」保留为蓝图。
+
+列表类应用遵循「列表窗口 + 编辑/详情窗口」拆分：`video` → `video-edit`、
+`music-app` → `music-detail`、`mumble` → `mumble-editor`、`timeline` →
+`timeline-editor`、`users` → `token-history`。子窗口不占任务栏固定位，关闭
+后回到父列表。
 
 ### 4.3 窗口模型
 
@@ -295,6 +335,75 @@
 | 内联警告 | `ui-callout` | 表单校验、说明、风险提示 |
 | 灯箱 | 全屏 | 图片预览 + 元数据侧栏 |
 
+对话框键盘约定：
+
+- `Esc` 取消，`Enter` 确认。
+- 焦点位于 `textarea`、`[contenteditable]` 或带 `data-ignore-enter` 的控件时，
+  `Enter` 不触发确认，交由控件自身处理（如标签输入的「回车添加」）。
+
+### 5.6 列表与详情拆分
+
+列表类模块统一拆成父子两个窗口：
+
+| 父列表 | 子窗口 | 子窗口职责 |
+| --- | --- | --- |
+| `video` | `video-edit` | 元数据、标签、封面截图 |
+| `music-app` | `music-detail` | 试听、歌词、封面、分组 |
+| `mumble` | `mumble-editor` | Markdown + Gallery 图库 |
+| `timeline` | `timeline-editor` | 节点信息 + Markdown |
+| `users` | `token-history` | 登录审计 |
+
+约定：
+
+- 「返回列表」先聚焦父窗口再关闭自身，避免出现空桌面。
+- 子窗口不参与任务栏固定位，只在任务栏显示运行中的普通按钮。
+- 编辑类子窗口的保存结果通过共享数据与父窗口 `rerender` 同步。
+
+### 5.7 认证与异常状态页
+
+认证、会话与异常状态不使用窗口，而是全屏页面（对应现有 `PublicLayout`），
+原型见 `design-preview/auth.html`，支持 `?state=` 深链接：
+
+| state | 场景 | 关键元素 |
+| --- | --- | --- |
+| `logging-in` | 跳转认证中心 | 旋转光环、Authority / ReturnUrl、取消 |
+| `completing-login` | 完成登录 | 进度条、GrantType 说明 |
+| `login-failed` | 登录失败 | 错误码、重新登录、返回主站 |
+| `registering` | 注册中 | 进度条、取消 |
+| `user-profile` | 用户信息确认 | 头像、claims 列表、进入后台 |
+| `logged-out` | 已退出 | 成功态、重新登录 |
+| `completing-logout` | 退出中 | 进度条 |
+| `logout-failed` | 退出失败 | 本地已清除提示、重试 |
+| `session-expired` | 会话过期 | 8 秒倒计时 + 进度条、立即登录、取消自动跳转 |
+| `no-permission` | 权限不足 | Required / Current 权限对比、退出登录 |
+| `not-found` | 页面不存在 | 404、回到桌面、打开命令面板 |
+
+设计要点：
+
+- 全屏壁纸 + 居中玻璃卡片，与桌面同一套令牌。
+- 状态图标以角标形式叠在 Logo 右下角，避免纵向堆叠。
+- 危险/警告/成功三态使用语义色，标题与描述始终给出下一步动作。
+- 倒计时组件可取消，取消后按钮仍可用。
+
+### 5.8 事件与生命周期约定（重要）
+
+原型第一版出现过「多次点击后卡死」，根因是重渲染时向同一个持久容器重复
+`addEventListener`，监听器数量随点击指数增长。正式实现必须遵守：
+
+1. 每次渲染都创建新的宿主节点 `os-app-host`，应用只向宿主绑定事件；
+   重渲染时丢弃旧宿主，监听器随 DOM 一起回收。
+2. `mount` 允许返回清理函数，窗口在重渲染前与关闭时统一调用；定时器、
+   Chart/hls/AudioPlayer 实例、Observer 都必须在此释放。
+3. 全局监听（`document` / `window`）只允许在外壳初始化时绑定一次；浮层
+   内部使用 `node.onclick =` 覆盖式赋值或随浮层销毁的监听器。
+4. 对话框的全局键盘监听在任意关闭路径（按钮、遮罩、Esc）都要移除。
+5. Blazor 迁移时对应约定：组件 `OnAfterRender` 绑定 JS 事件必须配对
+   `IAsyncDisposable`，或改用 `@onclick` 由渲染器管理，禁止手工向
+   持久元素重复绑定。
+
+验收方式：连续触发同一列表交互 20 次以上，窗口 DOM 中始终只有一个宿主
+节点，交互耗时保持线性。
+
 ---
 
 ## 六、响应式策略
@@ -307,12 +416,21 @@
 
 移动端关键规则：
 
+- 桌面图标变为启动器网格（4 列），顶部显示品牌与时钟。
+- 任务栏变为底部 Dock：
+  - 先排列运行中的窗口，再用固定应用补足到 6 个；
+  - 末尾固定一个「所有应用」按钮，呼出开始菜单启动器；
+  - 超出时横向滚动并带 `scroll-snap` 吸附，避免图标被压缩得不可点。
+  - 搜索框隐藏，保留通知、时钟与账户入口。
 - 表格自动转为「每行一张卡片」，单元格使用 `data-label` 作为字段名。
 - `ui-grid--2/3/4/6` 一律折叠为单列。
 - 编辑器由左右分栏变为上下布局，侧栏限高可滚动。
 - 工具栏允许换行，搜索与下拉占满整行。
 - 分页居中，页码收敛。
+- 窗口全屏，隐藏缩放与最小化/最大化按钮，标题栏显示返回键。
+- 会话恢复在移动端禁用（自由窗口布局没有意义）。
 - 对触屏（`pointer: coarse`）桌面图标单击即打开，无需双击。
+- 断点变化时任务栏会自动重算（`resize` 事件防抖 160ms）。
 
 ---
 
@@ -424,7 +542,8 @@ ClientApp/src/
 - 实现 `WindowHost` 与 `window-manager.ts`，接入会话恢复与深链接。
 - 保留旧路由：外壳加载失败时仍可退回传统布局（渐进增强）。
 
-**验收**：可以在桌面上打开任一模块窗口，任务栏、快捷键、吸附可用。
+**验收**：可以在桌面上打开任一模块窗口，任务栏、快捷键、吸附可用；
+最大化/还原/吸附动画平滑，拖拽缩放跟手；移动端 Dock 固定 6 个应用并可横向滚动。
 
 ### 阶段三：模块迁移（按优先级）
 
@@ -432,13 +551,18 @@ ClientApp/src/
 
 1. `dashboard`：纯读，无状态，验证图表生命周期。
 2. `article-list` → `article-editor`：覆盖列表 + 编辑器两种模式。
-3. `gallery` / `video`：覆盖媒体网格、灯箱、播放窗口。
-4. `comments` / `danmaku`：覆盖卡片流、多选批量、导入弹窗。
-5. `security` / `users` / `token-history`：覆盖 Tab、审计表格、危险操作。
-6. `outbox` / `code`：覆盖状态筛选、树/列表双视图、代码预览。
-7. `site`：覆盖多 Tab 配置与实时预览。
-8. 蓝图模块（音乐/录音/碎碎念/时间轴/动态页）：按蓝图实现。
-9. `settings-app` / `terminal`：最后接入主题持久化与命令。
+3. `gallery` / `video` / `video-edit` / `video-player`：覆盖媒体网格、灯箱、
+   播放窗口与编辑窗口。
+4. `music-app` / `music-detail` / `audio-app`：覆盖媒体库、试听与内嵌播放。
+5. `mumble` / `mumble-editor` / `timeline` / `timeline-editor`：覆盖时间流、
+   图库模式与节点编辑。
+6. `comments` / `danmaku`：覆盖卡片流、多选批量、导入弹窗。
+7. `friends` / `site`：覆盖独立友链应用与多 Tab 配置、实时预览。
+8. `security` / `users` / `token-history`：覆盖 Tab、审计表格、危险操作。
+9. `outbox` / `code`：覆盖状态筛选、树/列表双视图、代码预览。
+10. `auth.html` 对应的认证与异常页面：对接 OIDC 九态、会话过期倒计时、
+    权限不足与 404。
+11. `dynamic`（蓝图）与 `settings-app` / `terminal`：收尾接入主题持久化与命令。
 
 **验收**：每个模块达到「无旧页面残留、URL 可深链接、移动端可用」。
 
@@ -493,36 +617,49 @@ dotnet run --project src/Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj
 | 参数 | 效果 |
 | --- | --- |
 | `index.html#/article-list` | 直接打开文章管理窗口 |
-| `index.html#/music-app` | 打开音乐管理蓝图 |
+| `index.html#/video-edit` | 打开视频编辑窗口（无 id 时取第一条） |
+| `index.html#/music-detail` | 打开音乐详情窗口 |
+| `index.html#/dynamic` | 打开动态页蓝图 |
 | `index.html?panel=start` | 启动后展开开始菜单 |
 | `index.html?panel=palette` | 启动后展开命令面板 |
 | `index.html?panel=notifications` | 启动后展开通知中心 |
+| `auth.html?state=session-expired` | 查看会话过期状态页 |
+| `auth.html?state=no-permission` | 查看权限不足状态页 |
+
+命令面板中「查看认证状态设计」可直接打开 `auth.html`。
 
 ### 11.3 建议走查顺序
 
 1. 桌面：双击图标打开应用，观察窗口动画与活动态。
-2. 拖拽到屏幕顶部/左右边缘，验证吸附；双击标题栏最大化。
+2. 拖拽到屏幕顶部/左右边缘，验证吸附；双击标题栏最大化，确认动画平滑。
 3. `Ctrl+K` 输入拼音（如 `wz`）搜索应用。
 4. 概览：图表、Banner 轮播、日志。
 5. 文章：筛选、分页、进入编辑器、预览、发布反馈。
-6. 相册：网格/表格切换、灯箱、上传对话框。
-7. 弹幕：多选批量删除、导入对话框；消息队列：状态卡片筛选。
-8. 设置：切换强调色与壁纸，观察全局即时生效。
-9. 收缩浏览器窗口到手机宽度，检查启动器、全屏应用与表格卡片化。
-10. 关闭窗口后刷新，验证会话恢复；清空 localStorage 验证默认态。
+6. 相册：多选标签筛选、网格/表格切换、灯箱、编辑标签与描述。
+7. 视频：封面播放按钮、编辑窗口、封面截图。
+8. 音乐/录音：列表、详情窗口、试听与歌词。
+9. 碎碎念/时间轴：卡片流、编辑窗口、预览。
+10. 友链：新增友链对话框的实时预览。
+11. 弹幕：多选批量删除、导入对话框；消息队列：状态卡片筛选。
+12. 设置：切换强调色与壁纸，观察全局即时生效。
+13. 打开 `auth.html`，逐个切换 11 种认证状态。
+14. 收缩浏览器窗口到手机宽度，检查启动器、全屏应用、Dock 横向滚动与表格卡片化。
+15. 关闭窗口后刷新，验证会话恢复；清空 localStorage 验证默认态。
 
 ### 11.4 原型文件结构
 
 ```text
 wwwroot/design-preview/
 ├── index.html                 # 桌面外壳骨架与启动
+├── auth.html                  # 认证与异常状态设计页（?state=）
 ├── css/
 │   ├── tokens.css             # 设计令牌（重点迁移对象）
 │   ├── base.css               # 重置与基础排版
 │   ├── shell.css              # 壁纸/桌面/任务栏/开始菜单/浮层/启动屏
-│   ├── window.css             # 窗口 chrome 与吸附
+│   ├── window.css             # 窗口 chrome、几何动画与吸附
 │   ├── components.css         # ui-* 通用组件
-│   └── apps.css               # 各应用专属布局
+│   ├── apps.css               # 各应用专属布局
+│   └── auth.css               # 认证状态页
 └── js/
     ├── icons.js               # SVG 图标集
     ├── utils.js               # 格式化/高亮/拼音/存储
@@ -532,12 +669,30 @@ wwwroot/design-preview/
     ├── registry.js            # 应用注册表
     ├── overlays.js            # 对话框/灯箱/右键菜单
     ├── notifications.js       # Toast 与通知中心
-    ├── window-manager.js      # 窗口管理
-    ├── taskbar.js             # 任务栏
+    ├── window-manager.js      # 窗口管理 + os-app-host 生命周期
+    ├── taskbar.js             # 任务栏（桌面 12 固定位 / 移动 Dock 6 位）
     ├── start-menu.js          # 开始菜单
     ├── command-palette.js     # 命令面板
     ├── desktop.js             # 桌面图标与右键菜单
-    ├── apps/*.js              # 各应用视图
+    ├── auth.js                # 认证状态机与倒计时
+    ├── apps/
+    │   ├── dashboard.js
+    │   ├── articles.js        # article-list / article-editor / 预览
+    │   ├── media.js           # gallery / video / video-player / video-edit
+    │   ├── music.js           # music-app / music-detail
+    │   ├── audio.js           # audio-app
+    │   ├── mumble.js          # mumble / mumble-editor
+    │   ├── timeline.js        # timeline / timeline-editor
+    │   ├── interaction.js     # comments / danmaku
+    │   ├── friends.js
+    │   ├── site.js            # 页脚 / Robots / SEO / 通知
+    │   ├── security.js
+    │   ├── users.js           # users / token-history
+    │   ├── outbox.js
+    │   ├── code.js
+    │   ├── settings-app.js
+    │   ├── terminal.js
+    │   └── blueprints.js      # dynamic 蓝图
     └── main.js                # 启动与全局快捷键
 ```
 
@@ -557,6 +712,19 @@ wwwroot/design-preview/
 | 渐进增强 | 外壳 JS 加载失败将无法导航 | 阶段一至三保留传统路由回退，阶段四再移除 |
 
 ---
+
+## 十三、首轮评审反馈与设计响应
+
+| 反馈 | 根因 | 设计响应 | 落点 |
+| --- | --- | --- | --- |
+| 最大化/还原动画生硬 | 几何属性没有过渡，类切换瞬间跳变 | 窗口几何统一 380ms `--ease-out`；拖拽/缩放期间禁用过渡；最大化按钮图标随状态切换 | `window.css`、`window-manager.js` 3.5 节 |
+| 移动端任务栏未优化 | 固定 12 个图标全部压缩显示 | Dock 固定 6 位（运行中优先）+「所有应用」按钮 + 横向滚动吸附；`resize` 防抖重算 | `taskbar.js`、`shell.css` 6 节 |
+| 碎碎念/友链/录音/时间轴/OIDC 页面缺失 | 原型只覆盖了部分模块 | 新增 5 个应用与 1 个认证状态页，蓝图仅保留动态页 | `apps/mumble.js`、`friends.js`、`audio.js`、`timeline.js`、`auth.html` 4.2 节 |
+| 连续点击后无响应 | 重渲染向持久容器重复绑定事件，监听器指数增长 | 引入 `os-app-host` 宿主节点，重渲染整体替换；`mount` 返回清理函数；全局监听只绑定一次；对话框键盘监听全路径移除 | `window-manager.js`、`overlays.js` 5.8 节 |
+| 视频播放按钮位置不对 | 播放层相对整张卡片定位，未跟随封面 | 播放层移入封面容器，封面 `position: relative` | `media.js`、`apps.css` |
+| 视频编辑页不清晰 | 编辑只有弹窗，信息密度低 | 拆出独立 `video-edit` 窗口：封面预览、封面截图、标签编辑、描述、统计 | `media.js`、5.6 节 |
+| 相册标签下拉体验差且不可编辑 | 单选下拉 + 编辑只改描述 | 标签筛选改为多选 chips（并集匹配）；编辑对话框支持标签增删与描述修改 | `media.js`、`gallery` |
+| 前端技术边界需明确 | 文档未强调主次 | 第 1.5 节明确「Blazor WASM 为主，npm 包为辅」的分工 | 1.5 节 |
 
 ## 附录 A：设计令牌速查
 

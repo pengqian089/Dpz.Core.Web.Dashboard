@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-accent="cyan" data-wallpaper="aurora" data-density="cozy" data-motion="on">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="color-scheme" content="dark" />
+    <title>DPZ OS · 赛博桌面后台设计预览</title>
+    <link rel="stylesheet" href="./css/tokens.css" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/shell.css" />
+    <link rel="stylesheet" href="./css/window.css" />
+    <link rel="stylesheet" href="./css/components.css" />
+    <link rel="stylesheet" href="./css/apps.css" />
+</head>
+
+<body>
+    <div class="os" id="os">
+        <div class="os-wallpaper" aria-hidden="true">
+            <div class="os-wallpaper__aurora"></div>
+            <div class="os-wallpaper__grid"></div>
+            <div class="os-wallpaper__scan"></div>
+            <div class="os-wallpaper__vignette"></div>
+        </div>
+
+        <div class="os-hud" aria-hidden="true">
+            <span class="os-hud__corner os-hud__corner--tl"></span>
+            <span class="os-hud__corner os-hud__corner--tr"></span>
+            <span class="os-hud__corner os-hud__corner--bl"></span>
+            <span class="os-hud__corner os-hud__corner--br"></span>
+            <div class="os-hud__readout os-hud__readout--left">
+                DPZ.OS // NEXUS<br>NODE 07 · <b>ONLINE</b>
+            </div>
+            <div class="os-hud__readout os-hud__readout--right">
+                设计预览版 · STATIC PROTOTYPE<br>BUILD 2.7.0-preview
+            </div>
+        </div>
+
+        <main class="os-desktop" id="desktop">
+            <div class="os-launcher-head">
+                <span class="os-launcher-head__brand">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2 3 7v10l9 5 9-5V7z" />
+                        <path d="M12 22V12" />
+                        <path d="m3 7 9 5 9-5" />
+                    </svg>
+                    DPZ OS
+                </span>
+                <span class="os-launcher-head__time" id="mobile-time">--:--</span>
+            </div>
+
+            <div class="os-icons" id="desktop-icons"></div>
+
+            <aside class="os-desktop__side">
+                <div class="os-clock">
+                    <div class="os-clock__time" id="desktop-clock-time">--<span>:</span>--</div>
+                    <div class="os-clock__date" id="desktop-clock-date">----</div>
+                    <div class="os-clock__status">
+                        <span class="os-clock__dot"></span>
+                        <span>所有系统运行正常</span>
+                    </div>
+                </div>
+                <div class="os-mini">
+                    <div class="os-mini__head">
+                        <span>今日访问</span>
+                        <span>+12.4%</span>
+                    </div>
+                    <div class="os-mini__value">8,432</div>
+                    <div class="os-mini__bars">
+                        <i style="height:32%"></i>
+                        <i style="height:48%"></i>
+                        <i style="height:38%"></i>
+                        <i style="height:64%"></i>
+                        <i style="height:72%"></i>
+                        <i style="height:55%"></i>
+                        <i style="height:80%"></i>
+                        <i style="height:92%"></i>
+                        <i style="height:70%"></i>
+                        <i style="height:84%"></i>
+                    </div>
+                </div>
+                <div class="os-mini">
+                    <div class="os-mini__head">
+                        <span>消息队列</span>
+                        <span>OUTBOX</span>
+                    </div>
+                    <div class="os-mini__value">1 条待发布</div>
+                    <div class="os-mini__head" style="margin-top:10px">
+                        <span>拦截规则</span>
+                        <span>5 ACTIVE</span>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <div class="os-windows" id="windows"></div>
+        <div class="os-snap" id="snap-preview" hidden></div>
+
+        <footer class="os-taskbar" id="taskbar">
+            <div class="os-taskbar__side">
+                <button type="button" class="os-start-btn" id="start-button" title="开始" aria-label="开始">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2 3 7v10l9 5 9-5V7z" />
+                        <path d="M12 22V12" />
+                        <path d="m3 7 9 5 9-5" />
+                    </svg>
+                </button>
+                <button type="button" class="os-taskbar__search" id="taskbar-search">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <span>搜索应用或命令</span>
+                    <kbd>Ctrl K</kbd>
+                </button>
+            </div>
+
+            <div class="os-taskbar__apps" id="taskbar-apps"></div>
+
+            <div class="os-taskbar__tray">
+                <button type="button" class="os-tray-btn os-tray-btn--optional" id="tray-palette" title="个性化"
+                    aria-label="个性化">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1.1a1.6 1.6 0 0 1 1.6-1.7h2c3 0 5.6-2.5 5.6-5.6C22 6 17.5 2 12 2z" />
+                    </svg>
+                </button>
+                <button type="button" class="os-tray-btn has-dot" id="tray-notifications" title="通知中心"
+                    aria-label="通知中心">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                    </svg>
+                </button>
+                <div class="os-tray-clock" id="tray-clock" title="日期与时间">
+                    <span class="os-tray-clock__time" id="tray-time">--:--</span>
+                    <span class="os-tray-clock__date" id="tray-date">----</span>
+                </div>
+                <button type="button" class="os-tray-user" id="tray-user" title="账户" aria-label="账户">
+                    <span class="ui-avatar ui-avatar--sm" style="background-image:linear-gradient(135deg,#22d3ee,#8b5cf6)">胖</span>
+                </button>
+            </div>
+        </footer>
+
+        <div class="os-flyout os-start" id="start-menu" hidden></div>
+        <div class="os-palette" id="command-palette" hidden></div>
+        <div class="os-flyout os-panel" id="notification-center" hidden></div>
+        <div class="os-context" id="context-menu" hidden></div>
+        <div id="modal-root"></div>
+        <div class="os-toasts" id="toasts"></div>
+        <div class="os-lightbox" id="lightbox" hidden></div>
+
+        <div class="os-boot" id="boot">
+            <div class="os-boot__inner">
+                <div class="os-boot__logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" style="width:42px;height:42px">
+                        <path d="M12 2 3 7v10l9 5 9-5V7z" />
+                        <path d="M12 22V12" />
+                        <path d="m3 7 9 5 9-5" />
+                    </svg>
+                </div>
+                <div class="os-boot__title">DPZ OS</div>
+                <div class="os-boot__bar"><i></i></div>
+                <div class="os-boot__sub">正在启动六边形核心 …</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/icons.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/settings.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/registry.js"></script>
+    <script src="./js/overlays.js"></script>
+    <script src="./js/notifications.js"></script>
+    <script src="./js/window-manager.js"></script>
+    <script src="./js/taskbar.js"></script>
+    <script src="./js/start-menu.js"></script>
+    <script src="./js/command-palette.js"></script>
+    <script src="./js/desktop.js"></script>
+    <script src="./js/apps/dashboard.js"></script>
+    <script src="./js/apps/articles.js"></script>
+    <script src="./js/apps/media.js"></script>
+    <script src="./js/apps/interaction.js"></script>
+    <script src="./js/apps/site.js"></script>
+    <script src="./js/apps/security.js"></script>
+    <script src="./js/apps/users.js"></script>
+    <script src="./js/apps/outbox.js"></script>
+    <script src="./js/apps/code.js"></script>
+    <script src="./js/apps/settings-app.js"></script>
+    <script src="./js/apps/terminal.js"></script>
+    <script src="./js/apps/blueprints.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+
+</html>

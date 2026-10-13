@@ -1,0 +1,21 @@
+﻿using System.Collections.Generic;
+
+namespace Dpz.Core.Web.Management.Models.Request;
+
+public class SaveDynamicRequest
+{
+    /// <summary>
+    /// HTML 内容
+    /// </summary>
+    public required HtmlContent HtmlContent { get; set; }
+
+    /// <summary>
+    /// 样式 内容
+    /// </summary>
+    public SortedDictionary<int, StyleContent> StyleContents { get; set; } = [];
+
+    /// <summary>
+    /// 脚本 内容
+    /// </summary>
+    public SortedDictionary<int, ScriptContent> ScriptContents { get; set; } = [];
+}

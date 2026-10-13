@@ -15,7 +15,7 @@
 
 - 固定左侧导航（`Shared/NavMenu.razor`，6 个分组、21 个入口）
 - 右侧内容区按路由切换页面
-- 深色主题、BEM 命名的自定义 CSS（`ClientApp/src/styles/`）
+- 深色主题、BEM 命名的自定义 CSS（`src/styles/`）
 - 业务模块统一遵循 `List / Publish / Edit`（部分为 `Post`）页面模式
 
 ### 1.2 目标
@@ -37,12 +37,13 @@
 
 | 内容 | 位置 |
 | --- | --- |
-| 静态可交互原型 | `src/Dpz.Core.Web.Dashboard/wwwroot/design-preview/` |
-| 认证与异常状态设计页 | `src/Dpz.Core.Web.Dashboard/wwwroot/design-preview/auth.html` |
+| 静态可交互原型 | `design/` |
+| 认证与异常状态设计页 | `design/auth.html` |
 | 设计文档（本文） | `docs/desktop-ui-redesign.md` |
 
 原型为纯静态 HTML/CSS/JS，不依赖 npm 构建、不依赖后端服务，可直接双击
-`index.html` 打开，也可在 `dotnet run` 后通过 `https://localhost:5010/design-preview/` 访问。
+`design/index.html` 打开。它位于仓库根的 `design/`，不在应用 `wwwroot` 内，
+因此不会进入发布产物，也不再通过 `dotnet run` 的站点提供。
 
 ### 1.5 技术边界
 
@@ -99,8 +100,8 @@
 
 ### 3.1 色彩系统
 
-所有颜色以 CSS 变量定义在 `design-preview/css/tokens.css`，迁移时对应
-`ClientApp/src/styles/_tokens.css`。
+所有颜色以 CSS 变量定义在 `design/css/tokens.css`，迁移时对应
+`src/styles/_tokens.css`。
 
 基础色板：
 
@@ -362,7 +363,7 @@
 ### 5.7 认证与异常状态页
 
 认证、会话与异常状态不使用窗口，而是全屏页面（对应现有 `PublicLayout`），
-原型见 `design-preview/auth.html`，支持 `?state=` 深链接：
+原型见 `design/auth.html`，支持 `?state=` 深链接：
 
 | state | 场景 | 关键元素 |
 | --- | --- | --- |
@@ -470,7 +471,7 @@
 ### 8.1 建议目录结构
 
 ```text
-ClientApp/src/
+src/
 ├── app.ts
 ├── shell/
 │   ├── window-manager.ts      # 窗口创建/拖拽/缩放/吸附/会话
@@ -481,7 +482,7 @@ ClientApp/src/
 │   ├── notifications.ts       # Toast 与通知中心
 │   └── settings.ts            # 主题/壁纸/密度/会话开关
 ├── styles/
-│   ├── _tokens.css            # 由 design-preview/css/tokens.css 迁移
+│   ├── _tokens.css            # 由 design/css/tokens.css 迁移
 │   ├── _shell.css
 │   ├── _window.css
 │   ├── _components.css
@@ -530,7 +531,7 @@ ClientApp/src/
 
 ### 阶段一：设计令牌与基础组件（1–2 周）
 
-- 迁移 `tokens.css` 到 `ClientApp/src/styles/_tokens.css`，把旧变量映射到新令牌。
+- 迁移 `tokens.css` 到 `src/styles/_tokens.css`，把旧变量映射到新令牌。
 - 实现 `Panel / Stat / Badge / Chip / Empty / Skeleton / Pager / Table` 组件。
 - 仅替换视觉，不动信息架构；逐页验收深浅对比度。
 
@@ -603,13 +604,8 @@ ClientApp/src/
 ### 11.1 打开方式
 
 ```text
-方式一（无需构建）：直接双击
-src/Dpz.Core.Web.Dashboard/wwwroot/design-preview/index.html
-
-方式二（本地服务）：
-.\build.ps1            # 确保前端资产存在，可选
-dotnet run --project src/Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj
-# 访问 https://localhost:5010/design-preview/
+方式（无需构建、无需服务）：直接双击
+design/index.html
 ```
 
 ### 11.2 深链接
@@ -649,7 +645,7 @@ dotnet run --project src/Dpz.Core.Web.Dashboard/Dpz.Core.Web.Dashboard.csproj
 ### 11.4 原型文件结构
 
 ```text
-wwwroot/design-preview/
+design/
 ├── index.html                 # 桌面外壳骨架与启动
 ├── auth.html                  # 认证与异常状态设计页（?state=）
 ├── css/

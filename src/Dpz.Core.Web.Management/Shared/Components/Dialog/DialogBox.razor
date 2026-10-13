@@ -1,0 +1,52 @@
+@using Dpz.Core.Web.Management.Models.Dialog
+
+<wa-dialog
+    @ref="_dialogRef"
+    class="app-dialog"
+    label="@Model.Title"
+    open
+    light-dismiss="@Model.LightDismiss"
+    data-esc-to-close="@Model.EscToClose.ToString().ToLowerInvariant()"
+    with-footer="@(Model.Type != AppDialogType.Component)"
+    style="@GetDialogStyle()">
+    @if (Model.Type == AppDialogType.Component)
+    {
+        <div class="app-dialog__component-content">
+            <CascadingValue Value="@CloseAction">
+                @Model.Content
+            </CascadingValue>
+        </div>
+    }
+    else
+    {
+        <div class="app-dialog__message">@((MarkupString)Model.Message)</div>
+
+        @if (Model.Type == AppDialogType.Prompt)
+        {
+            <wa-input
+                @ref="_inputRef"
+                class="app-dialog__prompt"
+                value="@_inputValue"
+                autocomplete="off"
+                autofocus
+                @oninput="HandleInput"
+                @onkeydown="HandleKeyDown">
+            </wa-input>
+        }
+    }
+
+    @if (Model.Type != AppDialogType.Component)
+    {
+        <div slot="footer" class="app-dialog__footer">
+            @if (Model.Type != AppDialogType.Alert)
+            {
+                <wa-button appearance="outlined" @onclick="() => Close(null)">
+                    @Model.CancelText
+                </wa-button>
+            }
+            <wa-button variant="brand" appearance="filled" @onclick="() => Close(true)" autofocus>
+                @Model.ConfirmText
+            </wa-button>
+        </div>
+    }
+</wa-dialog>

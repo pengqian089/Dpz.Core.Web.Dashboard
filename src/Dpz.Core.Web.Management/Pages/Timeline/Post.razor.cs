@@ -1,0 +1,60 @@
+﻿using System;
+using System.Threading.Tasks;
+using Dpz.Core.Web.Management.Models;
+using Dpz.Core.Web.Management.Models.Dialog;
+using Dpz.Core.Web.Management.Service;
+using Dpz.Core.Web.Management.Shared.Components;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+
+namespace Dpz.Core.Web.Management.Pages.Timeline;
+
+public partial class Post(
+    ITimelineService timelineService,
+    NavigationManager navigation,
+    IAppDialogService dialogService
+) : ComponentBase
+{
+    private readonly TimelineCreateRequest _timeline = new() { Date = DateTime.Now, Title = "" };
+    private bool _isPublishing;
+    private MarkdownEditor? _editor;
+
+    private async Task PostDataAsync(EditContext context)
+    {
+        if (_editor == null)
+        {
+            dialogService.Toast("编辑器未初始化", ToastType.Error);
+            return;
+        }
+
+        _timeline.Content = await _editor.GetValueAsync();
+        _timeline.Images = _editor.GetUploadedImages();
+        if (string.IsNullOrWhiteSpace(_timeline.Content))
+        {
+            dialogService.Toast("请输入内容", ToastType.Warning);
+            return;
+        }
+
+        _isPublishing = true;
+        StateHasChanged();
+        try
+        {
+            await timelineService.CreateTimelineAsync(_timeline);
+            dialogService.Toast("发布成功", ToastType.Success);
+            navigation.NavigateTo("/timeline");
+        }
+        catch (Exception ex)
+        {
+            dialogService.Toast($"发布失败：{ex.Message}", ToastType.Error);
+        }
+        finally
+        {
+            _isPublishing = false;
+        }
+    }
+
+    private void BackToList()
+    {
+        navigation.NavigateTo("/timeline");
+    }
+}

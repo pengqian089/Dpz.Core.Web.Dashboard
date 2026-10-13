@@ -1,0 +1,25 @@
+﻿using System.Threading.Tasks;
+using Dpz.Core.Web.Management.Helper;
+using Dpz.Core.Web.Management.Models;
+using Dpz.Core.Web.Management.Models.Request;
+
+namespace Dpz.Core.Web.Management.Service;
+
+public interface IDynamicPageService
+{
+    Task<IPagedList<DynamicPageListModel>> GetPageAsync(
+        string? name = null,
+        int pageIndex = 1,
+        int pageSize = 10
+    );
+
+    Task<DynamicPageModel?> GetDynamicPageAsync(string id);
+
+    Task<bool> ExistsAsync(string id);
+
+    Task CreateDynamicPage(SaveDynamicRequest request);
+
+    Task EditDynamicPage(SaveDynamicRequest request);
+
+    Task DeleteAsync(string id);
+}

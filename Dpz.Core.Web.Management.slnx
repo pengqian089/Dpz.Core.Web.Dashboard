@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/design/">
+    <Project Path="design/Dpz.Core.Web.Management.Design.csproj" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="README.md" />
+    <File Path="AGENTS.md" />
+    <File Path="docs/desktop-ui-redesign.md" />
+    <File Path="docs/project-restructure.md" />
+  </Folder>
+  <Folder Name="/other/">
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Dpz.Core.Web.Management.Frontend/Dpz.Core.Web.Management.Frontend.csproj" />
+    <Project Path="src/Dpz.Core.Web.Management/Dpz.Core.Web.Management.csproj" />
+  </Folder>
+</Solution>

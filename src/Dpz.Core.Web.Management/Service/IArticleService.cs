@@ -1,0 +1,34 @@
+﻿using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using Dpz.Core.Web.Management.Helper;
+using Dpz.Core.Web.Management.Models;
+using Dpz.Core.Web.Management.Models.Request;
+
+namespace Dpz.Core.Web.Management.Service;
+
+public interface IArticleService
+{
+    Task<IPagedList<ArticleModel>> GetPageAsync(ArticleSearchRequest request);
+
+    Task PublishAsync(ArticlePublishRequest request);
+
+    Task<ArticleModel?> GetArticleAsync(string id);
+
+    Task<List<string>> GetTagsAsync();
+
+    Task<List<ArticleModel>> GetNewArticlesAsync();
+
+    Task<List<ArticleModel>> GetTopViewArticlesAsync();
+
+    Task EditAsync(ArticleEditRequest request);
+
+    Task DeleteAsync(string id);
+
+    Task<bool> ExistsAsync(string title);
+
+    Task<string?> UploadAsync(MultipartFormDataContent content);
+
+    Task<List<string>> GetAllAuthorsAsync(CancellationToken cancellationToken = default);
+}

@@ -1,0 +1,104 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <UseMonoRuntime>false</UseMonoRuntime>
+    <Features>runtime-async=on</Features>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.7.1" />
+    <PackageReference Include="dpz.core.enumlibrary" Version="1.0.3.1" />
+    <PackageReference Include="Markdig" Version="1.3.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.12" />
+    <PackageReference
+      Include="Microsoft.AspNetCore.Components.WebAssembly"
+      Version="11.0.0-rc.1.26425.128"
+    />
+    <PackageReference
+      Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"
+      Version="11.0.0-rc.1.26425.128"
+    />
+    <PackageReference
+      Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer"
+      Version="11.0.0-rc.1.26425.128"
+      PrivateAssets="all"
+    />
+    <PackageReference
+      Include="Microsoft.AspNetCore.SignalR.Client"
+      Version="11.0.0-rc.1.26425.128"
+    />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="TinyPinyin" Version="1.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference
+      Include="..\Dpz.Core.Web.Management.Frontend\Dpz.Core.Web.Management.Frontend.csproj"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\assets\**" Watch="false" />
+  </ItemGroup>
+
+  <!--
+    前端编译接入构建图。
+
+    Vite 产物直接写进本项目的 wwwroot/assets，而不是前端项目自己的 wwwroot：
+    静态 web 资产由下面的 ResolveProjectStaticWebAssets 从 Content 通配符发现，
+    而通配符在项目求值时就已展开。生成于构建期的文件进不了那份清单，
+    结果是 dotnet build 正常（开发服务器运行时按清单解析源码目录）、
+    但 dotnet publish 会静默漏掉整个 assets 目录。放进自己的 wwwroot 则由通配符天然覆盖。
+
+    触发点选 Build 与 ComputeFilesToPublish，覆盖 dotnet build / run / publish。
+    实际的重建判断在 build.ps1 内完成（比较前端源码与增量标记的时间戳），
+    所以这里不做 Inputs/Outputs 声明 —— 否则“无变化”时 MSBuild 会跳过本目标，
+    连标记检查都不会执行。
+  -->
+  <PropertyGroup>
+    <FrontendBuildEnabled Condition="'$(FrontendBuildEnabled)' == ''">true</FrontendBuildEnabled>
+    <FrontendProjectDir>$(MSBuildProjectDirectory)\..\Dpz.Core.Web.Management.Frontend\</FrontendProjectDir>
+    <!--
+      不能在求值期用 $(IntermediateOutputPath)：那时 TargetFramework 尚未确定，
+      该属性还是空的，路径会退化成裸文件名。改到目标内部算。
+    -->
+    <FrontendBuildScript>$(MSBuildProjectDirectory)\build.ps1</FrontendBuildScript>
+  </PropertyGroup>
+
+  <Target
+    Name="BuildFrontendAssets"
+    BeforeTargets="Build;ComputeFilesToPublish"
+    Condition="'$(FrontendBuildEnabled)' == 'true'"
+  >
+    <PropertyGroup>
+      <FrontendStampFile>$(IntermediateOutputPath)frontend.stamp</FrontendStampFile>
+    </PropertyGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <!--
+      把 index.html 路径与版本号通过环境变量传给 Vite。
+      viteIndexSyncPlugin 会在每次构建之后把 manifest 里带 hash 的产物名写回 index.html，
+      因此 Vite 以 watch 模式常驻重建时 index.html 也能保持同步，
+      不再需要 build.ps1 里那段轮询 manifest 时间戳的循环。
+    -->
+    <Exec
+      Command="pwsh -NoProfile -File &quot;$(FrontendBuildScript)&quot; -Mode frontend -ProjectRoot &quot;$(MSBuildProjectDirectory)&quot; -StampFile &quot;$(FrontendStampFile)&quot;"
+      EnvironmentVariables="MSBUILD_INDEX_HTML=$(MSBuildProjectDirectory)\wwwroot\index.html;MSBUILD_VERSION=$(Version)"
+    />
+  </Target>
+
+  <Target Name="CleanFrontendStamp" AfterTargets="Clean">
+    <Delete Files="$(IntermediateOutputPath)frontend.stamp" />
+  </Target>
+
+  <!--
+    dotnet watch 默认只监视本项目，看不到兄弟前端项目里的 TypeScript / CSS。
+    显式登记为 Watch 项，使 dotnet watch run 能在前端源码变化时重新触发构建。
+  -->
+  <ItemGroup>
+    <Watch Include="$(FrontendProjectDir)src\**\*.ts" />
+    <Watch Include="$(FrontendProjectDir)src\**\*.css" />
+    <Watch Include="$(FrontendProjectDir)package.json" />
+    <Watch Include="$(FrontendProjectDir)package-lock.json" />
+    <Watch Include="$(FrontendProjectDir)vite.config.ts" />
+  </ItemGroup>
+</Project>

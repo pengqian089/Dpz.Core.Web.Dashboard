@@ -1,0 +1,30 @@
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Dpz.Core.Web.Management.Helper;
+using Dpz.Core.Web.Management.Models;
+
+namespace Dpz.Core.Web.Management.Service;
+
+public interface IMumbleService
+{
+    Task<IPagedList<MumbleModel>> GetPageAsync(
+        string? content = null,
+        int pageIndex = 1,
+        int pageSize = 10
+    );
+
+    Task CreateAsync(
+        string markdown,
+        string htmlContent,
+        IReadOnlyCollection<ImageMetadata> images
+    );
+
+    Task EditAsync(string id, string markdown, IReadOnlyCollection<ImageMetadata> images);
+
+    Task<MumbleModel?> GetMumbleAsync(string id);
+
+    Task DeleteAsync(string id);
+
+    Task<string?> UploadAsync(MultipartFormDataContent content);
+}

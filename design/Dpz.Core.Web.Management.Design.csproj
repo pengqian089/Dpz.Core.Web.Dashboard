@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    这是一个“容器项目”：只为在 IDE 与解决方案里组织 design/ 下的静态原型。
+    它不产生代码，也不参与应用构建。
+
+    为什么不用 Microsoft.NET.Sdk.Razor + StaticWebAssetBasePath：
+    那会把这里的文件登记为静态 web 资产。应用项目的基路径也是 "/"，
+    一旦将来某处引用了本项目，两者就会在同一个基路径上冲突。
+    设计原型是脱离应用独立打开、独立迭代的，不需要进入任何静态资源流水线。
+
+    代价说明：SDK 风格项目必须要有 TargetFramework 才能被还原与加载，
+    因此这里会有 bin/ obj/，并产出一个空的 Design.dll。它被 .gitignore 覆盖、
+    不进入任何发布产物，属于 IDE 可加载性的必要成本。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+
+    <!-- 纯静态资源，没有 C# 源文件，显式清空默认项，避免 SDK 尝试编译它们。 -->
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!--
+    .html / .css 用 Content（IDE 的 Web 工具链靠它识别），.js 用 None 避免
+    被静态资源规则接管。两者都关掉 Watch：设计原型手工刷新即可。
+  -->
+  <ItemGroup>
+    <Content Include="**\*.html" Watch="false" />
+    <Content Include="**\*.css" Watch="false" />
+    <None Include="**\*.js" Watch="false" />
+    <None Include="*.md" Watch="false" />
+  </ItemGroup>
+</Project>

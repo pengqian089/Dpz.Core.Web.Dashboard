@@ -1,6 +1,9 @@
-# Dpz.Core.Web.Dashboard
+# Dpz.Core.Web.Management
 
-基于 Blazor WebAssembly 的个人网站管理后台系统。
+基于 Blazor WebAssembly 的个人网站后台管理系统。
+
+> 本仓库原名 `Dpz.Core.Web.Dashboard`。它早已不只是仪表板，而是完整的管理后台，
+> 因此在重构目录结构时一并更名为 `Dpz.Core.Web.Management`。
 
 ## 项目简介
 
@@ -8,12 +11,14 @@
 通过 REST API 与后端服务通信，支持文章、音频、视频、图片、代码笔记、
 动态页面、时间线、碎碎念等内容管理能力。
 
-现代前端资产由 `ClientApp` 统一管理，使用 npm、Vite 和 TypeScript 构建到
-Blazor 的 `wwwroot/assets/`。
+现代前端资产由独立的 `Dpz.Core.Web.Management.Frontend` 项目统一管理，
+使用 npm、Vite 和 TypeScript 构建。它是一个 Razor Class Library
+（`StaticWebAssetBasePath=/`），产物落在自身 `wwwroot/assets/`，
+再由应用项目通过 `ProjectReference` 在 build/publish 时合并静态资源。
 
 ## 技术栈
 
-- **应用框架**: Blazor WebAssembly (.NET 10.0)
+- **应用框架**: Blazor WebAssembly (.NET 11.0)
 - **前端资产**: npm、Vite、TypeScript
 - **认证**: OIDC (OpenID Connect)
 - **Markdown 编辑器**: Milkdown Crepe
@@ -31,79 +36,141 @@ Blazor 的 `wwwroot/assets/`。
 - **主站**: `https://core.dpangzi.com`
 - **CDN**: `https://dpangzi.com`
 
-开发环境配置在 `wwwroot/appsettings.Development.json` 中，通常指向本地 API、
-认证服务、主站和 CDN 服务。缺少 `BaseAddress`、`CDNBaseAddress` 或 `SourceSite`
-会导致应用启动失败。
+开发环境配置在 `src/Dpz.Core.Web.Management/wwwroot/appsettings.Development.json` 中，
+通常指向本地 API、认证服务、主站和 CDN 服务。缺少 `BaseAddress`、`CDNBaseAddress`
+或 `SourceSite` 会导致应用启动失败。
 
 ## 项目结构
 
 ```text
-src/Dpz.Core.Web.Dashboard/
-├── ClientApp/          # npm + Vite + TypeScript 前端资产工程
-│   ├── src/
-│   │   ├── app.ts      # 全局样式和第三方 CSS 入口
-│   │   ├── editors/    # Markdown / CodeMirror 编辑器 interop
-│   │   ├── interactions/ # tooltip、popover 等前端交互
-│   │   ├── interop/    # Blazor JS interop 模块
-│   │   └── styles/     # CSS 源文件
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── vite.config.ts
-├── Pages/              # 页面组件
-├── Service/            # 服务接口定义
-│   └── Impl/           # 服务实现
-├── Models/             # 数据模型
-├── Helper/             # 辅助工具类
-├── Shared/             # 共享组件
-│   └── Components/     # 公共组件
-├── wwwroot/
-│   ├── assets/         # Vite 构建产物，hash 命名，生成目录
-│   ├── resources/      # 静态资源
-│   ├── appsettings.json
-│   └── index.html
-├── build.ps1           # 前端资产和 Blazor build 统一入口
-└── Dpz.Core.Web.Dashboard.csproj
+Dpz.Core.Web.Management/                 # 仓库根
+├── Dpz.Core.Web.Management.slnx          # 解决方案，管项目与文档
+├── Directory.Build.props                 # 公共 MSBuild 属性：LangVersion / Nullable / Version
+├── NuGet.config                          # NuGet 源（含 GitHub Packages）
+├── .editorconfig / .csharpierignore / .gitignore
+├── README.md / AGENTS.md / LICENSE
+├── docs/                                 # 设计文档
+│   └── desktop-ui-redesign.md            # 桌面化 UI 改版路线
+├── design/                               # 静态 UI 原型（纯 HTML/CSS/JS，不参与构建与发布）
+│   ├── index.html                        # 桌面外壳原型
+│   ├── auth.html                         # 认证与异常状态设计页
+│   └── Dpz.Core.Web.Management.Design.csproj   # 容器项目：仅供 IDE 与解决方案组织，不参与构建
+└── src/
+    ├── Dpz.Core.Web.Management/           # Blazor WebAssembly 应用（宿主）
+    │   ├── Program.cs / App.razor / _Imports.razor / EnumConverter.cs
+    │   ├── Pages/                         # 页面组件，按功能分目录
+    │   ├── Shared/                        # 布局与共享组件
+    │   │   └── Components/                # 公共组件（含 Dialog/）
+    │   ├── Service/                       # 服务接口
+    │   │   └── Impl/                      # 服务实现
+    │   ├── Models/                        # 数据模型
+    │   ├── Helper/                        # 辅助工具类
+    │   ├── Properties/launchSettings.json
+    │   ├── wwwroot/                       # 应用静态资源
+    │   │   ├── assets/                    # Vite 产物，hash 命名，生成目录（被 gitignore）
+    │   │   ├── data/                      # 图标/语言映射等运行时 JSON
+    │   │   ├── images/
+    │   │   ├── appsettings.json
+    │   │   └── index.html                 # 已提交，启动页引用带 hash 的 Vite 资产
+    │   ├── build.ps1                      # 前端资产与 Blazor 构建的统一入口
+    │   └── Dpz.Core.Web.Management.csproj
+    └── Dpz.Core.Web.Management.Frontend/  # 前端资产项目（Microsoft.NET.Sdk.Razor）
+        ├── src/
+        │   ├── app.ts                     # 全局样式和第三方 CSS 入口
+        │   ├── editors/                   # Markdown / CodeMirror 编辑器 interop
+        │   ├── interactions/              # tooltip、popover 等前端交互
+        │   ├── interop/                   # Blazor JS interop 模块
+        │   ├── pages/                     # 页面级前端模块
+        │   └── styles/                    # CSS 源文件
+        ├── sync-index.mjs                 # 唯一的 index.html 同步实现（CLI + Vite 插件）
+        ├── sync-index.d.mts               # 上者的类型声明
+        ├── build.ps1                      # 转发到应用项目的构建脚本
+        ├── package.json
+        ├── tsconfig.json
+        ├── vite.config.ts
+        └── Dpz.Core.Web.Management.Frontend.csproj
 ```
+
+Vite 产物输出到**应用项目**的 `wwwroot/assets`，而不是前端项目自身。
+这不是随意选择：静态 web 资产由 MSBuild 从 `Content` 通配符在求值期发现，
+生成于构建期的文件放在兄弟项目里会导致 `dotnet publish` 静默漏掉整个 `assets` 目录。
+完整分析见 [docs/project-restructure.md](docs/project-restructure.md)。
+
+`build.ps1` 位于应用项目内，通过相对路径访问兄弟项目
+`../Dpz.Core.Web.Management.Frontend`。重命名任一项目目录时必须同步修改它。
+
+应用项目里的 `BuildFrontendAssets` MSBuild 目标（`BeforeTargets="Build;ComputeFilesToPublish"`）
+负责把前端编译接入构建图，具体的增量判断在 `build.ps1 -Mode frontend` 内完成。
 
 ## 环境要求
 
-- .NET 10.0 SDK
+- .NET 11.0 SDK
 - Node.js 和 npm
-- 可访问 `src/NuGet.config` 中配置的 NuGet 源。`dpz.core.enumlibrary`
+- 可访问仓库根 `NuGet.config` 中配置的 NuGet 源。`dpz.core.enumlibrary`
   来自 GitHub Packages，首次还原可能需要对应凭据。
 
-不再需要全局安装 `clean-css-cli`。CSS、第三方前端库、字体和图标均由
-`ClientApp` 通过 npm 与 Vite 管理。
+不需要全局安装 `clean-css-cli`。CSS、第三方前端库、字体和图标均由
+Frontend 项目通过 npm 与 Vite 管理。
 
 ## 开发运行
 
-首次运行或依赖缺失时，`build.ps1` 会自动在 `ClientApp` 中执行 `npm install`。
+前端编译已接入 MSBuild：`dotnet build`、`dotnet run`、`dotnet publish` 都会在需要时
+自动执行 Vite 构建，因此**不需要先手动跑任何前端命令**。首次运行或依赖缺失时，
+`build.ps1` 会在 Frontend 项目中自动执行 `npm install`。
 
-前端资产监听：
+最简单的运行方式：
 
 ```powershell
-cd src/Dpz.Core.Web.Dashboard
+dotnet run --project src/Dpz.Core.Web.Management/Dpz.Core.Web.Management.csproj
+```
+
+需要「前端监听 + 应用」一起跑时：
+
+```powershell
+cd src/Dpz.Core.Web.Management
 .\build.ps1 dev
 ```
 
-Blazor 开发服务需要在另一个终端启动：
+它会先执行一次 Vite 构建，然后并行运行 Vite `build --watch` 与 `dotnet watch run`；
+按 Ctrl+C 同时停止两者。
+
+开发前端时更推荐拆成两个终端（前端改动反馈更快，C# 侧走热重载）：
 
 ```powershell
-cd src/Dpz.Core.Web.Dashboard
-dotnet run --project .\Dpz.Core.Web.Dashboard.csproj
+# 终端 1：Blazor 开发服务（C# 热重载）
+cd src/Dpz.Core.Web.Management
+dotnet watch run
+
+# 终端 2：前端资产监听
+cd src/Dpz.Core.Web.Management.Frontend
+npm run watch
 ```
+
+Vite 每次重建都会通过 `sync-index.mjs` 自动把新的 hash 写回应用的 `index.html`，
+因此改完前端只需刷新浏览器即可，不会出现指向已删除产物的 404。
 
 开发服务地址来自 `Properties/launchSettings.json`：
 
 - `https://localhost:5010`
 - `http://localhost:5011`
 
+### 增量与开关
+
+前端重建的判断依据是 `obj/<tfm>/frontend.stamp` 与 Frontend 项目 `src/` 下最新源文件
+的时间戳比较：
+
+- 源码无变化：跳过 Vite，整个构建只多花约半秒。
+- 源码有变化：重新执行 Vite 并刷新 `index.html`。
+- `dotnet clean` 会删除该标记，从而让下次构建必定重新编译前端。
+
+只迭代 C#、想跳过前端编译时，给任意 dotnet 命令加 `-p:FrontendBuildEnabled=false`。
+
 ## 构建与检查
 
 生产构建入口：
 
 ```powershell
-cd src/Dpz.Core.Web.Dashboard
+cd src/Dpz.Core.Web.Management
 .\build.ps1
 ```
 
@@ -114,9 +181,9 @@ cd src/Dpz.Core.Web.Dashboard
 .\build.ps1 build
 ```
 
-生产构建会先清理 `wwwroot/assets/`、`bin/`、`obj/`，再执行 Vite build，
-根据 Vite manifest 同步 `wwwroot/index.html` 中的 hash 资源和版本号，
-最后执行 `dotnet build`。
+生产构建会先清理 Frontend 项目的 `wwwroot/assets/` 以及应用项目的 `bin/`、`obj/`，
+再执行 Vite build，根据 Vite manifest 同步应用 `wwwroot/index.html` 中的 hash 资源
+和版本号，最后执行 `dotnet build`。
 
 常用前端质量命令：
 
@@ -136,26 +203,35 @@ cd src/Dpz.Core.Web.Dashboard
 
 ## 发布
 
-发布前先执行生产构建，确保 Vite hash 资产和 `index.html` 已同步：
+发布只需一条命令，前端会按增量规则自动编译并合并：
 
 ```powershell
-cd src/Dpz.Core.Web.Dashboard
+dotnet publish src/Dpz.Core.Web.Management/Dpz.Core.Web.Management.csproj -c Release
+```
+
+想确保从零开始构建（清干净 `bin`/`obj` 与前端产物）时，先跑生产构建：
+
+```powershell
+cd src/Dpz.Core.Web.Management
 .\build.ps1 prod
-dotnet publish .\Dpz.Core.Web.Dashboard.csproj -c Release
+dotnet publish .\Dpz.Core.Web.Management.csproj -c Release
 ```
 
 发布产物位于：
 
 ```text
-src/Dpz.Core.Web.Dashboard/bin/Release/net10.0/publish/wwwroot/
+src/Dpz.Core.Web.Management/bin/Release/net11.0/publish/wwwroot/
 ```
 
-将该目录部署到服务器，并让 Web Server 指向发布目录中的 `wwwroot`。
-单页应用路由需要 fallback 到 `index.html`。
+Frontend 项目的 `assets/` 会由 MSBuild 通过 `ProjectReference` 合并到该目录，
+因此它就是一个自包含的静态站点根目录：将该目录部署到服务器，并让 Web Server
+指向它即可。单页应用路由需要 fallback 到 `index.html`。
+
+`design/` 不在 `wwwroot` 内，因此不会进入发布产物。
 
 ## 配置说明
 
-`wwwroot/appsettings.json`：
+`src/Dpz.Core.Web.Management/wwwroot/appsettings.json`：
 
 ```json
 {
@@ -214,11 +290,11 @@ src/Dpz.Core.Web.Dashboard/bin/Release/net10.0/publish/wwwroot/
 - `Publish.razor`: 新增页
 - `Edit.razor`: 编辑页
 
-新增模块需要在 `Shared/NavMenu.razor` 中加入入口。
+新增模块需要把入口加到 `Shared/NavMenu.razor.cs` 的静态 `Groups` 列表。
 
 ## 前端开发约定
 
-- 前端源码放在 `src/Dpz.Core.Web.Dashboard/ClientApp/`。
+- 前端源码放在 `src/Dpz.Core.Web.Management.Frontend/`。
 - TypeScript 优先，复杂交互使用 class 组织，按职责拆分模块。
 - 导出给 Blazor 的 interop 函数保持稳定、窄接口。
 - TypeScript 缩进 4 个空格，单行最大长度 100。
@@ -231,12 +307,18 @@ src/Dpz.Core.Web.Dashboard/bin/Release/net10.0/publish/wwwroot/
 - 支持 Chromium 内核浏览器和 Firefox。
 - 响应式 UI 需要兼顾手机端、平板端和 PC 端。
 
+### 换行符注意事项
+
+仓库根的 `.gitattributes` 设置了 `* text=auto eol=lf`，统一以 LF 存储与检出。
+如果本地克隆早于该文件加入，工作区里可能残留 CRLF，`prettier --check` 会误报格式不合格；
+此时在 Frontend 项目内运行 `npm run format`，或执行 `git add --renormalize .` 一次修正。
+
 ### CSS
 
 #### 文件结构
 
 ```text
-ClientApp/src/styles/
+src/Dpz.Core.Web.Management.Frontend/src/styles/
   app.css                  # 全局 CSS 入口，负责 import 顺序
   _variables.css           # 全局设计变量
   _layout.css              # 主布局结构
@@ -307,3 +389,10 @@ import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 ## 许可证
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
+
+## 相关文档
+
+- [项目目录重构与构建流水线改造](docs/project-restructure.md)
+  —— 为什么调整目录、解决了什么问题、改了什么，以及静态 web 资产发现时机这个坑的完整分析。
+- [DPZ OS 桌面化后台设计文档](docs/desktop-ui-redesign.md)
+  —— 前端 UI/UX 改版路线。

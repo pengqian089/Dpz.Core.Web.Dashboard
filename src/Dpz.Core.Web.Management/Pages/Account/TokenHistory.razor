@@ -1,0 +1,95 @@
+﻿@using Dpz.Core.Web.Management.Shared.Components
+
+<div class="account-token">
+    <div class="account-token__header">
+        <div class="account-token__title">
+            <i class="fas fa-shield-alt"></i>
+            登录记录
+        </div>
+        <div class="account-token__subtitle">
+            账号：@Account
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="account-token__skeleton">
+            @for (var i = 0; i < 5; i++)
+            {
+                <div class="account-token__skeleton-row">
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text-lg"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                    <div class="skeleton skeleton--text"></div>
+                </div>
+            }
+        </div>
+    }
+    else if (_records.Count == 0)
+    {
+        <div class="account-token__empty">
+            <i class="fas fa-history"></i>
+            暂无登录记录
+        </div>
+    }
+    else
+    {
+        <div class="account-token__table">
+            <div class="account-token__table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>账号</th>
+                            <th>IP地址</th>
+                            <th>User-Agent</th>
+                            <th>SessionId</th>
+                            <th class="account-token__col--method">登录方式</th>
+                            <th class="account-token__col--result">登录结果</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in _records)
+                        {
+                            <tr>
+                                <td data-label="账号">@record.Account</td>
+                                <td data-label="IP地址">
+                                    <span class="account-token__ip" title="@record.IpAddress">
+                                        @record.IpAddress
+                                    </span>
+                                </td>
+                                <td data-label="User-Agent">
+                                    <span class="account-token__agent" title="@record.UserAgent">
+                                        @record.UserAgent
+                                    </span>
+                                </td>
+                                <td data-label="SessionId">
+                                    <span class="account-token__session">@record.SessionId</span>
+                                </td>
+                                <td data-label="登录方式" class="account-token__col--method">@record.MethodStr</td>
+                                <td data-label="登录结果" class="account-token__col--result">
+                                    <span class="account-token__status @GetStatusClass(record.Status)">
+                                        @record.StatusStr
+                                    </span>
+                                </td>
+                                <td data-label="创建时间">
+                                    @record.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination CurrentPage="_pageIndex"
+                        TotalPages="_totalPages"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="HandlePageChanged"/>
+        </div>
+    }
+
+</div>

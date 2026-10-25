@@ -30,10 +30,10 @@
         "@codemirror/view": "^6.38.1",
         "@fontsource/jetbrains-mono": "^5.2.8",
         "@fortawesome/fontawesome-free": "^7.2.0",
-        "@milkdown/crepe": "^7.21.2",
+        "@milkdown/crepe": "^7.22.3",
         "chart.js": "^4.5.1",
         "hls.js": "^1.6.16",
-        "mermaid": "^11.16.1",
+        "mermaid": "^12.2.0",
         "photoswipe": "^5.4.4",
         "prismjs": "^1.30.0"
     },

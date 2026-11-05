@@ -20,9 +20,17 @@ export async function createEditor(
     markdown: string,
     editOnly: boolean,
     dotNetHelper: DotNetHelper,
-    imageMode: MarkdownImageMode = "inline"
+    imageMode: MarkdownImageMode = "inline",
+    galleryInputId: string | null = null
 ): Promise<void> {
-    await registry.createEditor(elementId, markdown, editOnly, dotNetHelper, imageMode);
+    await registry.createEditor(
+        elementId,
+        markdown,
+        editOnly,
+        dotNetHelper,
+        imageMode,
+        galleryInputId
+    );
 }
 
 /** 获取当前编辑器 Markdown 内容。 */

@@ -11,6 +11,7 @@ using Dpz.Core.Web.Dashboard.Models.Dialog;
 using Dpz.Core.Web.Dashboard.Models.Upload;
 using Dpz.Core.Web.Dashboard.Service;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
@@ -52,8 +53,14 @@ public partial class MarkdownEditor(
 
     private const int DefaultHeight = 800;
 
+    /// <summary>
+    /// 单次最多允许选择的图片数量，避免一次请求过大。
+    /// </summary>
+    private const int MaxGalleryUploadCount = 30;
+
     private string HeightStyle => $"height:{Height ?? DefaultHeight}{HeightUnit}";
     private string GalleryId => $"markdown-gallery-{_editorId}";
+    private string GalleryInputId => $"markdown-gallery-input-{_editorId}";
 
     private readonly string _editorId = Guid.NewGuid().ToString("N");
     private IJSObjectReference? _jsModule;
@@ -66,6 +73,8 @@ public partial class MarkdownEditor(
     private bool _photoSwipeInitialized;
     private bool _shouldRefreshPhotoSwipe;
     private string? _uploadError;
+    private string _editorInitialMarkdown = "";
+    private int _inputFileKey;
     private readonly List<ImageMetadata> _uploadedImages = [];
     private readonly List<GalleryImage> _galleryImages = [];
 
@@ -84,6 +93,10 @@ public partial class MarkdownEditor(
         {
             _uploadedImages.AddRange(Images ?? []);
         }
+
+        // 画廊模式下图片语法仍保留在 Markdown 中（源码模式可见），
+        // 只是可视化模式通过 CSS 隐藏图片节点，图片统一由底部画廊管理。
+        _editorInitialMarkdown = Markdown;
 
         _editOnly = await localStorageService.GetItemAsync<bool>("markdown-edit-only");
 
@@ -122,10 +135,11 @@ public partial class MarkdownEditor(
                 await _jsModule.InvokeVoidAsync(
                     "createEditor",
                     _editorId,
-                    Markdown,
+                    _editorInitialMarkdown,
                     _editOnly,
                     _objRef,
-                    ImageMode.ToString().ToLowerInvariant()
+                    ImageMode.ToString().ToLowerInvariant(),
+                    ImageMode == MarkdownImageMode.Gallery ? GalleryInputId : null
                 );
                 _editorInitialized = true;
             }
@@ -143,35 +157,34 @@ public partial class MarkdownEditor(
 
     public async Task<string> GetValueAsync()
     {
-        var fallback =
-            ImageMode == MarkdownImageMode.Gallery
-                ? NormalizeGalleryMarkdown(Markdown, _galleryImages)
-                : Markdown;
-        if (_jsModule == null || !_editorInitialized)
+        var markdown = _editorInitialMarkdown;
+        if (_jsModule != null && _editorInitialized)
         {
-            return fallback;
+            try
+            {
+                markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+            }
+            catch (Exception ex)
+            {
+                await dialogService.ShowAlertAsync(
+                    new AppDialogOptions
+                    {
+                        Title = "错误",
+                        Message = $"获取编辑器内容失败：{ex.Message}",
+                    }
+                );
+                markdown = _editorInitialMarkdown;
+            }
         }
 
-        string markdown;
-        try
+        if (ImageMode != MarkdownImageMode.Gallery)
         {
-            markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
-        }
-        catch (Exception ex)
-        {
-            await dialogService.ShowAlertAsync(
-                new AppDialogOptions
-                {
-                    Title = "错误",
-                    Message = $"获取编辑器内容失败：{ex.Message}",
-                }
-            );
-            return fallback;
+            return markdown;
         }
 
-        return ImageMode == MarkdownImageMode.Gallery
-            ? NormalizeGalleryMarkdown(markdown, _galleryImages)
-            : markdown;
+        // 源码模式下用户可能手动补了图片语法，这里把它们并入画廊，避免落库时被丢弃。
+        MergeMarkdownImages(markdown);
+        return NormalizeGalleryMarkdown(markdown, _galleryImages);
     }
 
     public List<ImageMetadata> GetUploadedImages()
@@ -219,6 +232,9 @@ public partial class MarkdownEditor(
         return urls.FirstOrDefault() ?? string.Empty;
     }
 
+    /// <summary>
+    /// 供可视化编辑器（inline 模式）的拖拽/粘贴/图片块上传使用。
+    /// </summary>
     [JSInvokable]
     public async Task<string[]> UploadImages(
         IJSStreamReference[] streamRefs,
@@ -226,10 +242,6 @@ public partial class MarkdownEditor(
         string[] contentTypes
     )
     {
-        _isUploading = true;
-        _uploadProgress = 0;
-        _uploadError = null;
-        StateHasChanged();
         var streams = new List<Stream>();
         try
         {
@@ -253,6 +265,154 @@ public partial class MarkdownEditor(
                 );
             }
 
+            var urls = await PostImagesAsync(files, fileNames);
+            await NotifyUploadedAsync(urls);
+            return urls;
+        }
+        catch (Exception ex)
+        {
+            _uploadError = $"图片上传失败：{ex.Message}";
+            logger.LogError(ex, "Failed to read image streams for upload.");
+            return [];
+        }
+        finally
+        {
+            foreach (var stream in streams)
+            {
+                await stream.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 画廊模式的多图上传入口。
+    ///
+    /// 直接读取 Blazor 的 <see cref="IBrowserFile"/>，不再经过 JS 侧的
+    /// <c>JSStreamReference</c> 数组，避免浏览器一次性选择多张图片时上传链路失效；
+    /// 选中的图片会统一追加到底部画廊，并在保存时写回 Markdown 末尾。
+    /// </summary>
+    private async Task UploadGalleryImagesAsync(InputFileChangeEventArgs e)
+    {
+        if (ImageMode != MarkdownImageMode.Gallery || _isUploading)
+        {
+            return;
+        }
+
+        var streams = new List<Stream>();
+        try
+        {
+            var files = new List<UploadFilePart>();
+            var fileNames = new List<string>();
+            foreach (var file in e.GetMultipleFiles(MaxGalleryUploadCount))
+            {
+                if (!IsImageFile(file))
+                {
+                    continue;
+                }
+
+                var stream = file.OpenReadStream(AppTools.MaxFileSize);
+                streams.Add(stream);
+                fileNames.Add(file.Name);
+                files.Add(new UploadFilePart("image", file.Name, file.ContentType, stream));
+            }
+
+            if (files.Count == 0)
+            {
+                _uploadError = "请选择图片文件。";
+                return;
+            }
+
+            if (OnImageUploading != null)
+            {
+                await OnImageUploading.Value.InvokeAsync("开始上传图片...");
+            }
+
+            var urls = await PostImagesAsync(files, [.. fileNames]);
+            if (urls.Length > 0)
+            {
+                await SyncEditorMarkdownAsync();
+                await NotifyUploadedAsync(urls);
+            }
+        }
+        catch (Exception ex)
+        {
+            _uploadError = $"图片上传失败：{ex.Message}";
+            logger.LogError(ex, "Failed to upload gallery images.");
+        }
+        finally
+        {
+            // 重建 InputFile，保证再次选择同一批文件时仍能触发 change。
+            _inputFileKey++;
+            foreach (var stream in streams)
+            {
+                await stream.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 把画廊的最新状态同步回编辑器。
+    ///
+    /// 画廊是图片的唯一来源：这里不能反过来从编辑器内容收集图片，否则刚被删除的图片
+    /// 会因为编辑器里还留着旧语法而被重新收集回来（表现为“删不掉、被排到最后”）。
+    /// 源码模式手动补的图片只在保存时由 <see cref="GetValueAsync"/> 合并。
+    /// </summary>
+    private async Task SyncEditorMarkdownAsync()
+    {
+        if (ImageMode != MarkdownImageMode.Gallery || _jsModule == null || !_editorInitialized)
+        {
+            return;
+        }
+
+        string markdown;
+        try
+        {
+            markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to read markdown before syncing gallery images.");
+            return;
+        }
+
+        var normalizedMarkdown = NormalizeGalleryMarkdown(markdown, _galleryImages);
+        try
+        {
+            await _jsModule.InvokeVoidAsync("setMarkdown", _editorId, normalizedMarkdown);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to sync gallery images into the editor.");
+        }
+    }
+
+    private async Task NotifyUploadedAsync(IReadOnlyCollection<string> urls)
+    {
+        if (OnImageUploaded == null)
+        {
+            return;
+        }
+
+        foreach (var url in urls)
+        {
+            await OnImageUploaded.Value.InvokeAsync(url);
+        }
+    }
+
+    /// <summary>
+    /// 统一的上传实现：展示进度、解析服务端响应并把图片登记到画廊。
+    /// </summary>
+    private async Task<string[]> PostImagesAsync(
+        IReadOnlyList<UploadFilePart> files,
+        IReadOnlyList<string> fileNames
+    )
+    {
+        _isUploading = true;
+        _uploadProgress = 0;
+        _uploadError = null;
+        StateHasChanged();
+        try
+        {
             var progress = new Progress<int>(value =>
             {
                 _uploadProgress = value;
@@ -266,40 +426,27 @@ public partial class MarkdownEditor(
                 progress
             );
             var images = ParseUploadImages(response);
-            _uploadedImages.AddRange(images);
-            AddUploadedGalleryImages(images, fileNames);
-            StateHasChanged();
-            var urls = images.Select(image => image.Url).ToArray();
-
-            foreach (var url in urls)
+            if (images.Length == 0)
             {
-                if (OnImageUploaded != null)
-                {
-                    await OnImageUploaded.Value.InvokeAsync(url);
-                }
+                _uploadError = "上传失败：服务器没有返回图片地址。";
+                return [];
             }
 
-            return urls;
+            _uploadedImages.AddRange(images);
+            AddUploadedGalleryImages(images, [.. fileNames]);
+            return images.Select(image => image.Url).ToArray();
         }
         catch (Exception ex)
         {
-            _uploadError = ex.Message;
-            if (OnImageUploaded != null)
-            {
-                await OnImageUploaded.Value.InvokeAsync(string.Empty);
-            }
+            _uploadError = $"图片上传失败：{ex.Message}";
+            logger.LogError(ex, "Failed to upload images to {UploadAction}.", UploadAction);
+            return [];
         }
         finally
         {
             _isUploading = false;
             StateHasChanged();
-            foreach (var stream in streams)
-            {
-                await stream.DisposeAsync();
-            }
         }
-
-        return [];
     }
 
     private async Task RemoveGalleryImageAsync(string url)
@@ -314,40 +461,25 @@ public partial class MarkdownEditor(
         );
         _uploadedImages.RemoveAll(image => string.Equals(image.Url, url, StringComparison.Ordinal));
         _shouldRefreshPhotoSwipe = true;
+        await SyncEditorMarkdownAsync();
+    }
 
-        if (_jsModule != null && _editorInitialized)
+    private static bool IsImageFile(IBrowserFile file)
+    {
+        if (file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
         {
-            string markdown;
-            try
-            {
-                markdown = await _jsModule.InvokeAsync<string>("getMarkdown", _editorId);
-            }
-            catch (Exception ex)
-            {
-                await dialogService.ShowAlertAsync(
-                    new AppDialogOptions
-                    {
-                        Title = "错误",
-                        Message = $"获取编辑器内容失败：{ex.Message}",
-                    }
-                );
-                return;
-            }
-            var normalizedMarkdown = NormalizeGalleryMarkdown(markdown, _galleryImages);
-            try
-            {
-                await _jsModule.InvokeVoidAsync("setMarkdown", _editorId, normalizedMarkdown);
-            }
-            catch (Exception ex)
-            {
-                await dialogService.ShowAlertAsync(
-                    new AppDialogOptions
-                    {
-                        Title = "错误",
-                        Message = $"更新编辑器内容失败：{ex.Message}",
-                    }
-                );
-            }
+            return true;
+        }
+
+        var extension = Path.GetExtension(file.Name).TrimStart('.');
+        return AppTools.ImageExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void MergeMarkdownImages(string markdown)
+    {
+        foreach (var image in ExtractMarkdownImages(markdown))
+        {
+            AddGalleryImage(CreateFallbackImageMetadata(image.Url), image.Alt);
         }
     }
 

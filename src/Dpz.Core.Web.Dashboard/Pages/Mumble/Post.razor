@@ -1,4 +1,4 @@
-﻿@page "/mumble/post"
+@page "/mumble/post"
 @attribute [Authorize]
 
 <div class="mumble-form">
@@ -39,7 +39,7 @@
                         <ValidationMessage For="@(() => _model)" />
                         <div class="form-helper">
                             <i class="fas fa-info-circle"></i>
-                            支持 Markdown 语法，上传图片后会在下方画廊显示
+                            支持 Markdown 语法；图片统一在下方画廊管理，可一次选择多张上传
                         </div>
                     </div>
                 </div>

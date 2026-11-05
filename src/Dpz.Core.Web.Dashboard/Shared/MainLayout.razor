@@ -5,7 +5,7 @@
 @inherits LayoutComponentBase
 
 <div class="app-layout">
-    <aside class="app-sidebar @(_drawerOpen ? "is-open" : "")">
+    <aside class="app-sidebar @(_drawerOpen ? "is-open" : "") @(_sidebarCollapsed ? "is-collapsed" : "")">
         <div class="app-sidebar__header">
             <div class="app-sidebar__logo">
                 <img src="https://dpangzi.com/core/images/Lara-Croft.png" alt="logo"/>
@@ -16,12 +16,13 @@
     </aside>
 
     <!-- Overlay for Mobile -->
-    <div class="app-overlay @(_drawerOpen ? "is-visible" : "")" @onclick="DrawerToggle"></div>
+    <div class="app-overlay @(_drawerOpen ? "is-visible" : "")" @onclick="CloseDrawer"></div>
 
-    <div class="app-main @(_drawerOpen ? "is-open" : "")">
+    <div class="app-main @(_drawerOpen ? "is-open" : "") @(_sidebarCollapsed ? "is-collapsed" : "")">
         <header class="app-header">
             <div class="flex items-center gap-4">
-                <button class="app-header__toggle btn-icon" @onclick="DrawerToggle">
+                <button class="app-header__toggle btn-icon" @onclick="ToggleSidebarAsync" title="切换导航菜单"
+                        aria-label="切换导航菜单">
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="app-header__title hidden-sm-down">

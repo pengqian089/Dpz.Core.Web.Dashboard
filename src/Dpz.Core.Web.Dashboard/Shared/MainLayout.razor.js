@@ -14,6 +14,14 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
+/**
+ * 当前视口是否使用移动端布局（与 CSS 断点保持一致）
+ * @returns {boolean} 是否为移动端视口
+ */
+export function isMobileViewport() {
+    return isMobile();
+}
+
 function getDropdowns() {
     return Array.from(document.querySelectorAll('.dropdown'));
 }

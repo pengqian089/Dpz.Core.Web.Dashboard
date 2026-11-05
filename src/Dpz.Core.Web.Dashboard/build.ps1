@@ -211,26 +211,55 @@ function Stop-ProcessTree {
     }
 
     $processId = $Process.Id
+
+    # 该函数通常在 Ctrl+C 之后的 finally 中运行，此时管道可能已经处于停止状态，
+    # 因此每一步都要吞掉异常，避免清理过程中再次抛错导致子进程残留。
+    # 优先用 taskkill /T 一次性结束整棵进程树：不依赖 WMI，比 Get-CimInstance 更快。
     try {
-        $children = Get-CimInstance Win32_Process -Filter "ParentProcessId = $processId"
+        & taskkill.exe /PID $processId /T /F *> $null
+    }
+    catch {
+    }
+
+    if ($null -eq (Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
+        return
+    }
+
+    # 退回方案：taskkill 不可用或被策略拦截时，改为递归结束子进程（依赖 WMI）。
+    try {
+        $children = @(
+            Get-CimInstance Win32_Process `
+                -Filter "ParentProcessId = $processId" `
+                -ErrorAction SilentlyContinue
+        )
+
         foreach ($child in $children) {
-            try {
-                $childProcess = Get-Process -Id $child.ProcessId -ErrorAction SilentlyContinue
+            $childProcess = Get-Process -Id $child.ProcessId -ErrorAction SilentlyContinue
+            if ($null -ne $childProcess) {
                 Stop-ProcessTree $childProcess
             }
-            catch {
-                Write-Warning "Failed to stop child process $($child.ProcessId): $($_.Exception.Message)"
-            }
-        }
-
-        $currentProcess = Get-Process -Id $processId -ErrorAction SilentlyContinue
-        if ($null -ne $currentProcess -and -not $currentProcess.HasExited) {
-            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
         }
     }
     catch {
-        Write-Warning "Failed to stop process ${processId}: $($_.Exception.Message)"
     }
+
+    try {
+        Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+    }
+    catch {
+    }
+}
+
+function Stop-DevProcesses {
+    param(
+        [System.Diagnostics.Process]$ViteProcess,
+
+        [System.Diagnostics.Process]$DotnetProcess
+    )
+
+    Write-Step "Stop dev processes"
+    Stop-ProcessTree $ViteProcess
+    Stop-ProcessTree $DotnetProcess
 }
 
 function Get-ManifestEntry {
@@ -299,16 +328,13 @@ function Invoke-DevMode {
 
     $viteProcess = $null
     $dotnetProcess = $null
-    $script:stopDevMode = $false
-    $cancelHandler = [ConsoleCancelEventHandler] {
-        param($sender, $eventArgs)
 
-        $eventArgs.Cancel = $true
-        $script:stopDevMode = $true
-    }
-
-    [Console]::add_CancelKeyPress($cancelHandler)
-
+    # 这里刻意不注册 [Console]::CancelKeyPress 的脚本块回调：
+    # 该回调运行在控制台输入线程上，而此线程无权执行 PowerShell 代码（主线程此时
+    # 正占用着管道），回调里的赋值会抛出未捕获的异常，最终以 0xE0434352 让整个
+    # pwsh 进程崩溃（即 "pwsh.exe - 应用程序错误" 弹窗）。
+    # 现在改为依赖 PowerShell 默认的 Ctrl+C 行为：中断当前管道并执行 finally。
+    # 子进程由 -NoNewWindow 与当前控制台共享，因而同样会收到 Ctrl+C 并自行退出。
     try {
         $lastManifestWriteTime = Get-ManifestLastWriteTimeUtc
         $viteProcess = Start-DevProcess `
@@ -325,7 +351,7 @@ function Invoke-DevMode {
 
         Write-ConsoleMessage "Dev mode is running. Press Ctrl+C to stop Vite and dotnet watch." Green
 
-        while (-not $script:stopDevMode) {
+        while ($true) {
             if ($viteProcess.HasExited) {
                 throw "vite build --watch exited with code $($viteProcess.ExitCode)"
             }
@@ -341,7 +367,9 @@ function Invoke-DevMode {
                     $lastManifestWriteTime = $manifestWriteTime
                 }
                 catch {
-                    Write-Warning "Failed to sync index.html: $($_.Exception.Message)"
+                    Write-ConsoleMessage `
+                        "Failed to sync index.html: $($_.Exception.Message)" `
+                        DarkYellow
                 }
             }
 
@@ -349,10 +377,7 @@ function Invoke-DevMode {
         }
     }
     finally {
-        [Console]::remove_CancelKeyPress($cancelHandler)
-        Write-Step "Stop dev processes"
-        Stop-ProcessTree $viteProcess
-        Stop-ProcessTree $dotnetProcess
+        Stop-DevProcesses $viteProcess $dotnetProcess
     }
 }
 

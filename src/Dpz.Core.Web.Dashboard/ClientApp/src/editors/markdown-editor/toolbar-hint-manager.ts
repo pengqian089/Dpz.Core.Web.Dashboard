@@ -8,12 +8,19 @@ import type { MarkdownViewportMode, ToolbarHint } from "./types";
  * Milkdown 的工具栏按钮由 Vue 组件动态渲染，编辑器生命周期中会反复增删。
  * 因此这里通过 MutationObserver 监听容器变化，在按钮出现后补齐中文 tooltip
  * 和 button type，避免按钮落在表单中时触发提交。
+ *
+ * 注意：Milkdown 未给按钮输出稳定 key，提示按“实际渲染顺序”匹配。画廊模式会
+ * 关闭 ImageBlock 特性并导致图片按钮消失，因此必须同步剔除 image 提示，否则
+ * 其后的所有按钮提示都会整体错位。
  */
 export class ToolbarHintManager {
     private readonly observer: MutationObserver;
     private readonly tooltips = new TooltipController();
 
-    public constructor(private readonly root: HTMLElement) {
+    public constructor(
+        private readonly root: HTMLElement,
+        private readonly hasImage: boolean = true
+    ) {
         this.observer = new MutationObserver(() => this.apply());
     }
 
@@ -35,9 +42,13 @@ export class ToolbarHintManager {
     private apply(): void {
         this.applyButtonTypes();
         this.applyHints(".milkdown-toolbar .toolbar-item", selectionToolbarHints);
-        this.applyHints(".milkdown-top-bar .top-bar-item", topBarHints);
+        this.applyHints(".milkdown-top-bar .top-bar-item", this.getTopBarHints());
         this.applyStaticTitle(".top-bar-heading-button", "选择标题级别");
         this.applyHeadingOptions();
+    }
+
+    private getTopBarHints(): readonly ToolbarHint[] {
+        return this.hasImage ? topBarHints : topBarHints.filter((hint) => hint.key !== "image");
     }
 
     private applyButtonTypes(): void {

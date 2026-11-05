@@ -49,7 +49,8 @@ export class MarkdownEditorRegistry {
         markdown: string,
         editOnly: boolean,
         dotNetHelper: DotNetHelper,
-        imageMode: MarkdownImageMode = "inline"
+        imageMode: MarkdownImageMode = "inline",
+        galleryInputId: string | null = null
     ): Promise<void> {
         const root = document.getElementById(elementId);
         const container = document.getElementById(`markdown-container-${elementId}`);
@@ -64,7 +65,7 @@ export class MarkdownEditorRegistry {
         this.configureToolbar(container);
         this.destroyToolbarHints(elementId);
 
-        const modeBar = this.createModeBar(elementId);
+        const modeBar = this.createModeBar(elementId, galleryInputId);
         const visualHost = document.createElement("div");
         const sourceHost = document.createElement("div");
         visualHost.className = "markdown-editor-visual";
@@ -73,8 +74,8 @@ export class MarkdownEditorRegistry {
         root.append(modeBar, visualHost, sourceHost);
 
         const mobile = this.isMobileViewport();
-        const crepe = this.createCrepe(visualHost, markdown, mobile, dotNetHelper);
-        this.configureUploadPlugin(crepe, dotNetHelper);
+        const crepe = this.createCrepe(visualHost, markdown, mobile, dotNetHelper, imageMode);
+        this.configureUploadPlugin(crepe, dotNetHelper, imageMode);
 
         await crepe.create();
         crepe.setReadonly(editOnly);
@@ -91,8 +92,10 @@ export class MarkdownEditorRegistry {
         });
         this.applyMode(elementId);
         this.configureToolbar(container);
-        this.startToolbarHints(elementId, container);
-        this.startImageInputManager(elementId, container);
+        this.startToolbarHints(elementId, container, imageMode !== "gallery");
+        if (imageMode !== "gallery") {
+            this.startImageInputManager(elementId, container);
+        }
         this.startTopBarTouchGuard(elementId, container);
     }
 
@@ -167,13 +170,17 @@ export class MarkdownEditorRegistry {
         root: HTMLElement,
         markdown: string,
         mobile: boolean,
-        dotNetHelper: DotNetHelper
+        dotNetHelper: DotNetHelper,
+        imageMode: MarkdownImageMode
     ): Crepe {
         return new Crepe({
             root,
             defaultValue: markdown ?? "",
             features: {
                 [Crepe.Feature.BlockEdit]: !mobile,
+                // 画廊模式由底部画廊统一管理图片，编辑器内不再渲染图片块，
+                // 否则点击图片按钮会插入一个空的 image-block 并序列化成 `![1.00]()`。
+                [Crepe.Feature.ImageBlock]: imageMode !== "gallery",
                 [Crepe.Feature.Latex]: false,
                 [Crepe.Feature.Table]: !mobile,
                 [Crepe.Feature.TopBar]: true
@@ -214,11 +221,20 @@ export class MarkdownEditorRegistry {
      * Milkdown upload plugin 会接管粘贴和拖放文件；这里把默认 base64 行为替换为
      * 通过 Blazor 上传，并用返回 URL 创建 image-block/image 节点。
      */
-    private configureUploadPlugin(crepe: Crepe, dotNetHelper: DotNetHelper): void {
+    private configureUploadPlugin(
+        crepe: Crepe,
+        dotNetHelper: DotNetHelper,
+        imageMode: MarkdownImageMode
+    ): void {
         crepe.editor.config((ctx) => {
             ctx.update(uploadConfig.key, (prev) => ({
                 ...prev,
                 uploader: async (files, schema) => {
+                    if (imageMode === "gallery") {
+                        // 画廊模式下图片只能通过底部上传入口添加，避免编辑器内出现图片块。
+                        return [];
+                    }
+
                     const nodeType = schema.nodes["image-block"] ?? schema.nodes.image;
                     if (!nodeType) {
                         return [];
@@ -230,11 +246,6 @@ export class MarkdownEditorRegistry {
                     }
 
                     const urls = await this.uploadImages(dotNetHelper, images);
-                    if (this.getImageMode(dotNetHelper) === "gallery") {
-                        this.appendUploadedImages(dotNetHelper, images, urls);
-                        return [];
-                    }
-
                     return urls
                         .map((src) => nodeType.createAndFill({ src }))
                         .filter((node) => node !== null);
@@ -243,7 +254,7 @@ export class MarkdownEditorRegistry {
         });
     }
 
-    private createModeBar(elementId: string): HTMLElement {
+    private createModeBar(elementId: string, galleryInputId: string | null): HTMLElement {
         const bar = document.createElement("div");
         bar.className = "markdown-editor-modebar";
 
@@ -252,7 +263,33 @@ export class MarkdownEditorRegistry {
             this.createModeButton(elementId, "source", "源码")
         );
 
+        if (galleryInputId) {
+            bar.append(this.createGalleryUploadLabel(galleryInputId));
+        }
+
         return bar;
+    }
+
+    /**
+     * 画廊模式的「图片」按钮。
+     *
+     * 使用 label[for] 关联 Blazor 渲染的 <InputFile>，点击后由浏览器原生打开文件选择框，
+     * 无需额外的 JS 往返，也不会丢失用户手势。
+     */
+    private createGalleryUploadLabel(galleryInputId: string): HTMLLabelElement {
+        const label = document.createElement("label");
+        label.className = "markdown-editor-modebar__button markdown-editor-modebar__gallery";
+        label.htmlFor = galleryInputId;
+        label.title = "上传图片（可多选）";
+
+        const icon = document.createElement("i");
+        icon.className = "fas fa-image";
+        icon.setAttribute("aria-hidden", "true");
+        const text = document.createElement("span");
+        text.textContent = "图片";
+
+        label.append(icon, text);
+        return label;
     }
 
     private createModeButton(
@@ -306,7 +343,7 @@ export class MarkdownEditorRegistry {
         root?.classList.toggle("markdown-editor-workspace--source", sourceMode);
         root?.classList.toggle("markdown-editor-workspace--visual", !sourceMode);
 
-        root?.querySelectorAll<HTMLButtonElement>(".markdown-editor-modebar__button").forEach(
+        root?.querySelectorAll<HTMLButtonElement>("button.markdown-editor-modebar__button").forEach(
             (button) => {
                 const active = button.dataset.mode === instance.mode;
                 button.classList.toggle("is-active", active);
@@ -359,8 +396,8 @@ export class MarkdownEditorRegistry {
         return window.matchMedia("(max-width: 700px)").matches;
     }
 
-    private startToolbarHints(elementId: string, root: HTMLElement): void {
-        const hints = new ToolbarHintManager(root);
+    private startToolbarHints(elementId: string, root: HTMLElement, hasImage: boolean): void {
+        const hints = new ToolbarHintManager(root, hasImage);
         hints.start();
         this.toolbarHints.set(elementId, hints);
     }

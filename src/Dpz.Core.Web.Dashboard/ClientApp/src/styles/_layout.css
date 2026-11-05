@@ -277,12 +277,12 @@
         display: inline-flex;
     }
 
-    /* Desktop Collapse Logic: is-open means "Collapsed" on Desktop */
-    .app-sidebar.is-open {
+    /* 桌面端折叠：is-collapsed 表示侧边栏收起，状态持久化到 localStorage */
+    .app-sidebar.is-collapsed {
         transform: translateX(-100%);
     }
 
-    .app-main.is-open {
+    .app-main.is-collapsed {
         margin-left: 0;
     }
 }
